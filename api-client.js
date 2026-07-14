@@ -232,7 +232,7 @@
       grade_code:p.grade||'',
       wall_angle_deg:angleMatch?Number(angleMatch[0]):null,
       attempt_no:p.attempts||1,
-      result_status:p.flash?'flash':p.success?'sent':'not_sent',
+      result_status:p.flash?'FLASH':p.success?'AFTER_WORK':'NOT_DONE',
       attempts_to_send:p.success?(p.attempts||1):null,
       perceived_difficulty:num(e.quality),
       notes:p.comment||'',
