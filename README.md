@@ -1,18 +1,10 @@
-# LTS Beta v0.5.0 — pont Google Sheets
+# LTS Beta v0.5.0.1 — correctif de démarrage
 
-Première connexion PWA ↔ Apps Script ↔ Google Sheets.
+Cause corrigée :
+- le tableau de bord Coach appelait `renderApiPanel()` avant le chargement de `api-client.js` ;
+- l’application tombait donc systématiquement sur l’écran « LTS n’a pas pu démarrer ».
 
-Contenu :
-- PWA v0.5.0 ;
-- client API séparé ;
-- Apps Script `Code.gs` ;
-- manifeste `appsscript.json` ;
-- guide de déploiement ;
-- stockage local conservé ;
-- semaine démo conservée ;
-- test de connexion ;
-- chargement d’un instantané distant ;
-- envoi manuel des check-ins et mensurations ;
-- journal des appels dans `API_LOG`.
-
-Le classeur Google Sheets v0.5.0 est fourni séparément.
+Correctifs :
+- chargement de `api-client.js` avant le script principal ;
+- panneau de secours si le module API est absent ;
+- conservation de toutes les fonctions de la v0.5.0.
