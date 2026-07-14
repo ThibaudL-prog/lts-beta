@@ -44,7 +44,7 @@ function health_() {
     schema_version: getConfig_('schema_version') || SCHEMA_VERSION,
     spreadsheet_id: SpreadsheetApp.getActive().getId(),
     server_time: new Date().toISOString(),
-    write_enabled: String(getConfig_('write_enabled')).toLowerCase() !== 'false'
+    write_enabled: configBoolean_('write_enabled', false)
   };
 }
 
@@ -143,16 +143,40 @@ function sheet_(name) {
 }
 
 function getConfig_(key) {
-  const rows = rows_('API_CONFIG');
-  const row = rows.find(r => String(r.setting_key) === key);
-  return row ? row.setting_value : null;
+  const sheet = sheet_('API_CONFIG');
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 3) return null;
+
+  // API_CONFIG has a title on row 1 and real headers on row 2.
+  const headers = values[1].map(String);
+  const keyIndex = headers.indexOf('setting_key');
+  const valueIndex = headers.indexOf('setting_value');
+
+  if (keyIndex < 0 || valueIndex < 0) {
+    throw new Error('En-têtes API_CONFIG introuvables');
+  }
+
+  for (let i = 2; i < values.length; i++) {
+    if (String(values[i][keyIndex]).trim() === String(key).trim()) {
+      return values[i][valueIndex];
+    }
+  }
+  return null;
+}
+
+function configBoolean_(key, defaultValue) {
+  const value = getConfig_(key);
+  if (value === null || value === '') return defaultValue;
+  if (value === true || String(value).trim().toLowerCase() === 'true') return true;
+  if (value === false || String(value).trim().toLowerCase() === 'false') return false;
+  throw new Error('Valeur booléenne invalide dans API_CONFIG : ' + key);
 }
 
 function assertApiEnabled_() {
-  if (String(getConfig_('api_enabled')).toLowerCase() === 'false') throw new Error('API désactivée');
+  if (!configBoolean_('api_enabled', false)) throw new Error('API désactivée');
 }
 function assertWriteEnabled_() {
-  if (String(getConfig_('write_enabled')).toLowerCase() === 'false') throw new Error('Écritures désactivées');
+  if (!configBoolean_('write_enabled', false)) throw new Error('Écritures désactivées');
 }
 
 function writeLog_(requestId, method, action, payload, status, duration, message) {

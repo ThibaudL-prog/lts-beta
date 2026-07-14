@@ -109,4 +109,184 @@
       if(typeof toast==='function')toast('Envoi impossible')
     }
   };
+  function currentApiConfig(){return cfg()}
+
+  function isoNow(){return new Date().toISOString()}
+  function num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+  function executionId(sessionId){return `exec-${sessionId}`}
+  function syncLabel(status){
+    return {local:'Local',pending:'Envoi…',synced:'Synchronisée',error:'Erreur sync'}[status]||'Local'
+  }
+
+  window.executionSyncBadge=function(p){
+    if(!p||!p.execution)return '';
+    const s=p.execution.sync?.status||'local';
+    const title=p.execution.sync?.message||syncLabel(s);
+    return `<span class="syncBadge ${s}" title="${escapeHtml(title)}">${syncLabel(s)}</span>`
+  };
+
+  function refreshExecutionViews(){
+    try{
+      if(typeof save==='function')save();
+      if(typeof renderAthleteWeek==='function'&&state.role!=='coach')renderAthleteWeek();
+      else if(typeof renderDashboard==='function'&&state.role==='coach')renderDashboard();
+    }catch(error){console.error('Actualisation sync',error)}
+  }
+
+  function buildExecutionRecord(session,week){
+    const e=session.execution||{};
+    const completedAt=e.completedAt||isoNow();
+    return {
+      session_execution_id:executionId(session.sessionId),
+      athlete_id:cfg().athleteId,
+      planned_session_id:session.sessionId,
+      started_at:e.startedAt||completedAt,
+      ended_at:completedAt,
+      status:e.completed?'completed':'in_progress',
+      rpe_session:num(e.rpe),
+      enjoyment:num(e.enjoyment),
+      pain_during:num(e.pain),
+      completion_pct:e.completed?100:Math.round(((e.sets||[]).filter(x=>x.completed).length/Math.max(1,(e.sets||[]).length))*100),
+      deviation_summary:'',
+      athlete_comment:e.note||'',
+      coach_comment:'',
+      data_quality:'athlete_entered',
+      duration_minutes:num(e.duration)||num(session.duration),
+      session_load_au:(num(e.duration)||num(session.duration))&&num(e.rpe)?(num(e.duration)||num(session.duration))*num(e.rpe):null
+    }
+  }
+
+  function buildSetRows(session){
+    const e=session.execution||{}, bodyweight=num(state.athlete?.weight)||null;
+    if(e.type==='SETS'){
+      return (e.sets||[]).map((x,i)=>({
+        set_result_id:`set-${session.sessionId}-${i+1}`,
+        session_execution_id:executionId(session.sessionId),
+        exercise_prescription_id:`presc-${session.sessionId}-${i+1}`,
+        exercise_catalog_id:session.templateId||'',
+        set_no:i+1,
+        side:'both',
+        reps_completed:num(x.reps),
+        duration_s:(session.structuredSets?.[i]?.work&&String(session.structuredSets[i].work).indexOf('/')<0)?num(x.reps):null,
+        load_added_kg:num(x.load),
+        bodyweight_kg_context:bodyweight,
+        rpe:null,
+        rir:num(x.rir),
+        valid:!!x.completed,
+        notes:x.completed?'':'Série non validée',
+        supported_load_kg:num(x.load),
+        volume_load_kg:num(x.load)&&num(x.reps)?num(x.load)*num(x.reps):null
+      }))
+    }
+    if(e.type==='EXERCISES'){
+      const rows=[];
+      (e.exercises||[]).forEach((x,i)=>{
+        const sets=Math.max(1,num(x.sets)||1);
+        for(let n=1;n<=sets;n++)rows.push({
+          set_result_id:`set-${session.sessionId}-${i+1}-${n}`,
+          session_execution_id:executionId(session.sessionId),
+          exercise_prescription_id:`presc-${session.sessionId}-${i+1}`,
+          exercise_catalog_id:session.exercises?.[i]?.name||session.templateId||'',
+          set_no:n,
+          side:'both',
+          reps_completed:num(x.reps),
+          duration_s:num(x.hold),
+          bodyweight_kg_context:bodyweight,
+          rpe:num(x.quality),
+          valid:true,
+          notes:''
+        })
+      });
+      return rows
+    }
+    return []
+  }
+
+  function buildRunningRecord(session){
+    const e=session.execution||{};
+    if(e.type!=='RUN')return null;
+    return {
+      running_result_id:`run-${session.sessionId}`,
+      session_execution_id:executionId(session.sessionId),
+      distance_m:num(e.distance)?num(e.distance)*1000:null,
+      time_seconds:num(e.duration)?num(e.duration)*60:null,
+      pace_seconds_per_km:num(e.paceMinutes)?num(e.paceMinutes)*60:null,
+      speed_kmh:num(e.speed),
+      average_hr_bpm:num(e.hr),
+      protocol_code:session.templateId||'PWA',
+      valid:true,
+      notes:e.note||''
+    }
+  }
+
+  function buildClimbingRows(session){
+    const e=session.execution||{};
+    if(e.type!=='CLIMBING')return [];
+    const angleMatch=String(session.climbing?.angle||'').match(/[\d.]+/);
+    return (e.problems||[]).map((p,i)=>({
+      climbing_attempt_id:`climb-${session.sessionId}-${i+1}`,
+      session_execution_id:executionId(session.sessionId),
+      problem_external_id:p.name||`bloc-${i+1}`,
+      problem_name:p.name||`Bloc ${i+1}`,
+      grading_system:'Font',
+      grade_code:p.grade||'',
+      wall_angle_deg:angleMatch?Number(angleMatch[0]):null,
+      attempt_no:p.attempts||1,
+      result_status:p.flash?'flash':p.success?'sent':'not_sent',
+      attempts_to_send:p.success?(p.attempts||1):null,
+      perceived_difficulty:num(e.quality),
+      notes:p.comment||'',
+      validation_status:'athlete_entered'
+    }))
+  }
+
+  window.syncSessionExecution=async function(sessionId){
+    if(typeof findSession!=='function')return;
+    const found=findSession(sessionId);
+    if(!found||!found.session.execution)return;
+    const session=found.session,e=session.execution,c=cfg();
+
+    if(!c.url){
+      e.sync={status:'local',message:'Enregistrée localement — API non configurée',updatedAt:isoNow()};
+      refreshExecutionViews();
+      return
+    }
+
+    e.sync={status:'pending',message:'Synchronisation en cours',updatedAt:isoNow()};
+    refreshExecutionViews();
+
+    try{
+      await request('execution.upsert',{method:'POST',payload:{record:buildExecutionRecord(session,found.week)}});
+
+      const sets=buildSetRows(session);
+      if(sets.length||e.type==='SETS'||e.type==='EXERCISES'){
+        await request('sets.replace',{method:'POST',payload:{session_execution_id:executionId(sessionId),records:sets}})
+      }
+
+      const climbing=buildClimbingRows(session);
+      if(climbing.length||e.type==='CLIMBING'){
+        await request('climbing.replace',{method:'POST',payload:{session_execution_id:executionId(sessionId),records:climbing}})
+      }
+
+      const running=buildRunningRecord(session);
+      if(running){
+        await request('running.upsert',{method:'POST',payload:{record:running}})
+      }
+
+      e.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow()};
+      if(typeof logAudit==='function')logAudit('SYNC_EXECUTION','SESSION',sessionId,session.title||'');
+      saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Séance synchronisée · ${session.title||sessionId}`});
+      refreshExecutionViews();
+      if(typeof toast==='function')toast('Séance synchronisée')
+    }catch(error){
+      console.error('Synchronisation séance',error);
+      e.sync={status:'error',message:error.message||'Synchronisation impossible',updatedAt:isoNow()};
+      saveCfg({connected:false,lastMessage:error.message||'Synchronisation impossible'});
+      refreshExecutionViews();
+      if(typeof toast==='function')toast('Séance conservée localement · erreur de synchronisation')
+    }
+  };
+
+  window.retrySessionSync=function(sessionId){return window.syncSessionExecution(sessionId)}
+
 })();

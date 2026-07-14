@@ -1,10 +1,22 @@
-# LTS Beta v0.5.0.1 — correctif de démarrage
+# LTS Beta v0.5.1 — synchronisation des performances
 
-Cause corrigée :
-- le tableau de bord Coach appelait `renderApiPanel()` avant le chargement de `api-client.js` ;
-- l’application tombait donc systématiquement sur l’écran « LTS n’a pas pu démarrer ».
+Cette version synchronise automatiquement les saisies Athlète après leur sauvegarde locale.
 
-Correctifs :
-- chargement de `api-client.js` avant le script principal ;
-- panneau de secours si le module API est absent ;
-- conservation de toutes les fonctions de la v0.5.0.
+Types couverts :
+- séries de force, doigts et endurance ;
+- exercices, prévention, mobilité, souplesse et gainage ;
+- séances génériques ;
+- running ;
+- escalade et Kilterboard.
+
+Sécurité :
+- la saisie est toujours conservée localement avant l’appel distant ;
+- statut visible : Local, Envoi…, Synchronisée ou Erreur sync ;
+- identifiants déterministes pour éviter les doublons ;
+- `write_enabled` reste appliqué par Apps Script ;
+- le bouton général d’envoi des check-ins et mensurations est conservé.
+
+Déploiement :
+- remplacer les fichiers GitHub par cette version ;
+- remplacer `Code.gs` dans Apps Script puis créer une nouvelle version du déploiement existant ;
+- conserver la même URL `/exec`.
