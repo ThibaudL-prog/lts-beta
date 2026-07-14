@@ -219,6 +219,24 @@
     }
   }
 
+  function normalizeFontGrade(value){
+    const allowed=['5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c'];
+    const raw=String(value||'').trim().toLowerCase().replace(/\s+/g,'');
+    if(allowed.includes(raw))return raw;
+
+    // A range such as 5C-6A is stored using its upper bound.
+    const parts=raw.split(/[-–—]/).filter(Boolean);
+    for(let i=parts.length-1;i>=0;i--){
+      if(allowed.includes(parts[i]))return parts[i]
+    }
+
+    const matches=raw.match(/[5-8][abc]\+?/g)||[];
+    for(let i=matches.length-1;i>=0;i--){
+      if(allowed.includes(matches[i]))return matches[i]
+    }
+    return ''
+  }
+
   function buildClimbingRows(session){
     const e=session.execution||{};
     if(e.type!=='CLIMBING')return [];
@@ -228,8 +246,8 @@
       session_execution_id:executionId(session.sessionId),
       problem_external_id:p.name||`bloc-${i+1}`,
       problem_name:p.name||`Bloc ${i+1}`,
-      grading_system:'Font',
-      grade_code:p.grade||'',
+      grading_system:'FONT',
+      grade_code:normalizeFontGrade(p.grade),
       wall_angle_deg:angleMatch?Number(angleMatch[0]):null,
       attempt_no:p.attempts||1,
       result_status:p.flash?'FLASH':p.success?'AFTER_WORK':'NOT_DONE',

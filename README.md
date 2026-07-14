@@ -1,11 +1,10 @@
-# LTS Beta v0.5.1.1 — correctif des statuts d’escalade
+# LTS Beta v0.5.1.2 — normalisation des cotations d’escalade
 
-Correction :
-- Flash → `FLASH`
-- Réussi après travail → `AFTER_WORK`
-- Non réussi → `NOT_DONE`
+Corrections :
+- `grading_system` est envoyé sous la valeur autorisée `FONT` ;
+- les cotations sont normalisées en minuscules ;
+- une plage comme `5C-6A` devient `6a` ;
+- une valeur comme `6B` devient `6b` ;
+- les statuts restent `FLASH`, `AFTER_WORK` et `NOT_DONE`.
 
-Ces valeurs correspondent exactement à la validation de données de la feuille `CLIMBING_ATTEMPTS`.
-
-Aucun autre comportement de la v0.5.1 n’est modifié.
-Le code Apps Script ne nécessite pas de nouveau déploiement.
+Aucune modification Apps Script n’est nécessaire.
