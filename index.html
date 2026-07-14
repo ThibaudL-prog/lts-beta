@@ -1,0 +1,1388 @@
+<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.0</title>
+<style>
+:root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
+*{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:grid;grid-template-columns:230px 1fr}.side{background:linear-gradient(180deg,#0b356b,#062449);color:#fff;min-height:100vh;padding:22px 14px;position:sticky;top:0;height:100vh}.logo{font-size:25px;font-weight:950;padding:4px 12px 22px}.nav button{display:block;width:100%;border:0;background:none;color:#dce8fb;text-align:left;padding:12px 14px;border-radius:12px;margin:3px 0}.nav button.active{background:#1a5dab}.main{padding:18px 22px}.mobilebar{display:none}.pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}.pagehead h1{margin:0;font-size:26px}.muted{color:var(--muted)}.small{font-size:12px}.grid{display:grid;gap:14px}.cols2{grid-template-columns:1.5fr 1fr}.cols3{grid-template-columns:repeat(3,1fr)}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 1px 2px rgba(16,33,61,.03)}.card h3{margin:0 0 10px}.btn{border:0;border-radius:12px;padding:11px 15px;background:var(--blue);color:white;font-weight:850}.btn.secondary{background:#edf3ff;color:var(--blue)}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.full{width:100%}.pill{display:inline-flex;border-radius:999px;padding:5px 9px;background:#edf3ff;color:var(--blue);font-size:12px;font-weight:850}.pill.green{background:#e8f8f1;color:#08794d}.pill.orange{background:#fff3e7;color:#b95d00}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.factor{padding:13px;border:1px solid var(--line);border-radius:14px;margin:9px 0}.factor.selected{background:#f4f7ff;border-color:#9db9ff}.factorhead{display:flex;justify-content:space-between;gap:10px}.level{width:38px;height:38px;border-radius:12px;background:#edf3ff;color:var(--blue);display:grid;place-items:center;font-weight:950}.rolegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.rolegrid button{border:1px solid var(--line);background:white;border-radius:10px;padding:9px}.rolegrid button.active{background:#edf3ff;border-color:#aac2ff;color:var(--blue);font-weight:850}.field{margin:12px 0}.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.field textarea{min-height:110px}.counter{text-align:right;font-size:12px;color:var(--muted)}.stepper{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.step{padding:8px 11px;border-radius:999px;background:#e8edf5;color:#5f6c83;font-size:12px;font-weight:800}.step.active{background:var(--blue);color:white}.weekgrid{display:grid;grid-template-columns:repeat(8,minmax(115px,1fr));gap:9px;overflow-x:auto;scroll-snap-type:x mandatory}.weekcard{scroll-snap-align:start;border:1px solid var(--line);border-radius:15px;background:white;padding:12px;min-height:145px}.weekcard.active{outline:2px solid #7798ff;background:#f6f8ff}.weektype{font-size:12px;font-weight:850}.work{color:var(--blue)}.deload{color:var(--green)}.test{color:var(--orange)}.proposal{border-left:4px solid var(--orange);padding-left:12px}.diff{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.old,.new{background:#f7f9fc;border-radius:12px;padding:11px}.arrow{font-weight:950;color:var(--blue)}.athlete{max-width:900px;margin:auto;background:white;min-height:100vh}.athhead{position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);z-index:10;display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}.athcontent{padding:14px 14px 100px}.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(900px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:white;border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:15}.bottom button{border:0;background:none;color:var(--muted);padding:8px 2px}.bottom button.active{color:var(--blue);font-weight:900}.sliderline{display:grid;grid-template-columns:120px 1fr 36px;gap:10px;align-items:center;margin:14px 0}.sliderline input{width:100%;accent-color:var(--blue)}.sliderline output{font-weight:900;text-align:right}.sectiontitle{display:flex;justify-content:space-between;align-items:center}.sheetwrap{position:fixed;inset:0;background:rgba(3,18,38,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center}.sheet{background:white;width:min(760px,100%);max-height:95vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:19px 17px calc(22px + env(safe-area-inset-bottom))}.sheethead{display:flex;justify-content:space-between;gap:12px;position:sticky;top:-19px;background:white;padding:3px 0 12px;z-index:3}.measuregrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.invalid{border-color:var(--red)!important;background:#fff7f8!important}.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#10213d;color:white;padding:10px 14px;border-radius:999px;z-index:200}
+@media(max-width:980px){.cols2,.cols3{grid-template-columns:1fr}.weekgrid{grid-template-columns:repeat(8,150px)}}
+@media(max-width:760px){.coach{display:block}.side{display:none}.main{padding:0 10px 28px}.mobilebar{display:flex;position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);padding:9px 0;align-items:center;justify-content:space-between}.mobilebar .actions{display:flex;gap:6px}.mobilebar button{border:0;border-radius:10px;padding:9px 10px;background:#edf3ff;color:var(--blue);font-weight:850}.mobilebar button.active{background:var(--blue);color:#fff}.pagehead{padding-top:12px}.measuregrid{grid-template-columns:1fr}.sliderline{grid-template-columns:105px 1fr 30px}}
+
+.reqboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.reqcard{border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff}
+.reqcard.missing{border-color:#f0b676;background:#fffaf4}.reqcard.ok{border-color:#9ed9bf;background:#f3fbf7}
+.reqtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.reqbar{height:7px;border-radius:99px;background:#e6ebf3;overflow:hidden;margin-top:9px}.reqbar i{display:block;height:100%;background:var(--blue)}
+.catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalogcard{border:1px solid var(--line);border-radius:14px;padding:13px;background:white}
+.catalogcard h4{margin:0 0 5px}.tagrow{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.guide{font-size:11px;color:var(--muted)}.recommend{border-left:4px solid var(--blue)}
+@media(max-width:760px){.reqboard,.catalog{grid-template-columns:1fr}}
+
+.settable{width:100%;border-collapse:separate;border-spacing:0 8px}.settable th{font-size:11px;color:var(--muted);text-align:left;padding:0 5px}.settable td{background:#f7f9fc;padding:6px 5px}.settable td:first-child{border-radius:10px 0 0 10px}.settable td:last-child{border-radius:0 10px 10px 0}.settable input,.settable select{width:100%;min-width:65px;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}
+.daygroup{margin:15px 0}.daytitle{font-weight:950;font-size:18px;margin-bottom:8px}.athsession{border:1px solid var(--line);border-radius:16px;padding:14px;margin:9px 0;background:white}.athsession.published{border-left:5px solid var(--blue)}.sessionmeta{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0}
+.exgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.exitem{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff}.exitem.selected{border-color:#7ea5ff;background:#f3f7ff}
+@media(max-width:760px){.exgrid{grid-template-columns:1fr}.settable{font-size:12px}.settable td,.settable th{padding:4px 2px}}
+
+.sessionopen{cursor:pointer}.sessionopen:hover{border-color:#8caeff}
+.execrow{display:grid;grid-template-columns:72px 1fr 1fr 1fr 54px;gap:7px;align-items:center;margin:8px 0;padding:8px;background:#f7f9fc;border-radius:12px}
+.execrow input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px}
+.check{width:22px!important;height:22px}.complete{border-left-color:var(--green)!important;background:#f2fbf7!important}
+.autoflex{border-left:4px solid #9b6de3}.subreq{font-size:12px;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}
+.climbcfg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.problem{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+@media(max-width:760px){.execrow{grid-template-columns:54px 1fr 1fr 1fr 42px}.climbcfg{grid-template-columns:1fr}}
+
+.validatedCard{background:#eefaf4!important;border-color:#9bd7b9!important}
+.draftCard{background:#fff8ed!important;border-color:#efc07b!important}
+.chartgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.chartbox{border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff}
+.chartbox h4{margin:0 0 6px}.chartsvg{width:100%;height:170px}
+.statusline{display:flex;gap:7px;align-items:center;font-size:12px;font-weight:850}
+.editbtn{margin-left:6px}.addblock{border:1px dashed #8fa9d3;background:#f5f8fd;border-radius:14px;padding:13px;width:100%;color:var(--blue);font-weight:850}
+.plannedactual{display:grid;grid-template-columns:1fr 1fr;gap:8px}.plannedactual>div{border-radius:10px;padding:8px;background:#f7f9fc}
+@media(max-width:760px){.chartgrid{grid-template-columns:1fr}.plannedactual{grid-template-columns:1fr}}
+
+.guidecard{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin:12px 0}
+.guidecardhead{padding:13px 14px;background:#f5f8fd;border-bottom:1px solid var(--line)}
+.guidecardbody{padding:13px}
+.pa-head,.pa-row{display:grid;grid-template-columns:58px repeat(4,minmax(68px,1fr));gap:6px;align-items:center}
+.pa-head{font-size:11px;font-weight:900;color:var(--muted);padding:0 4px 6px}
+.pa-row{padding:7px;background:#f7f9fc;border-radius:11px;margin:6px 0}
+.pa-row input,.pa-row select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}
+.planvalue{font-size:12px;font-weight:800}
+.dualgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dualcol{border:1px solid var(--line);border-radius:13px;padding:10px}
+.dualcol.actual{background:#f7fbff}
+.exercise-perf{display:grid;grid-template-columns:1.3fr repeat(4,minmax(60px,1fr));gap:6px;align-items:center;padding:8px;background:#f7f9fc;border-radius:10px;margin:6px 0}
+.exercise-perf input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px}
+.protocolnote{font-size:12px;color:var(--muted);padding:8px 10px;background:#f6f8fb;border-radius:10px;margin:8px 0}
+@media(max-width:760px){
+ .pa-head,.pa-row{grid-template-columns:48px repeat(4,minmax(54px,1fr));font-size:11px}
+ .dualgrid{grid-template-columns:1fr}
+ .exercise-perf{grid-template-columns:1fr 1fr}
+ .exercise-perf b{grid-column:1/-1}
+}
+
+.mobilebar .actions{display:flex;gap:5px;overflow-x:auto;max-width:78vw}
+.mobilebar .actions button{white-space:nowrap}
+.trackingtabs{display:flex;gap:7px;overflow-x:auto;margin:12px 0}
+.trackingtabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 12px;white-space:nowrap}
+.trackingtabs button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.measureform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:760px){.measureform{grid-template-columns:1fr 1fr}.mobilebar .actions{max-width:72vw}}
+
+.scrollbox{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.scrollbox:after{content:'Glisser horizontalement pour voir toutes les colonnes';display:none;font-size:11px;color:var(--muted);padding-top:5px}
+.scrollbox table{min-width:760px}
+.settable{width:100%;border-collapse:separate;border-spacing:0 8px}
+.settable th,.settable td{white-space:nowrap}
+.settable input,.settable select{min-width:78px}
+.pa-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pa-scroll .pa-head,.pa-scroll .pa-row{min-width:620px}
+.guidecard,.card,.athsession,.catalogcard,.reqcard{max-width:100%;box-sizing:border-box}
+.guidecardbody,.card,.athsession{overflow-wrap:anywhere}
+.chartbox{min-width:0}
+.measuregrid,.climbcfg,.dualgrid,.metricgrid,.chartgrid{min-width:0}
+@media(max-width:760px){
+ .scrollbox:after{display:block}
+ .settable{font-size:12px}
+ .settable th,.settable td{padding:5px 4px}
+ .guidecardbody{padding:10px}
+ .dualgrid{grid-template-columns:1fr}
+ .measuregrid,.climbcfg,.metricgrid,.chartgrid{grid-template-columns:1fr}
+ .reqboard,.catalog{grid-template-columns:1fr}
+ .weekgrid{grid-template-columns:1fr 1fr}
+ .mobilebar{position:sticky;top:0;z-index:20}
+}
+@media(max-width:420px){
+ .weekgrid{grid-template-columns:1fr}
+ .mobilebar .actions{max-width:68vw}
+}
+
+.cycleDraft{border:1px solid #efc07b;background:#fff8ed;border-radius:14px;padding:12px;margin-bottom:14px}
+.weekTopAction{position:sticky;top:0;z-index:12;background:#fff;padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.weekTopAction .btn{width:100%;min-height:48px;font-size:16px}
+@media(max-width:760px){.weekTopAction{top:54px}}
+
+.coachBottom{display:none}
+@media(max-width:760px){
+ .coach .main{padding-bottom:82px}
+ .coachBottom{
+   display:grid;position:fixed;left:0;right:0;bottom:0;z-index:50;
+   grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);
+   box-shadow:0 -8px 24px rgba(15,38,77,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom))
+ }
+ .coachBottom button{
+   border:0;background:transparent;padding:10px 3px;font-size:12px;font-weight:800;color:var(--muted)
+ }
+ .coachBottom button.active{color:var(--blue);background:#eef4ff;border-radius:11px}
+ .mobilebar .actions{display:none}
+}
+
+.demoBanner{border:1px solid #efc07b;background:#fff8ed;border-radius:14px;padding:12px;margin:12px 0}
+
+.coachTopSwitch{display:none}
+.dailyperf{border-left:5px solid var(--blue)}
+.dailyperf.complete{border-left-color:var(--green)}
+.speedResult{font-size:22px;font-weight:950;color:var(--blue)}
+@media(max-width:760px){
+ .coachTopSwitch{display:inline-flex}
+ .coachBottom{grid-template-columns:repeat(3,1fr)}
+}
+
+.coachActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.coachActions .btn{padding:8px 10px}
+.weekSummary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.summaryBox{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafcff}
+.previewAthlete{background:#f7faff;border:1px solid #cfe0ff;border-radius:14px;padding:12px}
+@media(max-width:760px){
+ .weekSummary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .coachActions{justify-content:flex-start;margin-top:8px}
+ .planningRow{align-items:flex-start;flex-direction:column}
+}
+
+.emptyChart{height:170px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;padding:16px}
+.rangebar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.rangebar button.active{background:var(--blue);color:white}
+.realDataBanner{border:1px solid #b9d3ff;background:#f4f8ff;border-radius:14px;padding:12px;margin-bottom:14px}.metricSource{font-size:11px;color:var(--muted);margin-top:5px}
+
+.g21status{border-radius:14px;padding:12px;border:1px solid var(--line);margin-bottom:12px}
+.g21status.valid{background:#effaf4;border-color:#9ed6b5}.g21status.watch{background:#fff9eb;border-color:#f1ce77}
+.g21status.adjust{background:#fff4ea;border-color:#efb474}.g21status.invalid{background:#fff0f0;border-color:#e7a1a1}
+.g21status.adapted{background:#f4f1ff;border-color:#b9a7ef}.alertCard{border-left:5px solid var(--line)}
+.alertCard.warning{border-left-color:#e6a329}.alertCard.critical{border-left-color:#d64b4b}
+.alertRule{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+
+.sessionContainer{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff;margin:12px 0}
+.sessionContainerHeader{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sessionSlot{font-size:12px;font-weight:900;color:var(--blue);text-transform:uppercase;letter-spacing:.04em}
+.prescriptionStack{display:grid;gap:8px;margin-top:10px}
+.prescriptionMini{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafcff}
+.sessionActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.sessionBadge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#eef4ff;font-size:11px;font-weight:800}
+@media(max-width:760px){.sessionContainerHeader{flex-direction:column}.sessionActions .btn{flex:1 1 auto}}
+
+.dataTools{display:flex;gap:8px;flex-wrap:wrap}
+.auditList{display:grid;gap:8px}
+.auditItem{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafcff}
+.schemaBadge{font-size:11px;font-weight:800;color:var(--muted)}
+
+.apiPanel{border:1px solid #b9d3ff;background:#f4f8ff;border-radius:14px;padding:12px;margin:14px 0}
+.apiStatus{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#eef1f5;font-size:12px;font-weight:800}
+.apiStatus.ok{background:#eaf8ef;color:#17633a}.apiStatus.error{background:#fff0f0;color:#a62d2d}.apiStatus.pending{background:#fff8e8;color:#875b00}
+.apiGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.apiGrid input{width:100%}
+@media(max-width:760px){.apiGrid{grid-template-columns:1fr}}
+</style></head><body><div id="app" class="app"></div>
+<script>
+window.addEventListener('error',event=>{
+ console.error('Erreur LTS',event.error||event.message);
+ const appNode=document.getElementById('app');
+ if(appNode&&!appNode.innerHTML.trim()){
+   appNode.innerHTML=`<div style="max-width:620px;margin:50px auto;padding:20px;font-family:system-ui"><h1>LTS n’a pas pu démarrer</h1><p>Une donnée locale incompatible a été détectée.</p><button onclick="localStorage.removeItem('lts-v050');location.reload()" style="padding:12px 16px;border:0;border-radius:10px;background:#1764e8;color:#fff;font-weight:700">Réinitialiser cette bêta</button></div>`
+ }
+});
+
+
+const GUIDE_REQUIREMENTS=[
+{id:'p1',name:'Force maximale des doigts',role:'P1 · facteur principal',domain:'B',min:2,target:2,max:2,unit:'stimuli',guide:'G01 / G21'},
+{id:'run',name:'Running',role:'P2 · facteur secondaire',domain:'D',min:2,target:3,max:4,unit:'séances',guide:'G17 / G21'},
+{id:'upperpull',name:'Haut du corps — tirage',role:'P3 · maintien',domain:'A_PULL',min:1,target:1,max:4,unit:'stimuli',guide:'G02/G05/G08 / G21'},
+{id:'upperpush',name:'Haut du corps — poussée',role:'P3 · maintien',domain:'A_PUSH',min:1,target:1,max:4,unit:'stimuli',guide:'G03/G06/G09 / G21'},
+{id:'climb',name:'Escalade',role:'Invariant',domain:'ESC',min:3,target:4,max:4,unit:'séances',guide:'G21'},
+{id:'maxb',name:'Bloc maximal',role:'Invariant',domain:'BM',min:1,target:1,max:2,unit:'stimuli',guide:'G21'},
+{id:'core',name:'Gainage',role:'Invariant',domain:'E',min:1,target:1,max:3,unit:'stimuli',guide:'G10 / G21'},
+{id:'flex',name:'Souplesse',role:'Invariant',domain:'SOUP',min:7,target:7,max:14,unit:'séances courtes',guide:'G12 / G21'},
+{id:'mob',name:'Mobilité',role:'Invariant',domain:'MOB',min:1,target:1,max:3,unit:'modules',guide:'G11 / G21'},
+{id:'cali',name:'Calisthénie',role:'Option selon objectif',domain:'CALI',min:0,target:1,max:3,unit:'séances ou micro-séances',guide:'G16 / G21'},
+{id:'prev',name:'Prévention',role:'Invariant',domain:'PREV',min:1,target:2,max:3,unit:'modules',guide:'G20 / G21'}
+];
+const PRESCRIPTIONS=[
+{id:'maxhang',domain:'B',quality:'Force maximale doigts',name:'Max Hangs 20 mm',guide:'G01',objective:'Développement',summary:'5 × 5 s · RIR 2 · repos ≥ 3 min · 2 séances/semaine',sets:5,reps:1,duration:5,rest:180,rir:2},
+{id:'repeaters',domain:'B',quality:'Endurance doigts',name:'Repeaters 7/3',guide:'G07',objective:'Développement',summary:'3 à 5 séries de 6 répétitions · 7 s / 3 s · RIR 2',sets:3,reps:6,duration:7,rest:180,rir:2},
+{id:'pullstrength',domain:'A',extraDomains:['A_PULL'],quality:'Force traction',name:'Tractions lestées Top Set + Back-off',guide:'G02',objective:'Maintien ou développement',summary:'Montée de gamme · Top Set 5RM · Back-off sets',sets:4,reps:5,duration:null,rest:180,rir:0},
+{id:'dipstrength',domain:'A',extraDomains:['A_PUSH'],quality:'Force poussée',name:'Dips lestés Top Set + Back-off',guide:'G03',objective:'Maintien ou développement',summary:'Montée de gamme · Top Set 5RM · Back-off sets',sets:4,reps:5,duration:null,rest:180,rir:0},
+{id:'pullend',domain:'A',extraDomains:['A_PULL'],quality:'Endurance traction',name:'Tractions strictes à RIR 2',guide:'G08',objective:'Développement',summary:'4 séries · RIR 2 · repos 3 min',sets:4,reps:null,duration:null,rest:180,rir:2},
+{id:'dipend',domain:'A',extraDomains:['A_PUSH'],quality:'Endurance poussée',name:'Dips stricts à RIR 2',guide:'G09',objective:'Développement',summary:'4 séries · RIR 2 · repos 3 min',sets:4,reps:null,duration:null,rest:180,rir:2},
+{id:'runef',domain:'D',quality:'Endurance fondamentale',name:'R1 — Endurance fondamentale',guide:'G17',objective:'Base aérobie',summary:'30 à 90 min · RPE 2 à 4 · allure conversationnelle',durationMin:35,rpe:3},
+{id:'runtempo',domain:'D',quality:'Seuil / Tempo',name:'R2 — Seuil / Tempo',guide:'G17',objective:'Seuil',summary:'20 à 40 min de travail · RPE 6 à 7',durationMin:60,rpe:7},
+{id:'run4x4',domain:'D',quality:'VO₂max',name:'R3 — VO₂max 4 × 4',guide:'G17',objective:'VO₂max',summary:'4 × 4 min · récupération 3 min · RPE 8 à 9',sets:4,duration:240,rest:180,rpe:9},
+{id:'corearc',domain:'E',quality:'Gainage',name:'Méthode Kevin Arc',guide:'G10',objective:'Tension corporelle',summary:'2 séances/semaine en développement · choix du coach',durationMin:35},
+{id:'mobility',domain:'MOB',quality:'Mobilité',name:'Mobilité complète — 5 articulations',guide:'G11',objective:'Mobilité active',summary:'Hanches · chevilles · thorax · épaules · poignets',durationMin:20},
+{id:'flexibility',domain:'SOUP',quality:'Souplesse',name:'Souplesse courte quotidienne',guide:'G12',objective:'Amplitude passive',summary:'10 à 20 min · 7 à 14 séances courtes/semaine',durationMin:15},
+{id:'prevfinger',domain:'PREV',quality:'Prévention',name:'Prévention doigts',guide:'G20',objective:'Prévention primaire',summary:'Finger Extensions · Rice Bucket · Finger Rolls · suspensions thérapeutiques',durationMin:15,editor:'exerciseLibrary',exerciseGuide:'G20-DOIGTS'},
+{id:'prevwrist',domain:'PREV',quality:'Prévention',name:'Prévention poignets',guide:'G20',objective:'Tolérance poignet et avant-bras',summary:'Flexion · extension · pronation · supination · déviations',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-POIGNETS'},
+{id:'prevelbow',domain:'PREV',quality:'Prévention',name:'Prévention coudes',guide:'G20',objective:'Prévention tendinopathies du coude',summary:'Tyler Twist · Reverse Tyler Twist · excentriques poignet',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-COUDES'},
+{id:'prevshoulder',domain:'PREV',quality:'Prévention',name:'Prévention épaules',guide:'G20',objective:'Coiffe et contrôle scapulaire',summary:'Face Pull élastique · rotations externes · Y-T-W · contrôle scapulaire',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-EPAULES'},
+{id:'prevtrunk',domain:'PREV',quality:'Prévention',name:'Prévention tronc',guide:'G20',objective:'Stabilité lombo-pelvienne',summary:'Bird Dog · Dead Bug · Side Plank',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-TRONC'},
+{id:'prevlower',domain:'PREV',quality:'Prévention',name:'Prévention membres inférieurs',guide:'G20',objective:'Prévention running',summary:'Mollets · tibial · ischios · adducteurs · hanche',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-MI'},
+{id:'climbfun',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Escalade libre / fun',editor:'climbing',climbingMode:'FREE_FUN',guide:'G21',objective:'Plaisir, adhésion et grimpe libre',summary:'Séance libre sans objectif de performance imposé · blocs ajoutables par l’athlète',durationMin:90},
+{id:'climbmax',domain:'ESC',extraDomains:['BM'],quality:'Escalade',name:'Bloc maximal général',editor:'climbing',climbingMode:'BOULDER_MAX',guide:'G21',objective:'Bloc maximal + stimulus doigts',summary:'Compte ESC + BM + B si le stimulus doigts est explicite',durationMin:120},
+{id:'climbtech',domain:'ESC',extraDomains:['C'],quality:'Technique',name:'Escalade technique facile',guide:'G13-G15 / G21',objective:'Coordination, vitesse ou précision',summary:'3 à 5 situations · difficulté nettement sous-maximale',durationMin:90},
+{id:'kiltertech',domain:'ESC',extraDomains:['C'],quality:'Technique',name:'Kilterboard technique',guide:'G21 / G13-G15',objective:'Technique standardisée',summary:'Angle réglable · travail sous-maximal · objectif technique',durationMin:90,editor:'climbing',climbingMode:'KILTER_TECH'},
+{id:'kilterintense',domain:'ESC',extraDomains:['BM','B'],quality:'Escalade',name:'Kilterboard intense',guide:'G21',objective:'Intensité et doigts',summary:'Angle réglable · intensité élevée à maximale · stimulus doigts par défaut',durationMin:105,editor:'climbing',climbingMode:'KILTER_INTENSE'},
+{id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle réglable · volume contrôlé · stimulus doigts optionnel',durationMin:105,editor:'climbing',climbingMode:'KILTER_VOLUME'}
+];
+
+const SEED={"role": "coach", "athlete": {"name": "Thibaud", "weight": 85}, "tests": [{"quality": "Force maximale doigts", "level": 2, "source": "Suspension 20 mm · 5 s · +14 kg"}, {"quality": "Endurance doigts", "level": 2, "source": "7 tours au protocole 7/3"}, {"quality": "Endurance running", "level": 2, "source": "5 km en 29:00"}, {"quality": "Force haut du corps", "level": 3, "source": "Traction +44 kg · Dips +50 kg"}], "cycle": {
+"name": "Cycle démo — Force doigts et running",
+"start": "2026-07-13",
+"primary": "Force maximale doigts",
+"secondary": "Endurance running",
+"comment": "Cycle de démonstration enregistré afin de tester la planification. Il reste volontairement non validé par le Coach.",
+"currentWeek": 1,
+"status": "DRAFT",
+"validatedAt": null,
+"isDemo": true
+}, "weeks": [{"weekId": "demo-week-1", "number": 1, "type": "WORK", "status": "PUBLISHED", "isDemo": true, "publishedAt": "2026-07-13T08:00:00.000Z", "comment": "Semaine fictive publiée uniquement pour tester le parcours Athlète.", "sessions": [{"sessionId": "demo-w1-mon-maxhang", "templateId": "maxhang", "title": "Max Hang 20 mm", "day": "Lun", "domain": "B", "extraDomains": [], "guide": "G01", "duration": 40, "structuredSets": [{"role": "SÉRIE 1", "loadMode": "kg lest", "load": 10, "reps": 1, "work": 5, "rir": 2, "rest": 180}, {"role": "SÉRIE 2", "loadMode": "kg lest", "load": 10, "reps": 1, "work": 5, "rir": 2, "rest": 180}, {"role": "SÉRIE 3", "loadMode": "kg lest", "load": 10, "reps": 1, "work": 5, "rir": 2, "rest": 180}, {"role": "SÉRIE 4", "loadMode": "kg lest", "load": 10, "reps": 1, "work": 5, "rir": 2, "rest": 180}, {"role": "SÉRIE 5", "loadMode": "kg lest", "load": 10, "reps": 1, "work": 5, "rir": 2, "rest": 180}], "exercises": null, "notes": "5 suspensions de 5 s à RIR 2. Arrêter en cas de douleur ou de perte de forme.", "execution": null}, {"sessionId": "demo-w1-mon-run", "templateId": "runef", "title": "R1 — Endurance fondamentale", "day": "Lun", "domain": "D", "extraDomains": [], "guide": "G17", "duration": 40, "structuredSets": null, "exercises": null, "rpe": 3, "load": "Allure conversationnelle", "notes": "40 min faciles. Objectif : reprendre du volume sans aggraver la bandelette ilio-tibiale.", "execution": null}, {"sessionId": "demo-w1-tue-kilter", "templateId": "kiltertech", "title": "Kilterboard technique", "day": "Mar", "domain": "ESC", "extraDomains": ["C"], "guide": "G21 / G13-G15", "duration": 90, "structuredSets": null, "exercises": null, "climbing": {"mode": "KILTER_TECH", "angle": "30°", "problemCount": 5, "attemptLimit": 4, "targetGrade": "6A–6B", "technicalFocus": "Précision des pieds et lecture", "fingerStimulus": false}, "notes": "Travail sous-maximal. Priorité à la précision et à la qualité des placements.", "execution": null}, {"sessionId": "demo-w1-wed-pull", "templateId": "pullstrength", "title": "Tractions lestées — Force", "day": "Mer", "domain": "A", "extraDomains": ["A_PULL"], "guide": "G02", "duration": 55, "structuredSets": [{"role": "RAMP", "pct": 10, "loadMode": "kg lest", "load": 3, "reps": 10, "rir": "", "rest": 120}, {"role": "RAMP", "pct": 40, "loadMode": "kg lest", "load": 11, "reps": 5, "rir": "", "rest": 180}, {"role": "RAMP", "pct": 80, "loadMode": "kg lest", "load": 21, "reps": 3, "rir": "", "rest": 180}, {"role": "RAMP", "pct": 90, "loadMode": "kg lest", "load": 24, "reps": 1, "rir": "", "rest": 180}, {"role": "TOP SET", "pct": 100, "loadMode": "kg lest", "load": 26, "reps": 5, "rir": 0, "rest": 180}, {"role": "BACK-OFF", "pct": 80, "loadMode": "kg lest", "load": 21, "reps": 5, "rir": "", "rest": 180}, {"role": "BACK-OFF", "pct": 80, "loadMode": "kg lest", "load": 21, "reps": 4, "rir": "", "rest": 180}, {"role": "BACK-OFF", "pct": 70, "loadMode": "kg lest", "load": 19, "reps": "Max", "rir": 0, "rest": 180}], "exercises": null, "notes": "Top Set calculé à partir de 85 kg de PDC et d’un 1RM externe de +44 kg.", "execution": null}, {"sessionId": "demo-w1-wed-dip", "templateId": "dipstrength", "title": "Dips lestés — Force", "day": "Mer", "domain": "A", "extraDomains": ["A_PUSH"], "guide": "G03", "duration": 55, "structuredSets": [{"role": "RAMP", "pct": 10, "loadMode": "kg lest", "load": 4, "reps": 10, "rir": "", "rest": 120}, {"role": "RAMP", "pct": 40, "loadMode": "kg lest", "load": 13, "reps": 5, "rir": "", "rest": 180}, {"role": "RAMP", "pct": 80, "loadMode": "kg lest", "load": 25, "reps": 3, "rir": "", "rest": 180}, {"role": "RAMP", "pct": 90, "loadMode": "kg lest", "load": 28, "reps": 1, "rir": "", "rest": 180}, {"role": "TOP SET", "pct": 100, "loadMode": "kg lest", "load": 31, "reps": 5, "rir": 0, "rest": 180}, {"role": "BACK-OFF", "pct": 80, "loadMode": "kg lest", "load": 25, "reps": 5, "rir": "", "rest": 180}, {"role": "BACK-OFF", "pct": 80, "loadMode": "kg lest", "load": 25, "reps": 4, "rir": "", "rest": 180}, {"role": "BACK-OFF", "pct": 70, "loadMode": "kg lest", "load": 22, "reps": "Max", "rir": 0, "rest": 180}], "exercises": null, "notes": "Top Set calculé à partir de 85 kg de PDC et d’un 1RM externe de +50 kg.", "execution": null}, {"sessionId": "demo-w1-thu-climbmax", "templateId": "climbmax", "title": "Bloc maximal général", "day": "Jeu", "domain": "ESC", "extraDomains": ["BM"], "guide": "G21", "duration": 105, "structuredSets": null, "exercises": null, "climbing": {"mode": "BOULDER_MAX", "angle": null, "problemCount": 4, "attemptLimit": 5, "targetGrade": "Niveau limite du jour", "technicalFocus": "", "fingerStimulus": false}, "notes": "Blocs maximaux variés, sans obligation de petites prises.", "execution": null}, {"sessionId": "demo-w1-fri-repeaters", "templateId": "repeaters", "title": "Repeaters 20 mm — 7/3", "day": "Ven", "domain": "B", "extraDomains": [], "guide": "G07", "duration": 35, "structuredSets": [{"role": "SÉRIE 1", "loadMode": "kg lest", "load": 0, "reps": 6, "work": "7/3", "rir": 2, "rest": 180}, {"role": "SÉRIE 2", "loadMode": "kg lest", "load": 0, "reps": 6, "work": "7/3", "rir": 2, "rest": 180}, {"role": "SÉRIE 3", "loadMode": "kg lest", "load": 0, "reps": 6, "work": "7/3", "rir": 2, "rest": 180}, {"role": "SÉRIE 4", "loadMode": "kg lest", "load": 0, "reps": 6, "work": "7/3", "rir": 2, "rest": 180}], "exercises": null, "notes": "4 séries de 6 répétitions en 7 s / 3 s, à RIR 2.", "execution": null}, {"sessionId": "demo-w1-fri-prevention", "templateId": "prevshoulder", "title": "Prévention épaules", "day": "Ven", "domain": "PREV", "extraDomains": [], "guide": "G20", "duration": 20, "structuredSets": null, "exercises": [{"name": "Rotation externe à l’élastique", "category": "Épaules", "sets": 3, "reps": 15, "rest": 60}, {"name": "Face Pull à l’élastique", "category": "Épaules", "sets": 3, "reps": 15, "rest": 60}, {"name": "Scapular Pull-up", "category": "Épaules", "sets": 3, "reps": 12, "rest": 60}], "notes": "Mouvement contrôlé, sans douleur.", "execution": null}, {"sessionId": "demo-w1-sat-fun", "templateId": "climbfun", "title": "Escalade libre / fun", "day": "Sam", "domain": "ESC", "extraDomains": [], "guide": "G21", "duration": 90, "structuredSets": null, "exercises": null, "climbing": {"mode": "FREE_FUN", "angle": null, "problemCount": 0, "attemptLimit": 0, "targetGrade": "", "technicalFocus": "", "fingerStimulus": false}, "notes": "Aucun bloc imposé. Ajouter les blocs réellement grimpés et noter le plaisir ressenti.", "execution": null}, {"sessionId": "demo-w1-sun-kilter", "templateId": "kiltervolume", "title": "Kilterboard volume", "day": "Dim", "domain": "ESC", "extraDomains": [], "guide": "G21", "duration": 90, "structuredSets": null, "exercises": null, "climbing": {"mode": "KILTER_VOLUME", "angle": "30°", "problemCount": 8, "attemptLimit": 4, "targetGrade": "5C–6A", "technicalFocus": "Fluidité et accumulation de réussites", "fingerStimulus": false}, "notes": "Volume modéré. Conserver une marge technique et physique.", "execution": null}, {"sessionId": "demo-w1-flex-lun", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Lun", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-mar", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Mar", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-mer", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Mer", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-jeu", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Jeu", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-ven", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Ven", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-sam", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Sam", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}, {"sessionId": "demo-w1-flex-dim", "templateId": "flexibility", "title": "Souplesse quotidienne", "day": "Dim", "domain": "SOUP", "extraDomains": [], "guide": "G12", "duration": 15, "structuredSets": null, "exercises": [{"name": "Pancake Stretch", "category": "Hanches", "sets": 2, "hold": 45, "rest": 20}], "autoFlex": true, "notes": "Routine courte quotidienne.", "execution": null}]}], "checkins": {"morning": {"sleep": 7.5, "quality": 8, "mood": 7, "fatigue": 4, "stress": 3, "energy": 7, "motivation": 9, "soreness": 3, "pain": 1}, "evening": {"rpe": 6, "fatigue": 5, "soreness": 4, "pain": 1, "bike": 18}}, "weekly": {"weight": 85, "waist": 88, "chest": 114, "hips": 92, "armRelaxed": 36, "armFlexed": 39, "thigh": 54, "calf": 37, "hrSupine": 65, "hrStanding": 76, "availability": "Disponible normalement", "pain": "", "comment": ""}}, KEY='lts-v050'; let state;
+try{state=JSON.parse(localStorage.getItem(KEY))||SEED}catch(e){state=SEED}
+const app=document.getElementById('app');
+
+if(!state.checkStatus)state.checkStatus={morning:'NOT_STARTED',evening:'NOT_STARTED',sunday:'NOT_STARTED'};
+
+if(!state.records)state.records={measurements:[],checkins:[],tests:[]};
+if(!state.trackingRange)state.trackingRange='30d';
+if(!state.history)state.history={};
+if(!state.athlete.external1rm)state.athlete.external1rm={pull:44,dip:50};
+const REAL_METRICS={
+weight:{label:'Poids',unit:'kg'},waist:{label:'Tour de taille',unit:'cm'},chest:{label:'Poitrine',unit:'cm'},hips:{label:'Hanches',unit:'cm'},armRelaxed:{label:'Bras relâché',unit:'cm'},armContracted:{label:'Bras contracté',unit:'cm'},thigh:{label:'Cuisse',unit:'cm'},calf:{label:'Mollet',unit:'cm'},hrSupine:{label:'FC allongé',unit:'bpm'},hrStanding:{label:'FC debout',unit:'bpm'},
+sleep:{label:'Durée de sommeil',unit:'h'},sleepQuality:{label:'Qualité du sommeil',unit:'/10'},fatigue:{label:'Fatigue',unit:'/10'},stress:{label:'Stress',unit:'/10'},energy:{label:'Énergie',unit:'/10'},motivation:{label:'Motivation',unit:'/10'},pain:{label:'Douleur',unit:'/10'},
+pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Repeaters',unit:'tours'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
+function nowIso(){return new Date().toISOString()}
+function recordDateLabel(iso){const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
+function rangeCutoff(range){const d=new Date();if(range==='7d')d.setDate(d.getDate()-7);else if(range==='30d')d.setDate(d.getDate()-30);else if(range==='cycle'&&state.cycle?.start)return new Date(state.cycle.start);else return new Date(0);return d}
+function metricSeries(key){const cutoff=rangeCutoff(state.trackingRange),rows=[];['measurements','checkins','tests'].forEach(bucket=>(state.records[bucket]||[]).forEach(r=>{if(r[key]!==null&&r[key]!==undefined&&r[key]!==''&&new Date(r.date)>=cutoff)rows.push({date:r.date,value:+r[key],source:r.source||bucket})}));return rows.sort((a,b)=>new Date(a.date)-new Date(b.date))}
+function addOrReplaceDailyRecord(bucket,record){const day=record.date.slice(0,10),arr=state.records[bucket]||(state.records[bucket]=[]),i=arr.findIndex(x=>x.date?.slice(0,10)===day&&x.source===record.source);if(i>=0)arr[i]={...arr[i],...record};else arr.push(record)}
+
+
+function newContainerId(){return 'ctr-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
+function slotLabel(slot){return ({matin:'Matin',midi:'Midi',soir:'Soir'})[slot]||'Midi'}
+function ensureSessionContainers(){
+ (state.weeks||[]).forEach(w=>{
+   w.containers=w.containers||[];
+   const slotOrder={matin:0,midi:1,soir:2};
+   (w.sessions||[]).forEach(p=>{
+     if(p.containerId&&w.containers.some(c=>c.containerId===p.containerId))return;
+     const slot=p.slot||((p.autoFlex||p.templateId==='flexibility')?'matin':(p.domain==='ESC'?'soir':'midi'));
+     let c=w.containers.find(x=>x.day===p.day&&x.slot===slot);
+     if(!c){
+       c={containerId:newContainerId(),day:p.day,slot,title:`${slotLabel(slot)} — ${p.day}`,comment:'',status:'PLANNED'};
+       w.containers.push(c)
+     }
+     p.containerId=c.containerId;p.slot=slot
+   });
+   const dayOrder={Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6};
+   w.containers.sort((a,b)=>{const d=(dayOrder[a.day]??99)-(dayOrder[b.day]??99);return d||((slotOrder[a.slot]??1)-(slotOrder[b.slot]??1))})
+ })
+}
+function containerPrescriptions(w,c){return (w.sessions||[]).filter(p=>p.containerId===c.containerId)}
+function containerDuration(w,c){return containerPrescriptions(w,c).reduce((sum,p)=>sum+(+p.duration||0),0)}
+function containerStatus(w,c){
+ const ps=containerPrescriptions(w,c),done=ps.filter(p=>p.execution?.completed).length;
+ if(!ps.length||done===0)return 'À faire';
+ if(done===ps.length)return 'Terminée';
+ return 'En cours'
+}
+function findContainer(n,id){const w=state.weeks.find(x=>x.number===n);return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
+
+
+const LTS_SCHEMA_VERSION='0.4.13';
+function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
+function logAudit(action,entityType,entityId,details=''){
+ state.auditLog=state.auditLog||[];
+ state.auditLog.unshift({auditId:stableId('audit'),date:new Date().toISOString(),action,entityType,entityId,details});
+ state.auditLog=state.auditLog.slice(0,200)
+}
+function ensureStableIds(){
+ state.schemaVersion=LTS_SCHEMA_VERSION;
+ if(state.cycle&&!state.cycle.cycleId)state.cycle.cycleId=stableId('cycle');
+ (state.weeks||[]).forEach(w=>{
+   if(!w.weekId)w.weekId=stableId('week');
+   if(!Number.isFinite(w.publicationVersion))w.publicationVersion=w.status==='PUBLISHED'?1:0;
+   (w.containers||[]).forEach(c=>{
+     if(!c.containerId)c.containerId=stableId('ctr');
+     (w.sessions||[]).filter(p=>p.containerId===c.containerId).forEach(p=>{
+       if(!p.sessionId)p.sessionId=stableId('presc');
+       if(!Number.isFinite(p.revision))p.revision=0
+     })
+   });
+   (w.sessions||[]).forEach(p=>{
+     if(!p.sessionId)p.sessionId=stableId('presc');
+     if(!Number.isFinite(p.revision))p.revision=0
+   })
+ });
+ state.auditLog=state.auditLog||[]
+}
+function buildExportPayload(){
+ return {
+   schemaVersion:LTS_SCHEMA_VERSION,
+   exportedAt:new Date().toISOString(),
+   appVersion:'0.4.13',
+   data:state
+ }
+}
+function exportLtsData(){
+ const payload=buildExportPayload();
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download=`LTS_backup_${new Date().toISOString().slice(0,10)}.json`;
+ document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ logAudit('EXPORT','SYSTEM','local','Sauvegarde JSON exportée');save();toast('Sauvegarde exportée')
+}
+function openImportLtsData(){
+ document.getElementById('ltsImportInput')?.click()
+}
+function importLtsData(input){
+ const file=input.files?.[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+   try{
+     const payload=JSON.parse(reader.result);
+     if(!payload||!payload.data||!payload.schemaVersion)throw new Error('Format invalide');
+     if(!Array.isArray(payload.data.weeks))throw new Error('Semaines manquantes');
+     if(!confirm('Importer cette sauvegarde remplacera les données locales de cette bêta. Continuer ?'))return;
+     state=payload.data;
+     ensureSessionContainers();ensureStableIds();
+     logAudit('IMPORT','SYSTEM','local',`Import du schéma ${payload.schemaVersion}`);
+     save();render();toast('Sauvegarde importée')
+   }catch(error){console.error(error);toast('Fichier de sauvegarde invalide')}
+   input.value=''
+ };
+ reader.readAsText(file)
+}
+function renderAuditLog(){
+ const rows=(state.auditLog||[]).slice(0,30);
+ return `<div class="card"><div class="sectiontitle"><div><h3>Journal des modifications</h3><p class="muted small">30 dernières actions locales.</p></div><span class="schemaBadge">Schéma ${state.schemaVersion||LTS_SCHEMA_VERSION}</span></div>${rows.length?`<div class="auditList">${rows.map(r=>`<div class="auditItem"><div class="row"><b>${r.action}</b><span class="muted small">${new Date(r.date).toLocaleString('fr-FR')}</span></div><div class="muted small">${r.entityType} · ${r.entityId}</div>${r.details?`<p>${r.details}</p>`:''}</div>`).join('')}</div>`:'<p class="muted">Aucune action enregistrée.</p>'}</div>`
+}
+
+function migrateState(){
+ state.weeks=(state.weeks||[]).map(w=>{if(!w.sessions)w.sessions=[];w.sessions.forEach((s,i)=>{if(!s.sessionId)s.sessionId='legacy-'+w.number+'-'+i});return w});
+ save()
+}
+migrateState();
+try{
+  ensureSessionContainers();
+  ensureStableIds();
+}catch(error){
+  console.error('Migration des séances impossible',error);
+  state.weeks=(state.weeks||[]).map(w=>({...w,containers:Array.isArray(w.containers)?w.containers:[]}));
+}
+
+
+
+const GUIDE_CARD_SCHEMAS={
+ pullstrength:{type:'SETS',guide:'G02',labels:['Charge','Reps','RIR','Repos']},
+ dipstrength:{type:'SETS',guide:'G03',labels:['Charge','Reps','RIR','Repos']},
+ pullend:{type:'SETS',guide:'G08',labels:['Charge','Reps','RIR','Repos']},
+ dipend:{type:'SETS',guide:'G09',labels:['Charge','Reps','RIR','Repos']},
+ maxhang:{type:'TIMED_SETS',guide:'G01',labels:['Charge','Durée','RIR','Repos']},
+ repeaters:{type:'REPEATERS',guide:'G07',labels:['Charge','Rép. 7/3','RIR','Repos']},
+ fingerpower:{type:'EXERCISES',guide:'G04'},
+ pullpower:{type:'EXERCISES',guide:'G05'},
+ pushpower:{type:'EXERCISES',guide:'G06'},
+ corearc:{type:'EXERCISES',guide:'G10'},
+ mobility:{type:'EXERCISES',guide:'G11'},
+ flexibility:{type:'EXERCISES',guide:'G12'},
+ coordination:{type:'EXERCISES',guide:'G13'},
+ speedtech:{type:'EXERCISES',guide:'G14'},
+ precision:{type:'EXERCISES',guide:'G15'},
+ calisthenics:{type:'EXERCISES',guide:'G16'},
+ prevfinger:{type:'EXERCISES',guide:'G20'},
+ prevwrist:{type:'EXERCISES',guide:'G20'},
+ prevelbow:{type:'EXERCISES',guide:'G20'},
+ prevshoulder:{type:'EXERCISES',guide:'G20'},
+ prevtrunk:{type:'EXERCISES',guide:'G20'},
+ prevlower:{type:'EXERCISES',guide:'G20'},
+ runef:{type:'RUN',guide:'G17'},
+ runtempo:{type:'RUN',guide:'G17'},
+ run4x4:{type:'RUN_INTERVALS',guide:'G17'},
+ runshort:{type:'RUN_INTERVALS',guide:'G17'},
+ runhills:{type:'RUN_INTERVALS',guide:'G17'},
+ runsprint:{type:'RUN_INTERVALS',guide:'G17'},
+ climbfun:{type:'CLIMBING',guide:'G21'},
+ climbmax:{type:'CLIMBING',guide:'G21'},
+ climbtech:{type:'CLIMBING',guide:'G13-G15/G21'},
+ kiltertech:{type:'CLIMBING',guide:'G13-G15/G21'},
+ kilterintense:{type:'CLIMBING',guide:'G21'},
+ kiltervolume:{type:'CLIMBING',guide:'G21'}
+};
+function guideSchemaFor(s){return GUIDE_CARD_SCHEMAS[s.templateId]||{type:s.structuredSets?'SETS':s.exercises?'EXERCISES':s.climbing?'CLIMBING':'GENERIC',guide:s.guide}}
+function ensureGuidePlannedStructure(p){
+ if(p.id==='maxhang')return [1,2,3,4,5].map(i=>({role:'SÉRIE '+i,loadMode:'kg lest/délestage',load:'',reps:1,work:5,rir:2,rest:180}));
+ if(p.id==='repeaters'){
+   const count=p.sets||3;
+   return Array.from({length:count},(_,i)=>({role:'SÉRIE '+(i+1),loadMode:'kg lest/délestage',load:'',reps:6,work:'7/3',rir:2,rest:180}));
+ }
+ return null
+}
+function plannedSetCell(v,unit=''){return '<span class="planvalue">'+(v===null||v===undefined||v===''?'—':v+(unit?' '+unit:''))+'</span>'}
+
+function ceilKg(x){return Math.ceil(Math.max(0,+x||0))}
+function calcStrengthPlan(kind){
+ const bw=+state.weekly.weight||+state.athlete.weight||85;
+ const ext1rm=kind==='pull'?+state.athlete.external1rm.pull:+state.athlete.external1rm.dip;
+ const total1rm=bw+ext1rm;
+ const topTotal=total1rm/(1+5/30);
+ const topExt=ceilKg(topTotal-bw);
+ const pctLoad=pct=>ceilKg(topExt*(pct/100));
+ return [
+  {role:'RAMP',pct:10,reps:10,load:pctLoad(10),loadMode:'kg lest',rest:120},
+  {role:'RAMP',pct:40,reps:5,load:pctLoad(40),loadMode:'kg lest',rest:180},
+  {role:'RAMP',pct:80,reps:3,load:pctLoad(80),loadMode:'kg lest',rest:180},
+  {role:'RAMP',pct:90,reps:1,load:pctLoad(90),loadMode:'kg lest',rest:180},
+  {role:'TOP SET',pct:100,reps:5,load:topExt,loadMode:'kg lest',rir:0,rest:180},
+  {role:'BACK-OFF',pct:80,reps:5,load:pctLoad(80),loadMode:'kg lest',rest:180},
+  {role:'BACK-OFF',pct:80,reps:4,load:pctLoad(80),loadMode:'kg lest',rest:180},
+  {role:'BACK-OFF',pct:70,reps:'Max',load:pctLoad(70),loadMode:'kg lest',rir:0,rest:180}
+ ]
+}
+
+function svgLine(values,labels){if(!values.length)return '';const w=320,h=140,p=22,min=Math.min(...values),max=Math.max(...values),span=max-min||1;const pts=values.map((v,i)=>{const x=values.length===1?w/2:p+i*(w-2*p)/(values.length-1),y=h-p-(v-min)*(h-2*p)/span;return[x,y]});const poly=pts.map(x=>x.join(',')).join(' ');return `<svg class="chartsvg" viewBox="0 0 ${w} ${h}"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#dce3ee"/>${values.length>1?`<polyline points="${poly}" fill="none" stroke="#1764e8" stroke-width="3"/>`:''}${pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="#1764e8"><title>${labels[i]} : ${values[i]}</title></circle>`).join('')}<text x="${p}" y="14" font-size="11">${max}</text><text x="${p}" y="${h-5}" font-size="11">${min}</text></svg>`}
+function chartCard(key){const meta=REAL_METRICS[key],rows=metricSeries(key);if(!rows.length)return `<div class="chartbox"><h4>${meta.label}</h4><div class="emptyChart">Aucune donnée réelle enregistrée pour cette période.</div></div>`;const vals=rows.map(r=>r.value),labels=rows.map(r=>recordDateLabel(r.date)),last=rows.at(-1);return `<div class="chartbox"><h4>${meta.label}</h4><div class="kpi">${last.value} ${meta.unit}</div>${svgLine(vals,labels)}<div class="metricSource">Dernière source : ${last.source}</div></div>`}
+function trackingRangeBar(){return `<div class="rangebar">${[['7d','7 jours'],['30d','30 jours'],['cycle','Cycle'],['all','Tout']].map(x=>`<button class="btn ghost ${state.trackingRange===x[0]?'active':''}" onclick="setTrackingRange('${x[0]}')">${x[1]}</button>`).join('')}</div>`}
+function setTrackingRange(range){state.trackingRange=range;save();if(state.role==='coach')trackingTab(window.currentTrackingTab||'daily');else athlete('profile')}
+
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),1700)}
+function closeSheet(){document.querySelector('.sheetwrap')?.remove()}
+function switchRole(){state.role=state.role==='coach'?'athlete':'coach';save();render()}
+function coachShell(content,active='dashboard'){
+ const bottom=[['dashboard','Accueil'],['weeks','Semaine'],['analytics','Suivi']];
+ app.innerHTML=`<div class="coach"><aside class="side"><div class="logo">LTS Coach</div><div class="nav">${[['dashboard','Tableau de bord'],['cycle','Cycle'],['weeks','Semaines'],['analytics','Suivi']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</div><button class="btn full" style="position:absolute;bottom:18px;left:14px;width:202px" onclick="switchRole()">Espace Athlète</button></aside><main class="main"><div class="mobilebar"><b>LTS Coach</b><button class="btn secondary coachTopSwitch" onclick="switchRole()">Athlète</button></div>${content}</main><nav class="coachBottom">${bottom.map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`
+}
+function coach(view){if(view==='cycle')renderCycle();else if(view==='weeks')renderWeeks();else if(view==='tests')renderTests();else if(view==='analytics')renderCoachAnalytics();else renderDashboard()}
+function renderDashboard(){const c=state.cycle;coachShell(`<div class="pagehead"><div><h1>Tableau de bord</h1><p class="muted">${c?'Cycle actif : '+c.name:'Aucun cycle actif'}</p></div>${c?'<button class="btn" onclick="renderWeeks()">Préparer la semaine</button>':'<button class="btn" onclick="renderCycle()">Créer un cycle</button>'}</div>${renderApiPanel()}<div class="grid cols3"><div class="card"><h3>Facteur principal</h3><div style="font-size:25px;font-weight:900">${c?c.primary:'À définir'}</div></div><div class="card"><h3>Semaine courante</h3><div style="font-size:25px;font-weight:900">${c?'S'+(c.currentWeek||1)+' / 8':'—'}</div></div><div class="card"><h3>Action attendue</h3><span class="pill ${c?'orange':''}">${c?'Créer la semaine suivante':'Créer le cycle'}</span></div></div>${renderDailyPerformanceTracking()}<div class="grid cols2" style="margin-top:14px"><div class="card"><h3>Derniers niveaux</h3>${state.tests.map(t=>`<div class="row"><div><b>${t.quality}</b><div class="muted small">${t.source}</div></div><div class="level">N${t.level}</div></div>`).join('')}</div><div class="card"><h3>Règles du cycle</h3><div class="row"><span>Structure</span><b>3 + 1 + 3 + 1</b></div><div class="row"><span>Semaine 4</span><b>Deload</b></div><div class="row"><span>Semaine 8</span><b>Tests</b></div><div class="row"><span>Mensurations</span><b>Chaque dimanche</b></div><button class="btn full" style="margin-top:12px" onclick="coach(\'analytics\')">Ouvrir le suivi et les graphiques</button></div></div>`,'dashboard')}
+
+
+function allExecutedSessions(){
+ return (state.weeks||[]).filter(w=>!w.isDemo).flatMap(w=>(w.sessions||[]).filter(s=>s.execution).map(s=>({week:w.number,...s})))
+   .sort((a,b)=>(b.execution?.completedAt||'').localeCompare(a.execution?.completedAt||''));
+}
+function plannedActualSummary(s){
+ const e=s.execution||{};
+ if(e.type==='SETS'){
+   const planned=(s.structuredSets||[]).reduce((sum,x)=>sum+(Number(x.reps)||0),0);
+   const actual=(e.sets||[]).reduce((sum,x)=>sum+(Number(x.reps)||0),0);
+   return `Répétitions : ${planned||'—'} prévues / ${actual||'—'} réalisées`;
+ }
+ if(e.type==='RUN'){
+   return `${e.distance||'—'} km · ${e.duration||'—'} min · ${e.speed||'—'} km/h · ${e.pace||'—'}`;
+ }
+ if(e.type==='CLIMBING'){
+   const probs=e.problems||[],success=probs.filter(x=>x.success).length,flashes=probs.filter(x=>x.flash).length;
+   return `${probs.length} blocs renseignés · ${success} réussis · ${flashes} flash`;
+ }
+ if(e.type==='EXERCISES'){
+   return `${(e.exercises||[]).length} exercice(s) renseigné(s)`;
+ }
+ return `${e.duration||s.duration||'—'} min réalisés`;
+}
+function renderDailyPerformanceTracking(){
+ const sessions=allExecutedSessions();
+ return `<div class="card"><div class="sectiontitle"><div><h3>Performances quotidiennes</h3><p class="muted small">Séances réellement effectuées, au-delà des tests.</p></div><span class="pill">${sessions.length}</span></div>${sessions.length?sessions.map(s=>`<div class="card dailyperf ${s.execution?.completed?'complete':''}" style="margin:10px 0"><div class="row"><div><b>S${s.week} · ${s.day} · ${s.title}</b><div class="muted small">${s.guide||''}</div></div><span class="pill green">${s.execution?.completed?'Terminée':'En cours'}</span></div><p>${plannedActualSummary(s)}</p><div class="measuregrid"><div class="row"><span>RPE</span><b>${s.execution?.rpe??'—'}</b></div><div class="row"><span>Douleur</span><b>${s.execution?.pain??'—'}/10</b></div></div><p class="muted small">${s.execution?.note||''}</p></div>`).join(''):'<p class="muted">Aucune performance quotidienne enregistrée pour le moment.</p>'}</div>`;
+}
+
+
+function trackingTab(tab){window.currentTrackingTab=tab;const tabs=`<div class="trackingtabs">${[['daily','Quotidien'],['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="trackingTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;let content='';
+if(tab==='daily')content=renderDailyPerformanceTracking();
+else if(tab==='perf')content=`<div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
+else if(tab==='life')content=`<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
+else content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`;
+coachShell(`<div class="pagehead"><div><h1>Suivi et analyses</h1><p class="muted">Données réellement saisies par l’Athlète et résultats validés par le Coach.</p></div></div><div class="realDataBanner"><b>Données réelles uniquement</b><div class="muted small">La semaine fictive et ses éventuelles saisies ne sont pas utilisées dans les graphiques.</div></div>${trackingRangeBar()}${tabs}${content}`,'analytics')}
+
+function renderCoachAnalytics(){trackingTab('daily')}
+
+
+function valueOrNull(id){const el=document.getElementById(id);return !el||el.value===''?null:+el.value}
+function latestAthleteMeasurement(){
+ const rows=[...(state.records.measurements||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+ return rows[0]||null
+}
+function renderLatestAthleteMeasurements(){
+ const r=latestAthleteMeasurement();
+ if(!r)return `<div class="card"><h3>Dernières mensurations de l’Athlète</h3><p class="muted">Aucune mensuration réelle enregistrée.</p></div>`;
+ const items=[
+  ['Poids',r.weight,'kg'],['Taille',r.waist,'cm'],['Poitrine',r.chest,'cm'],['Hanches',r.hips,'cm'],
+  ['Bras relâché',r.armRelaxed,'cm'],['Bras contracté',r.armContracted,'cm'],['Cuisse',r.thigh,'cm'],['Mollet',r.calf,'cm']
+ ].filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!=='');
+ return `<div class="card"><div class="sectiontitle"><div><h3>Dernières mensurations de l’Athlète</h3><p class="muted small">${new Date(r.date).toLocaleDateString('fr-FR')} · ${r.source||'Saisie Athlète'}</p></div><span class="pill green">À jour</span></div><div class="measuregrid">${items.map(x=>`<div class="summaryBox"><div class="muted small">${x[0]}</div><b>${x[1]} ${x[2]}</b></div>`).join('')}</div></div>`
+}
+function openAthleteMeasurements(){
+ const last=latestAthleteMeasurement()||{};
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Mes mensurations</h2><p class="muted">Ces données seront visibles par le Coach.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="measureform">
+  <div class="field"><label>Date</label><input id="mDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+  <div class="field"><label>Poids (kg)</label><input id="mWeight" type="number" step="0.1" value="${last.weight??''}"></div>
+  <div class="field"><label>Tour de taille (cm)</label><input id="mWaist" type="number" step="0.1" value="${last.waist??''}"></div>
+  <div class="field"><label>Poitrine (cm)</label><input id="mChest" type="number" step="0.1" value="${last.chest??''}"></div>
+  <div class="field"><label>Hanches (cm)</label><input id="mHips" type="number" step="0.1" value="${last.hips??''}"></div>
+  <div class="field"><label>Bras relâché (cm)</label><input id="mArmRelaxed" type="number" step="0.1" value="${last.armRelaxed??''}"></div>
+  <div class="field"><label>Bras contracté (cm)</label><input id="mArmContracted" type="number" step="0.1" value="${last.armContracted??''}"></div>
+  <div class="field"><label>Cuisse (cm)</label><input id="mThigh" type="number" step="0.1" value="${last.thigh??''}"></div>
+  <div class="field"><label>Mollet (cm)</label><input id="mCalf" type="number" step="0.1" value="${last.calf??''}"></div>
+ </div>
+ <button class="btn full" onclick="saveAthleteMeasurement()">Enregistrer mes mensurations</button></div></div>`)
+}
+function saveAthleteMeasurement(){
+ const date=(document.getElementById('mDate')?.value||new Date().toISOString().slice(0,10))+'T12:00:00';
+ const r={date,source:'Saisie Athlète',
+  weight:valueOrNull('mWeight'),waist:valueOrNull('mWaist'),chest:valueOrNull('mChest'),hips:valueOrNull('mHips'),
+  armRelaxed:valueOrNull('mArmRelaxed'),armContracted:valueOrNull('mArmContracted'),thigh:valueOrNull('mThigh'),calf:valueOrNull('mCalf')
+ };
+ if(!Object.entries(r).some(([k,v])=>!['date','source'].includes(k)&&v!==null))return toast('Renseigne au moins une mesure');
+ addOrReplaceDailyRecord('measurements',r);
+ if(r.weight!==null){state.weekly.weight=r.weight;state.athlete.weight=r.weight}
+ save();closeSheet();athlete('profile');toast('Mensurations enregistrées')
+}
+function saveRealTestRecord(){const date=(document.getElementById('tDate')?.value||new Date().toISOString().slice(0,10))+'T12:00:00';const r={date,source:'Test Coach',pull1rm:valueOrNull('tPull1rm'),dip1rm:valueOrNull('tDip1rm'),pullReps:valueOrNull('tPullReps'),dipReps:valueOrNull('tDipReps'),fingerMax:valueOrNull('tFingerMax'),fingerRepeaters:valueOrNull('tFingerRepeaters'),coreFlexor:valueOrNull('tCoreFlexor'),coreExtensor:valueOrNull('tCoreExtensor')};if(!Object.entries(r).some(([k,v])=>!['date','source'].includes(k)&&v!==null))return toast('Renseigne au moins un résultat');addOrReplaceDailyRecord('tests',r);save();trackingTab('perf');toast('Résultat réel enregistré')}
+
+function validateDemoCycle(){
+ if(!state.cycle)return;
+ if(!confirm('Valider ce cycle ? Il ne sera plus affiché comme brouillon.'))return;
+ state.cycle.status='VALIDATED';
+ state.cycle.validatedAt=new Date().toISOString();
+ save();renderCycle();toast('Cycle validé')
+}
+
+function setRole(i,role,btn){window.tempRoles[i]=role;const box=document.getElementById('fac'+i);box.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');box.classList.toggle('selected',role!=='excluded');validateCycle()}
+function updateCounter(){counter.textContent=arbComment.value.length;validateCycle()}
+function validateCycle(){const primary=window.tempRoles?.includes('primary');const ok=primary&&arbComment.value.trim().length>=40;createCycleBtn.disabled=!ok}
+function createCycle(){const props=state.tests.filter(t=>t.level===2);const p=props[window.tempRoles.indexOf('primary')];const sec=props.filter((_,i)=>window.tempRoles[i]==='secondary').map(x=>x.quality).join(', ');state.cycle={name:cycleName.value,start:cycleStart.value,primary:p.quality,secondary:sec,comment:arbComment.value,currentWeek:1,status:'DRAFT',validatedAt:null,isDemo:false};state.weeks=[];save();toast('Cycle créé');renderWeeks()}
+function weekCount(domain,n){
+ const w=state.weeks.find(x=>x.number===n);if(!w)return 0;
+ return (w.sessions||[]).filter(s=>{
+   const matches=s.domain===domain||(s.extraDomains||[]).includes(domain);
+   if(!matches)return false;
+   if(domain==='SOUP')return true;
+   return !s.autoFlex
+ }).length
+}
+function requirementCard(r,n){
+ const count=weekCount(r.domain,n), pct=Math.min(100,Math.round(count/r.target*100));
+ return `<div class="reqcard ${count>=r.min?'ok':'missing'}"><div class="reqtop"><div><b>${r.name}</b><div class="muted small">${r.role}</div></div><span class="pill ${count>=r.min?'green':'orange'}">${count}/${r.target}</span></div><div class="small" style="margin-top:7px">Cible : ${r.min===r.target?r.target:r.min+' à '+r.target} ${r.unit}</div><div class="reqbar"><i style="width:${pct}%"></i></div><div class="guide">${r.guide}</div></div>`
+}
+
+function safeClone(obj){return JSON.parse(JSON.stringify(obj))}
+function markWeekDraftAfterChange(w){
+ if(w.status==='PUBLISHED'){
+   w.status='DRAFT';
+   w.publicationNotice='Modifiée après publication : une nouvelle publication est requise.';
+ }
+}
+function weekExecutionSummary(w){
+ const sessions=(w.sessions||[]).filter(s=>!s.autoFlex);
+ const completed=sessions.filter(s=>s.execution?.completed).length;
+ const withData=sessions.filter(s=>s.execution).length;
+ return {planned:sessions.length,withData,completed,pending:Math.max(0,sessions.length-completed)}
+}
+
+const DAY_INDEX={Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6};
+function sessionStimuli(s){return [...new Set([s.domain,...(s.extraDomains||[])].filter(Boolean))]}
+function sessionIntensityClass(s){
+ const id=s.templateId||'',title=(s.title||'').toLowerCase();
+ if(['maxhang','climbmax','kilterintense','pullstrength','dipstrength','repeaters'].includes(id))return 'HIGH';
+ if(title.includes('maximal')||title.includes('force')||title.includes('fractionné')||title.includes('seuil'))return 'HIGH';
+ if(id==='climbfun'||id==='flexibility'||s.autoFlex)return 'LOW';
+ return 'MODERATE'
+}
+function minRecoveryHours(a,b){
+ const A=sessionStimuli(a),B=sessionStimuli(b);
+ const complementaryUpper=(A.includes('A_PULL')&&B.includes('A_PUSH'))||(A.includes('A_PUSH')&&B.includes('A_PULL'));
+ if(complementaryUpper)return 0;
+ if(!A.some(x=>B.includes(x)))return 0;
+ if(A.includes('B')||A.includes('BM')||A.includes('ESC')||A.includes('A_PULL')||A.includes('A_PUSH'))return 48;
+ if(A.includes('D'))return sessionIntensityClass(a)==='HIGH'||sessionIntensityClass(b)==='HIGH'?48:24;
+ return 24
+}
+function countStimulus(w,stim){
+ return (w.sessions||[]).filter(s=>{
+   if(!sessionStimuli(s).includes(stim))return false;
+   if(stim==='SOUP')return true;
+   return !s.autoFlex
+ }).length
+}
+function g21Bounds(){return {ESC:[3,4],BM:[1,2],A_PULL:[1,4],A_PUSH:[1,4],B:[1,4],D:[2,4],C:[1,3],CALI:[1,3],SOUP:[7,14],MOB:[1,3],PREV:[1,3]}}
+function evaluateG21Week(w){
+ const alerts=[],sessions=w.sessions||[],bounds=g21Bounds();
+ Object.entries(bounds).forEach(([stim,[min,max]])=>{
+  const n=countStimulus(w,stim);
+  if(n<min){
+   const severity=['ESC','D','B'].includes(stim)&&n===0?'critical':'warning';
+   alerts.push({severity,rule:`G21 · ${stim} minimum`,reason:`${n} stimulus planifié pour une cible de ${min} à ${max}.`,action:`Ajouter ${min-n} stimulus ${stim} ou documenter une adaptation volontaire.`})
+  } else if(n>max) alerts.push({severity:'warning',rule:`G21 · ${stim} maximum`,reason:`${n} stimuli planifiés pour une limite de ${max}.`,action:`Retirer, fusionner ou alléger ${n-max} stimulus.`})
+ });
+ const ordered=sessions.filter(s=>DAY_INDEX[s.day]!==undefined&&!s.autoFlex).sort((a,b)=>DAY_INDEX[a.day]-DAY_INDEX[b.day]);
+ for(let i=0;i<ordered.length;i++)for(let j=i+1;j<ordered.length;j++){
+  const a=ordered[i],b=ordered[j],req=minRecoveryHours(a,b),gap=(DAY_INDEX[b.day]-DAY_INDEX[a.day])*24;
+  if(req&&gap<req)alerts.push({severity:sessionIntensityClass(a)==='HIGH'&&sessionIntensityClass(b)==='HIGH'?'critical':'warning',rule:'G21 · TMR',reason:`${a.title} (${a.day}) puis ${b.title} (${b.day}) : ${gap} h pour ${req} h recommandées.`,action:'Déplacer une séance ou réduire son intensité.'})
+ }
+ const byDay={};sessions.filter(s=>!s.autoFlex).forEach(s=>(byDay[s.day]||(byDay[s.day]=[])).push(s));
+ Object.entries(byDay).forEach(([day,list])=>{
+  const high=list.filter(s=>sessionIntensityClass(s)==='HIGH');
+  const onlyComplementaryUpper=high.length===2&&high.some(s=>sessionStimuli(s).includes('A_PULL'))&&high.some(s=>sessionStimuli(s).includes('A_PUSH'));
+  if(high.length>=2&&!onlyComplementaryUpper)alerts.push({severity:'warning',rule:'G21 · interférence intra-journée',reason:`${high.length} contenus à forte intensité sont prévus le ${day}.`,action:'Conserver une seule priorité haute, regrouper les contenus compatibles dans une même séance ou séparer les séances.'});
+  if(list.some(s=>sessionStimuli(s).includes('B'))&&list.some(s=>sessionStimuli(s).includes('BM')||s.templateId==='kilterintense'))
+   alerts.push({severity:'critical',rule:'G21 · surcharge locale doigts',reason:`Travail doigts et bloc maximal intense sont regroupés le ${day}.`,action:'Séparer ces contenus de 48 à 72 h.'})
+ });
+ const p=(state.cycle?.primary||'').toLowerCase(),s=(state.cycle?.secondary||'').toLowerCase();
+ if(p.includes('doigt')&&countStimulus(w,'B')<2)alerts.push({severity:'critical',rule:'G21 · facteur limitant',reason:'Le cycle cible les doigts mais moins de 2 stimuli spécifiques sont planifiés.',action:'Ajouter une deuxième séance doigts.'});
+ if(s.includes('running')&&countStimulus(w,'D')<2)alerts.push({severity:'warning',rule:'G21 · objectif secondaire',reason:'Le running secondaire n’atteint pas le minimum hebdomadaire.',action:'Ajouter une séance facile ou justifier la réduction.'});
+ const painful=allExecutedSessions().filter(x=>(x.execution?.pain||0)>=4);
+ if(painful.length)alerts.push({severity:'critical',rule:'Sécurité · douleur',reason:`${painful.length} séance(s) récente(s) avec douleur ≥ 4/10.`,action:'Réévaluer les contenus avant publication.'});
+ const critical=alerts.filter(a=>a.severity==='critical').length,warning=alerts.filter(a=>a.severity==='warning').length;
+ let status='VALIDATED';if(w.adaptedVoluntarily)status='ADAPTED';else if(critical>=2)status='INVALID';else if(critical===1)status='ADJUST';else if(warning)status='WATCH';
+ return {alerts,status,critical,warning}
+}
+function g21StatusLabel(s){return {VALIDATED:'Validée',WATCH:'Vigilance',ADJUST:'À ajuster',INVALID:'Non valide',ADAPTED:'Adaptée volontairement'}[s]||s}
+function renderG21Status(w){const r=evaluateG21Week(w),c={VALIDATED:'valid',WATCH:'watch',ADJUST:'adjust',INVALID:'invalid',ADAPTED:'adapted'}[r.status];return `<div class="g21status ${c}"><div class="row"><div><b>${g21StatusLabel(r.status)}</b><div class="muted small">${r.critical} critique(s) · ${r.warning} vigilance(s)</div></div><span class="pill">${r.status}</span></div></div>`}
+function renderG21Alerts(w){const r=evaluateG21Week(w);if(!r.alerts.length)return `<div class="card"><h3>Contrôles G21</h3><p class="muted">Aucune alerte détectée.</p></div>`;return `<div class="card"><div class="sectiontitle"><div><h3>Contrôles G21</h3><p class="muted small">Règle, raison et correction proposée.</p></div><span class="pill">${r.alerts.length}</span></div>${r.alerts.map(a=>`<div class="card alertCard ${a.severity}" style="margin:10px 0"><div class="alertRule">${a.rule}</div><p><b>${a.reason}</b></p><p class="muted">${a.action}</p></div>`).join('')}</div>`}
+function saveAdaptationChoice(n){const w=state.weeks.find(x=>x.number===n);if(!w)return;w.adaptedVoluntarily=document.getElementById('adaptedVoluntary')?.checked||false;w.adaptationReason=document.getElementById('adaptationReason')?.value||'';save();closeSheet();openWeek(n)}
+
+function renderWeekSummary(w){
+ const x=weekExecutionSummary(w);
+ const stimuli=[
+  ['Escalade',weekCount('ESC',w.number)],
+  ['Tirage',weekCount('A_PULL',w.number)],
+  ['Poussée',weekCount('A_PUSH',w.number)],
+  ['Doigts',weekCount('B',w.number)],
+  ['Running',weekCount('D',w.number)],
+  ['Gainage',weekCount('C',w.number)]
+ ];
+ return `<div class="card"><div class="sectiontitle"><div><h3>Résumé hebdomadaire</h3><p class="muted small">Planification, stimuli et exécution réelle.</p></div><span class="pill ${w.status==='PUBLISHED'?'green':'orange'}">${w.status}</span></div>
+ <div class="weekSummary">
+  <div class="summaryBox"><div class="muted small">Prescriptions prévues</div><b>${x.planned}</b></div>
+  <div class="summaryBox"><div class="muted small">Avec saisie</div><b>${x.withData}</b></div>
+  <div class="summaryBox"><div class="muted small">Terminées</div><b>${x.completed}</b></div>
+  <div class="summaryBox"><div class="muted small">À réaliser</div><b>${x.pending}</b></div>
+ </div>
+ <div class="tagrow" style="margin-top:10px">${stimuli.map(s=>`<span class="pill">${s[0]} : ${s[1]}</span>`).join('')}</div>
+ ${w.publicationNotice?`<div class="protocolnote" style="margin-top:10px">${w.publicationNotice}</div>`:''}
+ </div>`;
+}
+function previewSessionForAthlete(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Aperçu Athlète</h2><p class="muted">Voici la carte telle qu’elle sera comprise côté Athlète.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="previewAthlete"><div class="athsession published"><b>${s.title}</b><div class="sessionmeta"><span class="pill">${s.guide||''}</span><span class="pill">${s.duration||0} min</span><span class="pill">${s.day}</span></div>${sessionDetails(s)}<div class="statusline">Touchez la carte pour voir le prévu et saisir le réalisé</div></div></div>
+ <button class="btn full" onclick="closeSheet();editWeekSession(${n},${i})">Modifier cette séance</button></div></div>`)
+}
+function duplicateWeekSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ const copy=safeClone(s);
+ copy.sessionId='sess-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+ copy.title=s.title+' — copie';
+ copy.execution=null;
+ copy.revision=0;
+ w.sessions.splice(i+1,0,copy);
+ markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('DUPLICATE','SESSION_CONTAINER',nc.containerId,nc.title);toast('Séance dupliquée')
+}
+function moveWeekSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Déplacer la séance</h2><p class="muted">${s.title}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="field"><label>Nouveau jour</label><select id="moveDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option ${d===s.day?'selected':''}>${d}</option>`).join('')}</select></div>
+ <button class="btn full" onclick="saveMovedSession(${n},${i})">Déplacer</button></div></div>`)
+}
+function saveMovedSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ s.day=document.getElementById('moveDay').value;s.revision=(s.revision||0)+1;
+ markWeekDraftAfterChange(w);save();closeSheet();closeSheet();openWeek(n);toast('Séance déplacée')
+}
+
+function renderWeeks(){
+if(!state.cycle){return renderCycle()}
+const nextNumber=state.weeks.length===0?1:Math.min(8,Math.max(...state.weeks.map(w=>w.number))+1);
+const nextLabel=nextNumber===1?'Créer la semaine 1':nextNumber===4?'Proposer le deload':nextNumber===8?'Proposer la semaine de tests':'Créer la semaine '+nextNumber;
+coachShell(`<div class="pagehead"><div><h1>Semaines du cycle</h1><p class="muted">${state.cycle.name}</p></div><button class="btn" onclick="nextWeekFlow()">${nextLabel}</button></div>
+<div class="card"><h3>Feuille de route de la prochaine semaine</h3><p class="muted">L’application compte les stimuli planifiés, pas seulement les séances.</p><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,nextNumber)).join('')}</div></div>
+<div class="weekgrid" style="margin-top:14px">${[1,2,3,4,5,6,7,8].map(n=>{
+ const w=state.weeks.find(x=>x.number===n);const typ=n===4?'DELOAD':n===8?'TESTS':'TRAVAIL';
+ return `<div class="weekcard ${w?'active':''}"><b>S${n}</b><div class="weektype ${n===4?'deload':n===8?'test':'work'}">${typ}</div><p class="muted small">${w?w.status:'Non créée'}</p>${w?`<button class="btn ghost full" onclick="openWeek(${n})">Construire / modifier</button>`:''}</div>`
+}).join('')}</div>`,'weeks')
+}
+function ensureDailyFlexibility(w){
+ if(!w.sessions)w.sessions=[];
+ const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+ days.forEach(day=>{
+   const exists=w.sessions.some(s=>s.autoFlex===true&&s.day===day);
+   if(!exists)w.sessions.push({
+     sessionId:'flex-auto-'+w.number+'-'+day,
+     templateId:'flexibility',
+     title:'Souplesse quotidienne',
+     day:day,domain:'SOUP',extraDomains:[],guide:'G12',
+     duration:15,autoFlex:true,notes:'Routine courte quotidienne proposée automatiquement.',
+     exercises:[]
+   })
+ })
+}
+
+function nextWeekFlow(){
+const next=state.weeks.length===0?1:Math.min(8,Math.max(...state.weeks.map(w=>w.number))+1);
+if(state.weeks.some(w=>w.number===next))return toast('Cette semaine existe déjà');
+if(next===4)return showDeloadProposal();if(next===8)return showTestProposal();
+const newWeek={number:next,type:'WORK',status:'DRAFT',sessions:[]};ensureDailyFlexibility(newWeek);state.weeks.push(newWeek);state.cycle.currentWeek=next;save();openWeek(next);toast('Semaine '+next+' créée')
+}
+function openWeek(n){
+const w=state.weeks.find(x=>x.number===n);if(!w.sessions)w.sessions=[];
+document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Semaine ${n}</h2><p class="muted">${w.type} · planification guidée</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+<div class="weekTopAction"><button class="btn" onclick="openNewSessionContainer(${n})">+ Ajouter une séance</button><div class="navhint" style="margin-top:6px">Crée un créneau, puis ajoute une ou plusieurs prescriptions à l’intérieur.</div></div>
+${renderG21Status(w)}${renderWeekSummary(w)}${renderG21Alerts(w)}
+<div class="card"><h3>À placer dans cette semaine</h3><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,n)).join('')}</div></div>
+<div class="card" style="margin-top:14px"><div class="sectiontitle"><h3>Planning</h3></div>
+${w.containers?.length?w.containers.map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div><div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>{const i=w.sessions.indexOf(p);return `<div class="prescriptionMini"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div>${p.execution?.completed?'<span class="pill green">Réalisée</span>':''}</div><div class="coachActions" style="margin-top:8px"><button class="btn ghost" onclick="previewSessionForAthlete(${n},${i})">Aperçu</button><button class="btn ghost" onclick="editWeekSession(${n},${i})">Modifier</button><button class="btn ghost" onclick="removeWeekSession(${n},${i})">Retirer</button></div></div>`}).join('')}</div><div class="sessionActions"><button class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button><button class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button><button class="btn ghost" onclick="duplicateSessionContainer(${n},'${c.containerId}')">Dupliquer séance</button><button class="btn ghost" onclick="removeSessionContainer(${n},'${c.containerId}')">Retirer séance</button></div></div>`).join(''):'<p class="muted">Commence par créer une séance matin, midi ou soir.</p>'}</div>
+<div class="field"><label>Commentaire coach</label><textarea id="weekComment">${w.comment||w.proposal||''}</textarea></div>
+<div class="card"><label class="row"><span><b>Adaptation volontaire</b><div class="muted small">Maintenir la semaine malgré une alerte justifiée.</div></span><input id="adaptedVoluntary" type="checkbox" ${w.adaptedVoluntarily?'checked':''}></label><div class="field"><label>Justification</label><textarea id="adaptationReason">${w.adaptationReason||''}</textarea></div><button class="btn secondary full" onclick="saveAdaptationChoice(${n})">Enregistrer l’adaptation</button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn secondary" onclick="saveWeek(${n},'DRAFT')">Enregistrer</button><button class="btn" onclick="attemptPublish(${n})">Publier</button></div></div></div>`)
+}
+
+function openNewSessionContainer(n){
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Nouvelle séance</h2><p class="muted">Un créneau réel pouvant contenir plusieurs prescriptions.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="measuregrid"><div class="field"><label>Jour</label><select id="ctrDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option>${d}</option>`).join('')}</select></div><div class="field"><label>Créneau</label><select id="ctrSlot"><option value="matin">Matin</option><option value="midi">Midi</option><option value="soir">Soir</option></select></div></div>
+ <div class="field"><label>Nom de la séance</label><input id="ctrTitle" value="Séance"></div><div class="field"><label>Commentaire Coach</label><textarea id="ctrComment"></textarea></div>
+ <button class="btn full" onclick="saveNewSessionContainer(${n})">Créer puis ajouter une prescription</button></div></div>`)
+}
+function saveNewSessionContainer(n){
+ const w=state.weeks.find(x=>x.number===n);if(!w)return;
+ const c={containerId:newContainerId(),day:ctrDay.value,slot:ctrSlot.value,title:ctrTitle.value||'Séance',comment:ctrComment.value||'',status:'PLANNED'};
+ w.containers=w.containers||[];w.containers.push(c);state.pendingContainerId=c.containerId;save();closeSheet();chooseRequirement(n)
+}
+function addPrescriptionToContainer(n,id){state.pendingContainerId=id;chooseRequirement(n)}
+function editSessionContainer(n,id){
+ const {container:c}=findContainer(n,id);if(!c)return;
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Modifier la séance</h2></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="measuregrid"><div class="field"><label>Jour</label><select id="editCtrDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option ${d===c.day?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Créneau</label><select id="editCtrSlot">${['matin','midi','soir'].map(s=>`<option value="${s}" ${s===c.slot?'selected':''}>${slotLabel(s)}</option>`).join('')}</select></div></div>
+ <div class="field"><label>Nom</label><input id="editCtrTitle" value="${c.title||''}"></div><div class="field"><label>Commentaire</label><textarea id="editCtrComment">${c.comment||''}</textarea></div>
+ <button class="btn full" onclick="saveSessionContainer(${n},'${id}')">Enregistrer</button></div></div>`)
+}
+function saveSessionContainer(n,id){
+ const {week:w,container:c}=findContainer(n,id);if(!c)return;
+ c.day=editCtrDay.value;c.slot=editCtrSlot.value;c.title=editCtrTitle.value;c.comment=editCtrComment.value;
+ (w.sessions||[]).filter(p=>p.containerId===id).forEach(p=>{p.day=c.day;p.slot=c.slot});
+ markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('UPDATE','SESSION_CONTAINER',id,c.title);toast('Séance modifiée')
+}
+function duplicateSessionContainer(n,id){
+ const {week:w,container:c}=findContainer(n,id);if(!c)return;
+ const nc={...safeClone(c),containerId:newContainerId(),title:(c.title||'Séance')+' — copie'};
+ w.containers.push(nc);
+ containerPrescriptions(w,c).forEach(p=>{const cp=safeClone(p);cp.sessionId='sess-'+Date.now()+'-'+Math.random().toString(16).slice(2);cp.containerId=nc.containerId;cp.execution=null;w.sessions.push(cp)});
+ markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('DUPLICATE','SESSION_CONTAINER',nc.containerId,nc.title);toast('Séance dupliquée')
+}
+function removeSessionContainer(n,id){
+ const {week:w,container:c}=findContainer(n,id);if(!c)return;
+ if(!confirm(`Retirer la séance « ${c.title} » et toutes ses prescriptions ?`))return;
+ w.sessions=w.sessions.filter(p=>p.containerId!==id);w.containers=w.containers.filter(x=>x.containerId!==id);
+ markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('DELETE','SESSION_CONTAINER',id,c.title);toast('Séance retirée')
+}
+
+function chooseRequirement(n){
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="reqChooser"><div class="sheet"><div class="sheethead"><div><h2>Choisir ce que tu veux placer</h2><p class="muted">Les éléments incomplets sont affichés en premier.</p></div><button class="btn ghost" onclick="document.getElementById('reqChooser').remove()">Fermer</button></div>
+ <div class="reqboard">${GUIDE_REQUIREMENTS.slice().sort((a,b)=>(weekCount(a.domain,n)>=a.min)-(weekCount(b.domain,n)>=b.min)).map(r=>`<button class="reqcard ${weekCount(r.domain,n)>=r.min?'ok':'missing'}" style="text-align:left" onclick="showCatalog(${n},'${r.domain}')"><b>${r.name}</b><div class="muted small">${r.role}</div><p>${weekCount(r.domain,n)}/${r.target} ${r.unit}</p></button>`).join('')}</div></div></div>`)
+}
+function showCatalog(n,domain){
+ document.getElementById('reqChooser')?.remove();
+ const compatible=PRESCRIPTIONS.filter(p=>p.domain===domain||(p.extraDomains||[]).includes(domain));
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="catalogSheet"><div class="sheet"><div class="sheethead"><div><h2>Prescriptions compatibles</h2><p class="muted">${GUIDE_REQUIREMENTS.find(r=>r.domain===domain)?.name||domain}</p></div><button class="btn ghost" onclick="document.getElementById('catalogSheet').remove()">Fermer</button></div>
+ <div class="catalog">${compatible.map((p,i)=>`<div class="catalogcard ${i===0?'recommend':''}"><div class="tagrow"><span class="pill">${p.guide}</span><span class="pill green">${p.objective}</span></div><h4>${p.name}</h4><p class="muted small">${p.summary}</p><button class="btn full" onclick="configurePrescription(${n},'${p.id}')">Choisir</button></div>`).join('')||'<p>Aucune prescription disponible.</p>'}</div></div></div>`)
+}
+function defaultStructuredSets(p){
+ if(p.id==='pullstrength'||p.id==='dipstrength')return calcStrengthPlan(p.id==='pullstrength'?'pull':'dip');
+ const guideTimed=ensureGuidePlannedStructure(p);if(guideTimed)return guideTimed;
+ if(p.id==='pullend'||p.id==='dipend')return [1,2,3,4].map(i=>({
+   role:'SÉRIE '+i,loadMode:'PDC / kg',load:'PDC',reps:'',rir:2,rest:180
+ }));
+ return null
+}
+function setRowsHtml(sets){
+ return `<div class="scrollbox"><table class="settable"><thead><tr><th>Bloc</th><th>% / durée</th><th>Charge prévue</th><th>Reps</th><th>RIR</th><th>Repos</th><th></th></tr></thead><tbody id="setRows">${sets.map((s,i)=>`<tr><td><input data-set="${i}" data-k="role" value="${s.role}"></td><td><input data-set="${i}" data-k="${s.work!==undefined?'work':'pct'}" value="${s.work??s.pct??''}"></td><td><input data-set="${i}" data-k="load" value="${s.load===0?'PDC':(s.load||'')}"></td><td><input data-set="${i}" data-k="reps" value="${s.reps??''}"></td><td><input data-set="${i}" data-k="rir" value="${s.rir??''}"></td><td><input data-set="${i}" data-k="rest" value="${s.rest??''}"></td><td><button class="btn ghost" onclick="this.closest('tr').remove()">×</button></td></tr>`).join('')}</tbody></table></div><button class="btn secondary" onclick="addSetRow()">+ Ajouter une série</button>`
+}
+function addSetRow(){document.getElementById('setRows').insertAdjacentHTML('beforeend',`<tr><td><input data-k="role" value="TRAVAIL"></td><td><input data-k="loadMode" value="kg"></td><td><input data-k="load"></td><td><input data-k="reps"></td><td><input data-k="rir"></td><td><input data-k="rest" value="180"></td><td><button class="btn ghost" onclick="this.closest('tr').remove()">×</button></td></tr>`)}
+function exerciseSelector(p){
+ const list=EXERCISE_LIBRARY.filter(x=>x.guide===p.exerciseGuide);
+ return `<div class="field"><label>Exercices / situations à sélectionner</label><div class="exgrid">${list.map((x,i)=>`<label class="exitem"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}"> <b>${x.name}</b><div class="muted small">${x.category}</div><div class="measuregrid" style="margin-top:7px"><input data-exfield="sets" data-index="${i}" value="${x.sets||''}" placeholder="Séries"><input data-exfield="reps" data-index="${i}" value="${x.reps||''}" placeholder="Reps"><input data-exfield="hold" data-index="${i}" value="${x.hold||''}" placeholder="Durée s"><input data-exfield="rest" data-index="${i}" value="${x.rest||''}" placeholder="Repos s"></div></label>`).join('')}</div></div>`
+}
+
+function climbingEditor(p){
+ const isKilter=p.climbingMode&&p.climbingMode.startsWith('KILTER');
+ return `<div class="climbcfg">
+ ${isKilter?`<div class="field"><label>Angle Kilterboard</label><select id="climbAngle"><option>20°</option><option selected>30°</option><option>40°</option><option>50°</option><option>60°</option><option>70°</option></select></div>`:''}
+ <div class="field"><label>Nombre de blocs prévus</label><input id="climbProblems" type="number" value="${p.climbingMode==='FREE_FUN'?0:(p.climbingMode==='KILTER_VOLUME'?8:4)}"></div>
+ <div class="field"><label>Essais maximum par bloc</label><input id="climbAttempts" type="number" value="${p.climbingMode==='FREE_FUN'?0:(p.climbingMode==='KILTER_VOLUME'?4:5)}"></div>
+ <div class="field"><label>Cotation / niveau cible</label><input id="climbGrade" placeholder="Ex. 6B–6C"></div>
+ <div class="field"><label>Stimulus doigts significatif</label><select id="climbFinger"><option value="false">Non</option><option value="true" ${p.climbingMode==='KILTER_INTENSE'?'selected':''}>Oui</option></select></div>
+ <div class="field"><label>Objectif technique</label><input id="climbFocus" placeholder="Précision, coordination, lecture…"></div>
+ </div>`
+}
+
+function configurePrescription(n,id){
+ const p=PRESCRIPTIONS.find(x=>x.id===id);document.getElementById('catalogSheet')?.remove();
+ const structured=defaultStructuredSets(p);
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="prescriptionEditor"><div class="sheet"><div class="sheethead"><div><h2>${p.name}</h2><p class="muted">${p.guide} · ${p.summary}</p></div><button class="btn ghost" onclick="document.getElementById('prescriptionEditor').remove()">Fermer</button></div>
+ <div class="guidecard"><div class="guidecardhead"><b>Carte prescription Coach · ${p.guide}</b><div class="muted small">${p.objective}</div></div><div class="guidecardbody"><div class="protocolnote">${p.summary}</div>
+ <div class="measuregrid"><div class="field"><label>Séance de destination</label><div class="protocolnote">${(()=>{const w=state.weeks.find(x=>x.number===n),c=w?.containers?.find(x=>x.containerId===state.pendingContainerId);return c?`${c.day} · ${slotLabel(c.slot)} · ${c.title}`:'Aucune séance sélectionnée'})()}</div></div>
+ <div class="field"><label>Durée totale (min)</label><input id="prTotalDuration" type="number" value="${p.durationMin||45}"></div></div>
+ ${structured?`<div class="field"><label>Plan série par série</label><div class="muted small">Sur mobile, fais glisser horizontalement pour voir toutes les colonnes.</div>${setRowsHtml(structured)}</div>`:''}
+ ${p.editor==='exerciseLibrary'?exerciseSelector(p):''}
+ ${p.editor==='climbing'?climbingEditor(p):''}
+ ${!structured&&p.editor!=='exerciseLibrary'?`<div class="measuregrid">
+ ${p.sets!=null?`<div class="field"><label>Séries</label><input id="prSets" type="number" value="${p.sets}"></div>`:''}
+ ${p.reps!=null?`<div class="field"><label>Répétitions par série</label><input id="prReps" type="number" value="${p.reps}"></div>`:''}
+ ${p.duration!=null?`<div class="field"><label>Durée de travail (s)</label><input id="prWork" type="number" value="${p.duration}"></div>`:''}
+ ${p.rest!=null?`<div class="field"><label>Récupération (s)</label><input id="prRest" type="number" value="${p.rest}"></div>`:''}
+ ${p.rir!=null?`<div class="field"><label>RIR</label><input id="prRir" type="number" value="${p.rir}"></div>`:''}
+ ${p.rpe!=null?`<div class="field"><label>RPE cible</label><input id="prRpe" type="number" value="${p.rpe}"></div>`:''}
+ <div class="field"><label>Charge / allure / variante</label><input id="prLoad" placeholder="À préciser par le coach"></div></div>`:''}
+ <div class="field"><label>Consigne générale</label><textarea id="prNotes">${p.summary}</textarea></div>
+ </div></div><button class="btn full" onclick="savePrescription(${n},'${id}')">Ajouter au planning</button></div></div>`)
+}
+function collectStructuredSets(){
+ return [...document.querySelectorAll('#setRows tr')].map(tr=>{const o={};tr.querySelectorAll('input').forEach(inp=>o[inp.dataset.k]=inp.value);return o})
+}
+function collectExercises(guide){
+ const all=EXERCISE_LIBRARY.filter(x=>x.guide===guide),selected=[];
+ document.querySelectorAll(`input[type=checkbox][data-guide="${guide}"]:checked`).forEach(cb=>{
+  const i=+cb.dataset.ex,x=all[i],fields={};
+  document.querySelectorAll(`[data-exfield][data-index="${i}"]`).forEach(inp=>fields[inp.dataset.exfield]=inp.value);
+  selected.push({...x,...fields})
+ });return selected
+}
+function savePrescription(n,id){
+ const p=PRESCRIPTIONS.find(x=>x.id===id),w=state.weeks.find(x=>x.number===n),get=x=>document.getElementById(x)?.value||null;const ctr=(w.containers||[]).find(c=>c.containerId===state.pendingContainerId);if(!ctr)return toast('Choisis d’abord une séance');
+ const structured=document.getElementById('setRows')?collectStructuredSets():null;
+ const exercises=p.editor==='exerciseLibrary'?collectExercises(p.exerciseGuide):null;
+ if(p.editor==='exerciseLibrary'&&exercises.length===0)return toast('Sélectionne au moins un exercice');
+ let extra=[...(p.extraDomains||[])];
+ const climbing=p.editor==='climbing'?{
+   mode:p.climbingMode,
+   angle:document.getElementById('climbAngle')?.value||null,
+   problemCount:+document.getElementById('climbProblems')?.value||4,
+   attemptLimit:+document.getElementById('climbAttempts')?.value||5,
+   targetGrade:document.getElementById('climbGrade')?.value||'',
+   technicalFocus:document.getElementById('climbFocus')?.value||'',
+   fingerStimulus:document.getElementById('climbFinger')?.value==='true'
+ }:null;
+ if(climbing?.fingerStimulus&&!extra.includes('B'))extra.push('B');
+ if(climbing&&!climbing.fingerStimulus)extra=extra.filter(x=>x!=='B');
+ w.sessions.push({sessionId:'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2),templateId:p.id,title:p.name,day:ctr.day,slot:ctr.slot,containerId:ctr.containerId,domain:p.domain,extraDomains:extra,guide:p.guide,duration:+prTotalDuration.value||45,structuredSets:structured,exercises:exercises,climbing:climbing,sets:+get('prSets')||null,reps:+get('prReps')||null,workSeconds:+get('prWork')||null,restSeconds:+get('prRest')||null,rir:get('prRir')!==null?+get('prRir'):null,rpe:get('prRpe')!==null?+get('prRpe'):null,load:get('prLoad'),notes:prNotes.value,execution:null});
+ state.pendingContainerId=null;save();document.getElementById('prescriptionEditor').remove();closeSheet();openWeek(n);logAudit('CREATE','PRESCRIPTION',s.sessionId,s.title);toast('Prescription ajoutée')
+}
+
+
+function editWeekSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ const p=PRESCRIPTIONS.find(x=>x.id===s.templateId)||{guide:s.guide||'Prescription',objective:'Séance personnalisée',summary:s.notes||''};
+ closeSheet();
+ const climbingFields=s.climbing?`<div class="card"><h3>Paramètres escalade</h3><div class="measuregrid">
+  <div class="field"><label>Angle</label><input id="edClimbAngle" value="${s.climbing.angle||''}"></div>
+  <div class="field"><label>Nombre de blocs</label><input id="edClimbProblems" type="number" value="${s.climbing.problemCount??0}"></div>
+  <div class="field"><label>Essais maximum</label><input id="edClimbAttempts" type="number" value="${s.climbing.attemptLimit??0}"></div>
+  <div class="field"><label>Cotation cible</label><input id="edClimbGrade" value="${s.climbing.targetGrade||''}"></div>
+ </div><div class="field"><label>Focus technique</label><input id="edClimbFocus" value="${s.climbing.technicalFocus||''}"></div></div>`:'';
+ const exerciseFields=s.exercises?.length?`<div class="card"><h3>Exercices complémentaires</h3>${s.exercises.map((x,j)=>`<div class="guidecard"><div class="guidecardhead"><b>${x.name}</b></div><div class="guidecardbody"><div class="measuregrid">
+  <div class="field"><label>Séries</label><input data-edex="${j}" data-k="sets" value="${x.sets??''}"></div>
+  <div class="field"><label>Répétitions</label><input data-edex="${j}" data-k="reps" value="${x.reps??''}"></div>
+  <div class="field"><label>Durée</label><input data-edex="${j}" data-k="hold" value="${x.hold??''}"></div>
+  <div class="field"><label>Repos</label><input data-edex="${j}" data-k="rest" value="${x.rest??''}"></div>
+ </div></div></div>`).join('')}</div>`:'';
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Modifier la séance</h2><p class="muted">${s.guide||''}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="guidecard"><div class="guidecardhead"><b>Carte prescription Coach · ${p.guide}</b><div class="muted small">${p.objective||''}</div></div><div class="guidecardbody"><div class="protocolnote">${p.summary||''}</div>
+ <div class="field"><label>Titre affiché</label><input id="edTitle" value="${s.title||''}"></div>
+ <div class="measuregrid"><div class="field"><label>Jour</label><select id="edDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option ${d===s.day?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Durée</label><input id="edDuration" type="number" value="${s.duration||45}"></div></div>
+ ${s.structuredSets?setRowsHtml(s.structuredSets):''}
+ ${exerciseFields}${climbingFields}
+ <div class="field"><label>Consigne</label><textarea id="edNotes">${s.notes||''}</textarea></div>
+ <button class="btn full" onclick="saveEditedSession(${n},${i})">Enregistrer les modifications</button></div></div>`)
+}
+function saveEditedSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ s.title=document.getElementById('edTitle')?.value||s.title;
+ s.day=document.getElementById('edDay')?.value||s.day;
+ s.duration=+document.getElementById('edDuration')?.value||s.duration;
+ s.notes=document.getElementById('edNotes')?.value||'';
+ if(document.getElementById('setRows'))s.structuredSets=collectStructuredSets();
+ if(s.exercises?.length){
+   document.querySelectorAll('[data-edex]').forEach(inp=>{
+     const j=+inp.dataset.edex,k=inp.dataset.k;
+     s.exercises[j][k]=inp.value
+   })
+ }
+ if(s.climbing){
+   s.climbing.angle=document.getElementById('edClimbAngle')?.value||null;
+   s.climbing.problemCount=+document.getElementById('edClimbProblems')?.value||0;
+   s.climbing.attemptLimit=+document.getElementById('edClimbAttempts')?.value||0;
+   s.climbing.targetGrade=document.getElementById('edClimbGrade')?.value||'';
+   s.climbing.technicalFocus=document.getElementById('edClimbFocus')?.value||'';
+ }
+ s.revision=(s.revision||0)+1;markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('UPDATE','SESSION_CONTAINER',id,c.title);toast('Séance modifiée')
+}
+
+function removeWeekSession(n,i){
+ const w=state.weeks.find(x=>x.number===n),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ if(!confirm('Retirer « '+s.title+' » de la semaine ?'))return;
+ const cid=s.containerId;w.sessions.splice(i,1);if(cid&&!w.sessions.some(p=>p.containerId===cid))w.containers=w.containers.filter(c=>c.containerId!==cid);markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('DELETE','PRESCRIPTION',s.sessionId,s.title);toast('Prescription retirée')
+}
+function saveWeek(n,status){
+ const w=state.weeks.find(x=>x.number===n);
+ w.comment=document.getElementById('weekComment')?.value||'';
+ w.status=status;
+ if(status==='PUBLISHED'){w.publishedAt=new Date().toISOString();w.publicationVersion=(w.publicationVersion||0)+1;w.publicationNotice=''}
+ logAudit(status==='PUBLISHED'?'PUBLISH':'SAVE_DRAFT','WEEK',w.weekId||String(n),`Statut ${status}`);save();closeSheet();renderWeeks();toast(status==='PUBLISHED'?'Semaine publiée':'Semaine enregistrée')
+}
+function attemptPublish(n){
+ const w=state.weeks.find(x=>x.number===n);if(!w)return;
+ w.comment=document.getElementById('weekComment')?.value||'';
+ w.adaptedVoluntarily=document.getElementById('adaptedVoluntary')?.checked||false;
+ w.adaptationReason=document.getElementById('adaptationReason')?.value||'';
+ const g21=evaluateG21Week(w);
+ if(g21.status==='INVALID'&&!w.adaptedVoluntarily)return toast('Semaine non valide : corrige les alertes ou documente une adaptation volontaire');
+ if(w.adaptedVoluntarily&&!w.adaptationReason.trim())return toast('La justification de l’adaptation volontaire est obligatoire');
+ const missing=GUIDE_REQUIREMENTS.filter(r=>weekCount(r.domain,n)<r.min);
+ if(missing.length&&!w.adaptedVoluntarily&&w.comment.trim().length<40)return toast(missing.length+' exigences manquent : commentaire de 40 caractères requis');
+ w.g21Status=g21.status;saveWeek(n,'PUBLISHED')
+}
+function athleteShell(content,active='daily'){app.innerHTML=`<div class="athlete"><header class="athhead"><b style="font-size:23px">LTS Athlete</b><button class="btn secondary" onclick="switchRole()">Coach</button></header><main class="athcontent">${content}</main><nav class="bottom" style="grid-template-columns:repeat(5,1fr)">${[['daily','Quotidien'],['today','Aujourd’hui'],['week','Semaine'],['checkup','Dimanche'],['profile','Profil']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="athlete('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`}
+function slider(name,key,val,min=0,max=10,step=1){return `<div class="sliderline"><label>${name}</label><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="this.nextElementSibling.value=this.value;draftSlider('${key}',this.value)"><output>${val}</output></div>`}
+function publishedWeeks(){return state.weeks.filter(w=>w.status==='PUBLISHED')}
+function sessionDetails(s){
+ const sets=s.structuredSets?'<div class="small">'+s.structuredSets.map((x,i)=>
+   'S'+(i+1)+' '+x.role+': '+(x.load||'—')+' '+(x.loadMode||'')+' × '+(x.reps||'—')+
+   ' · RIR '+(x.rir===''?'—':x.rir)+' · repos '+(x.rest||'—')+'s'
+ ).join('<br>')+'</div>':'';
+ const exercises=s.exercises?.length?'<div class="small">'+s.exercises.map(x=>
+   x.name+' · '+(x.sets||'—')+' séries · '+(x.reps||x.hold||'—')+(x.hold?' s':'')
+ ).join('<br>')+'</div>':'';
+ const climb=s.climbing?'<div class="small">'+
+   (s.climbing.angle?'Angle : '+s.climbing.angle+' · ':'')+
+   s.climbing.problemCount+' blocs · '+s.climbing.attemptLimit+' essais max'+
+   (s.climbing.targetGrade?' · cible '+s.climbing.targetGrade:'')+
+   (s.climbing.technicalFocus?' · '+s.climbing.technicalFocus:'')+
+   '</div>':'';
+ return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'
+}
+function findSession(sessionId){
+ for(const w of state.weeks){const s=(w.sessions||[]).find(x=>x.sessionId===sessionId);if(s)return {week:w,session:s}}
+ return null
+}
+function openAthleteSession(sessionId){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session,schema=guideSchemaFor(s);
+ if(schema.type==='CLIMBING')return openClimbingExecution(s);
+ if(schema.type==='SETS'||schema.type==='TIMED_SETS'||schema.type==='REPEATERS')return openGuideSetExecution(s,schema);
+ if(schema.type==='EXERCISES')return openExerciseExecution(s,schema);
+ if(schema.type==='RUN'||schema.type==='RUN_INTERVALS')return openRunningExecution(s,schema);
+ return openGenericExecution(s)
+}
+function openGuideSetExecution(s,schema){
+ const existing=s.execution?.sets||[], labels=schema.labels||['Charge','Reps','RIR','Repos'];
+ const rows=(s.structuredSets||[]).map((p,i)=>{
+   const a=existing[i]||{}, plannedWork=p.work??p.workSeconds??null;
+   const plannedSecond=schema.type==='TIMED_SETS'?(plannedWork||5)+' s':schema.type==='REPEATERS'?(plannedWork||'7/3'):p.reps;
+   return `<div class="guidecard">
+   <div class="guidecardhead"><b>${p.role||'Série '+(i+1)}</b></div>
+   <div class="guidecardbody"><div class="dualgrid">
+    <div class="dualcol"><b>Prévu par le Coach</b>
+     <div class="row"><span>${labels[0]}</span>${plannedSetCell(p.load||'PDC')}</div>
+     <div class="row"><span>${labels[1]}</span>${plannedSetCell(plannedSecond)}</div>
+     <div class="row"><span>${labels[2]}</span>${plannedSetCell(p.rir)}</div>
+     <div class="row"><span>${labels[3]}</span>${plannedSetCell(p.rest,'s')}</div>
+    </div>
+    <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
+     <div class="field"><label>Charge réelle</label><input data-actload="${i}" value="${a.load??''}" placeholder="${p.load||'PDC'}"></div>
+     <div class="field"><label>${schema.type==='TIMED_SETS'?'Durée réelle (s)':schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??''}"></div>
+     <div class="field"><label>RIR réel</label><input data-actrir="${i}" value="${a.rir??''}"></div>
+     <label><input class="check" data-actdone="${i}" type="checkbox" ${a.completed?'checked':''}> Série validée</label>
+    </div>
+   </div></div></div>`
+ }).join('');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="protocolnote">${s.notes||''}</div>${rows}
+ <div class="measuregrid"><div class="field"><label>RPE séance</label><input id="execRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="execPain" type="number" min="0" max="10" value="${s.execution?.pain??0}"></div></div>
+ <div class="field"><label>Commentaire</label><textarea id="execNote">${s.execution?.note||''}</textarea></div>
+ <button class="btn full" onclick="saveSetExecution('${s.sessionId}')">Enregistrer les performances</button></div></div>`)
+}
+
+function saveSetExecution(sessionId){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session,planned=s.structuredSets||[],sets=[];
+ for(let i=0;i<planned.length;i++){
+   const load=document.querySelector(`[data-actload="${i}"]`);
+   const reps=document.querySelector(`[data-actreps="${i}"]`);
+   const rir=document.querySelector(`[data-actrir="${i}"]`);
+   const done=document.querySelector(`[data-actdone="${i}"]`);
+   sets.push({
+     planned:planned[i],
+     load:load?load.value:'',
+     reps:reps?reps.value:'',
+     rir:rir?rir.value:'',
+     completed:done?done.checked:false
+   });
+ }
+ s.execution={
+   type:'SETS',
+   sets,
+   rpe:+document.getElementById('execRpe')?.value||null,
+   pain:+document.getElementById('execPain')?.value||0,
+   note:document.getElementById('execNote')?.value||'',
+   completed:sets.length>0&&sets.every(x=>x.completed),
+   completedAt:new Date().toISOString()
+ };
+ save();closeSheet();renderAthleteWeek();
+ toast(s.execution.completed?'Séance validée':'Séance enregistrée en cours')
+}
+function openGenericExecution(s){
+ const e=s.execution||{};
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide||''} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>Consigne</span><b>${s.notes||'—'}</b></div></div>
+ <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée réalisée (min)</label><input id="genDuration" type="number" value="${e.duration??s.duration??''}"></div><div class="field"><label>RPE réel</label><input id="genRpe" type="number" min="0" max="10" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="genPain" type="number" min="0" max="10" value="${e.pain??0}"></div></div></div>
+ <div class="field"><label>Commentaire</label><textarea id="genNote">${e.note||''}</textarea></div>
+ <button class="btn full" onclick="saveGenericExecution('${s.sessionId}')">Valider la séance</button></div></div>`)
+}
+function saveGenericExecution(sessionId){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session;
+ s.execution={
+   type:'GENERIC',
+   duration:+document.getElementById('genDuration')?.value||0,
+   rpe:+document.getElementById('genRpe')?.value||null,
+   pain:+document.getElementById('genPain')?.value||0,
+   note:document.getElementById('genNote')?.value||'',
+   completed:true,
+   completedAt:new Date().toISOString()
+ };
+ save();closeSheet();renderAthleteWeek();toast('Séance validée')
+}
+
+function openExerciseExecution(s,schema){
+ const planned=s.exercises||[], actual=s.execution?.exercises||[];
+ const rows=planned.map((x,i)=>{
+  const a=actual[i]||{};
+  return `<div class="guidecard"><div class="guidecardhead"><b>${x.name}</b><span class="pill" style="margin-left:6px">${x.category||s.guide}</span></div><div class="guidecardbody"><div class="dualgrid">
+   <div class="dualcol"><b>Prévu par le Coach</b>
+    <div class="row"><span>Séries</span>${plannedSetCell(x.sets)}</div>
+    <div class="row"><span>Répétitions</span>${plannedSetCell(x.reps)}</div>
+    <div class="row"><span>Maintien</span>${plannedSetCell(x.hold,'s')}</div>
+    <div class="row"><span>Repos</span>${plannedSetCell(x.rest,'s')}</div>
+   </div>
+   <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
+    <div class="field"><label>Séries réalisées</label><input data-exactsets="${i}" value="${a.sets??''}"></div>
+    <div class="field"><label>Répétitions réalisées</label><input data-exactreps="${i}" value="${a.reps??''}"></div>
+    <div class="field"><label>Meilleur maintien (s)</label><input data-exacthold="${i}" value="${a.hold??''}"></div>
+    <div class="field"><label>Qualité /10</label><input data-exquality="${i}" value="${a.quality??''}"></div>
+   </div>
+  </div></div></div>`
+ }).join('');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${schema.guide} · prescription et performance</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ ${rows||'<div class="card"><p>Aucun exercice détaillé n’a été défini. La séance peut néanmoins être validée avec un commentaire global.</p></div>'}
+ <div class="measuregrid"><div class="field"><label>RPE séance</label><input id="exRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="exPain" type="number" min="0" max="10" value="${s.execution?.pain??0}"></div></div>
+ <div class="field"><label>Commentaire</label><textarea id="exNote">${s.execution?.note||''}</textarea></div>
+ <button class="btn full" onclick="saveExerciseExecution('${s.sessionId}',${planned.length})">Enregistrer les performances</button></div></div>`)
+}
+function saveExerciseExecution(sessionId,count){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session,exercises=[];
+ for(let i=0;i<count;i++)exercises.push({
+  planned:(s.exercises||[])[i]||null,
+  sets:document.querySelector(`[data-exactsets="${i}"]`)?.value||'',
+  reps:document.querySelector(`[data-exactreps="${i}"]`)?.value||'',
+  hold:document.querySelector(`[data-exacthold="${i}"]`)?.value||'',
+  quality:document.querySelector(`[data-exquality="${i}"]`)?.value||''
+ });
+ s.execution={type:'EXERCISES',exercises,rpe:+document.getElementById('exRpe')?.value||null,pain:+document.getElementById('exPain')?.value||0,note:document.getElementById('exNote')?.value||'',completed:true,completedAt:new Date().toISOString()};
+ save();closeSheet();renderAthleteWeek();toast('Séance validée')
+}
+
+function formatPace(minutesPerKm){
+ if(!Number.isFinite(minutesPerKm)||minutesPerKm<=0)return '—';
+ const min=Math.floor(minutesPerKm);
+ const sec=Math.round((minutesPerKm-min)*60);
+ return `${min}:${String(sec===60?0:sec).padStart(2,'0')} min/km`;
+}
+function updateRunningCalculations(){
+ const duration=+document.getElementById('runDuration')?.value||0;
+ const distance=+document.getElementById('runDistance')?.value||0;
+ const speed=duration>0&&distance>0?distance/(duration/60):0;
+ const pace=distance>0&&duration>0?duration/distance:0;
+ const speedEl=document.getElementById('runSpeedCalculated');
+ const paceEl=document.getElementById('runPaceCalculated');
+ if(speedEl)speedEl.textContent=speed?speed.toFixed(2)+' km/h':'—';
+ if(paceEl)paceEl.textContent=pace?formatPace(pace):'—';
+ return {speed,pace};
+}
+
+function openRunningExecution(s,schema){
+ const e=s.execution||{}, plannedIntervals=s.structuredSets||[];
+ const intervals=plannedIntervals.length?plannedIntervals.map((p,i)=>`<div class="pa-row"><b>${i+1}</b>${plannedSetCell(p.work||p.workSeconds||p.reps)}<input data-runint="${i}" value="${e.intervals?.[i]?.actual??''}" placeholder="Réalisé"><span>${p.rest||''} s</span><input data-runqual="${i}" value="${e.intervals?.[i]?.quality??''}" placeholder="Qualité /10"></div>`).join(''):'';
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">G17 · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+ <div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>RPE cible</span><b>${s.rpe??'—'}</b></div><div class="row"><span>Allure / charge</span><b>${s.load||'Selon protocole'}</b></div></div>
+ <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée (min)</label><input id="runDuration" type="number" step="0.1" value="${e.duration??''}" oninput="updateRunningCalculations()"></div><div class="field"><label>Distance (km)</label><input id="runDistance" type="number" step="0.01" value="${e.distance??''}" oninput="updateRunningCalculations()"></div><div class="measuregrid"><div class="field"><label>Vitesse calculée</label><div id="runSpeedCalculated" class="speedResult">${e.speed?Number(e.speed).toFixed(2)+' km/h':'—'}</div></div><div class="field"><label>Allure calculée</label><div id="runPaceCalculated" class="speedResult">${e.paceMinutes?formatPace(+e.paceMinutes):'—'}</div></div></div><div class="field"><label>FC moyenne</label><input id="runHr" value="${e.hr??''}"></div></div></div>
+ ${intervals?`<h3>Intervalles</h3><div class="pa-scroll"><div class="pa-head"><span>#</span><span>Prévu</span><span>Réalisé</span><span>Repos</span><span>Qualité</span></div>${intervals}</div>`:''}
+ <div class="measuregrid"><div class="field"><label>RPE réel</label><input id="runRpe" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="runPain" value="${e.pain??0}"></div></div>
+ <div class="field"><label>Commentaire</label><textarea id="runNote">${e.note||''}</textarea></div>
+ <button class="btn full" onclick="saveRunningExecution('${s.sessionId}',${plannedIntervals.length})">Enregistrer les performances</button></div></div>`);setTimeout(updateRunningCalculations,0)
+}
+function saveRunningExecution(sessionId,count){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session,intervals=[];
+ for(let i=0;i<count;i++)intervals.push({
+   planned:(s.structuredSets||[])[i]||null,
+   actual:document.querySelector(`[data-runint="${i}"]`)?.value||'',
+   quality:document.querySelector(`[data-runqual="${i}"]`)?.value||''
+ });
+ const calc=updateRunningCalculations();
+ s.execution={
+   type:'RUN',
+   duration:+document.getElementById('runDuration')?.value||0,
+   distance:+document.getElementById('runDistance')?.value||0,
+   speed:calc.speed?+calc.speed.toFixed(2):null,
+   paceMinutes:calc.pace?+calc.pace.toFixed(4):null,
+   pace:calc.pace?formatPace(calc.pace):null,
+   hr:+document.getElementById('runHr')?.value||null,
+   intervals,
+   rpe:+document.getElementById('runRpe')?.value||null,
+   pain:+document.getElementById('runPain')?.value||0,
+   note:document.getElementById('runNote')?.value||'',
+   completed:true,
+   completedAt:new Date().toISOString()
+ };
+ save();closeSheet();renderAthleteWeek();toast('Performances enregistrées')
+}
+function openClimbingExecution(s){
+ const defaultMode=s.templateId==='climbfun'?'FREE_FUN':s.templateId==='kiltertech'?'KILTER_TECH':s.templateId==='kilterintense'?'KILTER_INTENSE':s.templateId==='kiltervolume'?'KILTER_VOLUME':s.templateId==='climbtech'?'CLIMB_TECH':'BOULDER_MAX';
+ const cfg=s.climbing||{
+   mode:defaultMode,
+   angle:null,
+   problemCount:defaultMode==='FREE_FUN'?0:4,
+   attemptLimit:defaultMode==='FREE_FUN'?0:5,
+   targetGrade:'',
+   technicalFocus:'',
+   fingerStimulus:false
+ };
+ s.climbing=cfg;
+ const count=Number.isFinite(+cfg.problemCount)?+cfg.problemCount:4,existing=s.execution?.problems||[];
+ const rows=Array.from({length:count},(_,i)=>{
+   const a=existing[i]||{};
+   return `<div class="problem"><b>Bloc ${i+1}</b><div class="measuregrid">
+   <div class="field"><label>Cotation</label><input data-cgrade="${i}" value="${a.grade||cfg.targetGrade||''}"></div>
+   <div class="field"><label>Flash</label><select data-cflash="${i}" onchange="toggleAttempts(${i},this.value)"><option value="">—</option><option value="yes" ${a.flash===true?'selected':''}>Oui</option><option value="no" ${a.flash===false?'selected':''}>Non</option></select></div>
+   <div class="field" id="successWrap${i}" style="${a.flash===true?'display:none':''}"><label>Réussi</label><select data-csuccess="${i}"><option value="yes" ${a.success===true?'selected':''}>Oui</option><option value="no" ${a.success===false?'selected':''}>Non</option></select></div>
+   <div class="field" id="attemptWrap${i}" style="${a.flash===true?'display:none':''}"><label>Nombre d’essais</label><input data-cattempts="${i}" type="number" value="${a.attempts||''}"></div>
+   </div></div>`
+ }).join('');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${cfg.mode==='FREE_FUN'?'Escalade libre / fun':(cfg.angle?'Kilterboard '+cfg.angle:(cfg.mode==='CLIMB_TECH'?'Escalade technique':'Bloc maximal'))}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div><div id="climbingProblems">${rows||'<div class="card" id="noPlannedBlocks"><p class="muted">Aucun bloc imposé. Ajoute les blocs réellement grimpés.</p></div>'}</div>
+ <div class="field"><label>Plaisir /10</label><input id="climbEnjoyment" type="number" min="0" max="10" value="${s.execution?.enjoyment??''}"></div>
+ <div class="field"><label>Qualité perçue /10</label><input id="climbQuality" type="number" min="0" max="10" value="${s.execution?.quality??''}"></div>
+ <div class="field"><label>RPE séance</label><input id="climbRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div>
+ <div class="field"><label>Commentaire</label><textarea id="climbNote">${s.execution?.note||''}</textarea></div>
+ <button class="addblock" onclick="addClimbingProblem()">+ Ajouter un bloc réalisé</button><button class="btn full" style="margin-top:10px" onclick="saveClimbingExecution('${s.sessionId}',document.querySelectorAll('.problem').length)">Valider la séance</button></div></div>`)
+}
+
+function addClimbingProblem(){
+ const container=document.getElementById('climbingProblems');
+ if(!container)return toast('Carte escalade indisponible');
+ document.getElementById('noPlannedBlocks')?.remove();
+ const i=container.querySelectorAll('.problem').length;
+ const block=`<div class="problem"><div class="row"><b>Bloc ${i+1} <span class="pill">Ajouté</span></b><button class="btn ghost" type="button" onclick="removeClimbingProblem(this)">Retirer</button></div><div class="measuregrid">
+ <div class="field"><label>Nom / identifiant</label><input data-cname="${i}"></div>
+ <div class="field"><label>Cotation</label><input data-cgrade="${i}"></div>
+ <div class="field"><label>Flash</label><select data-cflash="${i}" onchange="toggleAttempts(${i},this.value)"><option value="">—</option><option value="yes">Oui</option><option value="no">Non</option></select></div>
+ <div class="field" id="successWrap${i}"><label>Réussi</label><select data-csuccess="${i}"><option value="yes">Oui</option><option value="no">Non</option></select></div>
+ <div class="field" id="attemptWrap${i}"><label>Nombre d’essais</label><input data-cattempts="${i}" type="number"></div>
+ <div class="field"><label>Commentaire</label><input data-ccomment="${i}"></div></div></div>`;
+ container.insertAdjacentHTML('beforeend',block)
+}
+function removeClimbingProblem(button){
+ button.closest('.problem')?.remove();
+ renumberClimbingProblems()
+}
+function renumberClimbingProblems(){
+ document.querySelectorAll('#climbingProblems .problem').forEach((block,i)=>{
+   const title=block.querySelector('b');
+   if(title)title.childNodes[0].nodeValue='Bloc '+(i+1)+' ';
+   block.querySelectorAll('[data-cname],[data-cgrade],[data-cflash],[data-csuccess],[data-cattempts],[data-ccomment]').forEach(el=>{
+     for(const key of ['cname','cgrade','cflash','csuccess','cattempts','ccomment']){
+       if(el.dataset[key]!==undefined)el.dataset[key]=String(i)
+     }
+   });
+   const sw=block.querySelector('[id^="successWrap"]');if(sw)sw.id='successWrap'+i;
+   const aw=block.querySelector('[id^="attemptWrap"]');if(aw)aw.id='attemptWrap'+i;
+   const flash=block.querySelector('[data-cflash]');if(flash)flash.setAttribute('onchange',`toggleAttempts(${i},this.value)`)
+ })
+}
+
+function toggleAttempts(i,val){
+ const hide=val==='yes';document.getElementById('successWrap'+i).style.display=hide?'none':'block';document.getElementById('attemptWrap'+i).style.display=hide?'none':'block'
+}
+function saveClimbingExecution(sessionId,count){
+ const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
+ const s=found.session,problems=[],blocks=[...document.querySelectorAll('#climbingProblems .problem')];
+ blocks.forEach((block,i)=>{
+   const flash=block.querySelector('[data-cflash]')?.value||'';
+   problems.push({
+     name:block.querySelector('[data-cname]')?.value||'',
+     grade:block.querySelector('[data-cgrade]')?.value||'',
+     planned:i<(s.climbing?.problemCount||0),
+     flash:flash==='yes'?true:flash==='no'?false:null,
+     success:flash==='yes'?true:(block.querySelector('[data-csuccess]')?.value==='yes'),
+     attempts:flash==='yes'?1:(+block.querySelector('[data-cattempts]')?.value||null),
+     comment:block.querySelector('[data-ccomment]')?.value||''
+   })
+ })
+ s.execution={type:'CLIMBING',problems:problems,quality:+climbQuality.value||null,enjoyment:+document.getElementById('climbEnjoyment')?.value||null,rpe:+climbRpe.value||null,note:climbNote.value,completed:true,completedAt:new Date().toISOString()};
+ save();closeSheet();renderAthleteWeek();toast('Séance enregistrée')
+}
+function renderAthleteWeek(){
+ const weeks=state.weeks.filter(w=>w.status==='PUBLISHED');
+ if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
+ const body=weeks.map(w=>`<div class="card"><div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':''}</div>${(w.containers||[]).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>${c.comment?`<p class="muted">${c.comment}</p>`:''}<div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>`<div class="prescriptionMini" onclick="openAthleteSession('${p.sessionId}')"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div>${p.execution?.completed?'<span class="pill green">Terminée</span>':'<span class="pill">Ouvrir</span>'}</div></div>`).join('')}</div></div>`).join('')}</div>`).join('');
+ athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div><div class="demoBanner"><b>Semaine fictive de démonstration</b><div class="muted small">Elle sert uniquement à tester les cartes Athlète.</div></div>'+body,'week')
+}
+function renderToday(){
+ const dayMap=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+ const today=dayMap[new Date().getDay()];
+ const weeks=publishedWeeks();
+ const sessions=weeks.flatMap(w=>(w.sessions||[]).filter(s=>s.day===today));
+ let body='';
+ if(!sessions.length){
+   body='<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
+ }else{
+   body=sessions.map(s=>{
+     return '<div class="athsession published sessionopen '+(s.execution?.completed?'complete':'')+'">'+
+       '<b>'+s.title+'</b>'+(s.execution?.completed?'<span class="pill green" style="margin-left:6px">✓ Terminée</span>':'')+
+       '<div class="sessionmeta"><span class="pill">'+(s.guide||'')+'</span><span class="pill">'+(s.duration||0)+' min</span></div>'+
+       sessionDetails(s)+
+       '<button class="btn full" onclick="openAthleteSession(\''+s.sessionId+'\')">'+(s.execution?.completed?'Modifier la saisie':'Commencer')+'</button>'+
+       '</div>';
+   }).join('');
+ }
+ athleteShell('<div class="muted">'+today+'</div><h1>Séances du jour</h1>'+body,'today')
+}
+function athlete(view){if(view==='checkup')return renderSunday();if(view==='today')return renderToday();if(view==='week')return renderAthleteWeek();if(view==='profile')return athleteShell(`<div class="sectiontitle"><div><h1>Mon évolution</h1><p class="muted">Performances, tests et mensurations.</p></div><button class="btn" onclick="openAthleteMeasurements()">Saisir mes mensurations</button></div>${trackingRangeBar()}${renderLatestAthleteMeasurements()}<h3>Haut du corps</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Doigts et gainage</h3><div class="chartgrid">${['fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Mesures physiques</h3><div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`,'profile');renderDaily()}
+function draftSlider(key,val){const [part,k]=key.split('.');state.checkins[part][k]=+val;if(state.checkStatus[part]==='VALIDATED')state.checkStatus[part]='DRAFT';else if(state.checkStatus[part]==='NOT_STARTED')state.checkStatus[part]='DRAFT';save()}
+function validateDailyCheckin(part){state.checkStatus[part]='VALIDATED';const c=state.checkins[part],date=nowIso();if(part==='morning')addOrReplaceDailyRecord('checkins',{date,source:'Check-in matin',sleep:c.sleep,sleepQuality:c.quality,fatigue:c.fatigue,stress:c.stress,energy:c.energy,motivation:c.motivation,pain:c.pain});else addOrReplaceDailyRecord('checkins',{date,source:'Check-in soir',fatigue:c.fatigue,pain:c.pain});save();renderDaily();toast(`Check-in ${part==='morning'?'du matin':'du soir'} validé`)}
+function renderDaily(){athleteShell(`<div class="sectiontitle"><div><div class="muted">Bonjour Thibaud</div><h1>Check quotidien</h1></div><span class="pill green">Brouillon auto</span></div><div class="card ${state.checkStatus.morning==='VALIDATED'?'validatedCard':state.checkStatus.morning==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.morning==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Matin</h3>${slider('Sommeil (h)','morning.sleep',state.checkins.morning.sleep,4,10,.1)}${slider('Qualité','morning.quality',state.checkins.morning.quality)}${slider('Humeur','morning.mood',state.checkins.morning.mood)}${slider('Fatigue','morning.fatigue',state.checkins.morning.fatigue)}${slider('Stress','morning.stress',state.checkins.morning.stress)}${slider('Énergie','morning.energy',state.checkins.morning.energy)}${slider('Motivation','morning.motivation',state.checkins.morning.motivation)}${slider('Courbatures','morning.soreness',state.checkins.morning.soreness)}${slider('Douleur','morning.pain',state.checkins.morning.pain)}<button class="btn full" onclick="validateDailyCheckin('morning')">Valider le matin</button></div><div class="card ${state.checkStatus.evening==='VALIDATED'?'validatedCard':state.checkStatus.evening==='DRAFT'?'draftCard':''}" style="margin-top:14px"><div class="statusline">${state.checkStatus.evening==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Soir</h3>${slider('RPE journée','evening.rpe',state.checkins.evening.rpe)}${slider('Fatigue','evening.fatigue',state.checkins.evening.fatigue)}${slider('Courbatures','evening.soreness',state.checkins.evening.soreness)}${slider('Douleur','evening.pain',state.checkins.evening.pain)}${slider('Vélo (km)','evening.bike',state.checkins.evening.bike,0,60,1)}<button class="btn full" onclick="validateDailyCheckin('evening')">Valider le soir</button></div>`,'daily')}
+function renderSunday(){const w=state.weekly;athleteShell(`<div class="sectiontitle"><div><div class="muted">Dimanche</div><h1>Check-up hebdomadaire</h1></div><span class="pill orange">Obligatoire</span></div><div class="card ${state.checkStatus.sunday==='VALIDATED'?'validatedCard':state.checkStatus.sunday==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.sunday==='VALIDATED'?'✓ Check-up validé':'À remplir'}</div><p class="muted">Toutes les mensurations doivent être confirmées chaque dimanche.</p><div class="measuregrid">${[['Poids (kg)','weight',w.weight],['Taille (cm)','waist',w.waist],['Poitrine (cm)','chest',w.chest],['Hanches (cm)','hips',w.hips],['Bras relâché (cm)','armRelaxed',w.armRelaxed],['Bras contracté (cm)','armFlexed',w.armFlexed],['Cuisse (cm)','thigh',w.thigh],['Mollet (cm)','calf',w.calf],['FC allongé','hrSupine',w.hrSupine],['FC debout','hrStanding',w.hrStanding]].map(x=>`<div class="field"><label>${x[0]}</label><input data-week="${x[1]}" type="number" step=".1" value="${x[2]}"></div>`).join('')}</div><div class="field"><label>Disponibilités semaine suivante</label><input data-week="availability" value="${w.availability}"></div><div class="field"><label>Douleur persistante</label><input data-week="pain" value="${w.pain}"></div><div class="field"><label>Commentaire général</label><textarea data-week="comment">${w.comment}</textarea></div><button class="btn full" onclick="saveSunday()">Valider le check-up du dimanche</button></div>`,'checkup')}
+function saveSunday(){let ok=true;document.querySelectorAll('[data-week]').forEach(el=>{el.classList.remove('invalid');if(el.value.trim()===''){el.classList.add('invalid');ok=false}else state.weekly[el.dataset.week]=isNaN(el.value)?el.value:+el.value});if(!ok)return toast('Toutes les mesures obligatoires doivent être renseignées');state.checkStatus.sunday='VALIDATED';addOrReplaceDailyRecord('measurements',{date:nowIso(),source:'Check-up dimanche',weight:state.weekly.weight,waist:state.weekly.waist,chest:state.weekly.chest,hips:state.weekly.hips,armRelaxed:state.weekly.armRelaxed,armContracted:state.weekly.armFlexed,thigh:state.weekly.thigh,calf:state.weekly.calf,hrSupine:state.weekly.hrSupine,hrStanding:state.weekly.hrStanding});state.athlete.weight=state.weekly.weight;save();renderSunday();toast('Check-up hebdomadaire validé')}
+
+PRESCRIPTIONS.push(
+{id:'fingerpower',domain:'B',quality:'Puissance doigts',name:'Puissance doigts — Pan Güllich',guide:'G04',objective:'Puissance',summary:'Choisir 1 à 2 orientations et les exercices officiels',editor:'exerciseLibrary',exerciseGuide:'G04',durationMin:45},
+{id:'pullpower',domain:'A',extraDomains:['A_PULL'],quality:'Puissance traction',name:'Puissance de traction',guide:'G05',objective:'Puissance',summary:'Choisir 2 à 3 exercices officiels · 3 à 5 séries · 2 reps',editor:'exerciseLibrary',exerciseGuide:'G05',durationMin:45},
+{id:'pushpower',domain:'A',extraDomains:['A_PUSH'],quality:'Puissance poussée',name:'Puissance de poussée',guide:'G06',objective:'Puissance',summary:'Choisir 2 à 3 exercices officiels · 3 à 5 séries · 2 reps',editor:'exerciseLibrary',exerciseGuide:'G06',durationMin:45},
+{id:'coordination',domain:'ESC',extraDomains:['C'],quality:'Coordination',name:'Coordination intégrée à la grimpe',guide:'G13',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G13',durationMin:90},
+{id:'speedtech',domain:'ESC',extraDomains:['C'],quality:'Vitesse gestuelle',name:'Vitesse gestuelle intégrée à la grimpe',guide:'G14',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G14',durationMin:90},
+{id:'precision',domain:'ESC',extraDomains:['C'],quality:'Précision gestuelle',name:'Précision gestuelle intégrée à la grimpe',guide:'G15',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G15',durationMin:90},
+{id:'calisthenics',domain:'CALI',quality:'Calisthénie',name:'Skill calisthénie',guide:'G16',objective:'Skill',summary:'1 figure principale + 2 à 4 exercices de progression',editor:'exerciseLibrary',exerciseGuide:'G16',durationMin:45},
+{id:'runshort',domain:'D',quality:'Fractionné court',name:'R4 — Fractionné court',guide:'G17',objective:'Puissance aérobie',summary:'10 à 20 répétitions · RPE 8 à 9',sets:10,duration:30,rest:30,rpe:9,durationMin:55},
+{id:'runhills',domain:'D',quality:'Côtes',name:'R5 — Côtes',guide:'G17',objective:'Puissance en montée',summary:'6 à 12 montées de 10 à 45 s · quasi maximal',sets:8,duration:30,rest:120,rpe:9,durationMin:55},
+{id:'runsprint',domain:'D',quality:'Sprint',name:'R6 — Sprint',guide:'G17',objective:'Vitesse',summary:'6 à 10 sprints de 10 à 20 s · récupération complète',sets:6,duration:15,rest:180,rpe:10,durationMin:50}
+);
+const EXERCISE_LIBRARY=[
+{guide:'G04',name:'Montées amples',category:'Puissance maximale',sets:3,reps:null,hold:null,rest:180},
+{guide:'G04',name:'Le 1-4',category:'Puissance maximale',sets:3,reps:null,hold:null,rest:180},
+{guide:'G04',name:'Jumps à deux mains amples',category:'Puissance maximale',sets:3,reps:1,hold:null,rest:180},
+{guide:'G04',name:'Montées cadencées',category:'Puissance répétée',sets:5,reps:null,hold:null,rest:120},
+{guide:'G04',name:'Jumps à deux mains cadencés',category:'Puissance répétée',sets:6,reps:null,hold:null,rest:120},
+{guide:'G05',name:'Chest-to-bar explosif',category:'Puissance traction',sets:3,reps:2,rest:180},
+{guide:'G05',name:'Belly-to-bar explosif',category:'Puissance traction',sets:3,reps:2,rest:180},
+{guide:'G05',name:'Plyometric Pull-up',category:'Puissance traction',sets:3,reps:2,rest:180},
+{guide:'G05',name:'Power Slap',category:'Puissance traction',sets:3,reps:2,rest:180},
+{guide:'G06',name:'Pompes explosives',category:'Puissance poussée',sets:3,reps:2,rest:180},
+{guide:'G06',name:'Clap Push-up',category:'Puissance poussée',sets:3,reps:2,rest:180},
+{guide:'G06',name:'Pompes pliométriques sur supports',category:'Puissance poussée',sets:3,reps:2,rest:180},
+{guide:'G06',name:'Dips explosifs',category:'Puissance poussée',sets:3,reps:2,rest:180},
+{guide:'G10',name:'Hollow Body Hold',category:'Antérieur',sets:3,hold:45,rest:30},
+{guide:'G10',name:'Dead Bug',category:'Contrôle',sets:3,reps:10,rest:30},
+{guide:'G10',name:'Body Saw',category:'Anti-extension',sets:3,reps:10,rest:30},
+{guide:'G10',name:'Arch Hold',category:'Postérieur',sets:3,hold:45,rest:30},
+{guide:'G10',name:'Side Plank',category:'Latéral',sets:3,hold:45,rest:30},
+{guide:'G10',name:'Copenhagen Plank',category:'Latéral/adducteurs',sets:3,hold:30,rest:45},
+{guide:'G10',name:'L-Sit',category:'Compression',sets:3,hold:10,rest:120},
+{guide:'G11',name:'90/90 actif',category:'Hanches',sets:2,reps:10,rest:30},
+{guide:'G11',name:'Cossack Squat',category:'Hanches',sets:2,reps:8,rest:30},
+{guide:'G11',name:'Hip Airplane',category:'Hanches',sets:2,reps:6,rest:30},
+{guide:'G11',name:'Knee-to-Wall actif',category:'Chevilles',sets:2,reps:12,rest:30},
+{guide:'G11',name:'Open Book',category:'Thorax',sets:2,reps:10,rest:30},
+{guide:'G11',name:'Wall Slides',category:'Épaules',sets:2,reps:12,rest:30},
+{guide:'G11',name:'Wrist Rocks',category:'Poignets',sets:2,reps:12,rest:30},
+{guide:'G12',name:'Pancake Stretch',category:'Hanches',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Butterfly Stretch',category:'Hanches',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Frog Stretch',category:'Hanches',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Pigeon Stretch',category:'Hanches',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Lat Stretch',category:'Épaules',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Doorway Pec Stretch',category:'Épaules',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Wall Calf Stretch',category:'Chevilles',sets:2,hold:45,rest:20},
+{guide:'G12',name:'Wrist Flexor Stretch',category:'Avant-bras',sets:2,hold:40,rest:20},
+{guide:'G13',name:'Silent Feet',category:'Précision placements',durationMin:15},
+{guide:'G13',name:'No Readjust',category:'Précision placements',durationMin:15},
+{guide:'G13',name:'Feet Swap Drill',category:'Coordination membres',sets:3,durationMin:10},
+{guide:'G13',name:'Downclimbing',category:'Équilibre',durationMin:15},
+{guide:'G13',name:'Hover Hands',category:'Contrôle',durationMin:15},
+{guide:'G14',name:'Fast Climbing',category:'Déplacement',durationMin:15},
+{guide:'G14',name:'Time Trial',category:'Déplacement',reps:4},
+{guide:'G14',name:'Fast Hands',category:'Mains',durationMin:15},
+{guide:'G14',name:'Fast Feet',category:'Pieds',durationMin:15},
+{guide:'G14',name:'Flash Decision',category:'Décision',reps:5},
+{guide:'G15',name:'Exact Placement',category:'Pieds',reps:10},
+{guide:'G15',name:'Exact Grip',category:'Mains',reps:10},
+{guide:'G15',name:'No Readjust',category:'Contrôle',durationMin:15},
+{guide:'G15',name:'Light Grip',category:'Force',durationMin:15},
+{guide:'G15',name:'Repeat Perfect',category:'Reproductibilité',reps:3},
+{guide:'G16',name:'Support Hold aux parallettes ou barres',category:'Fondations',sets:3,hold:15,rest:120},
+{guide:'G16',name:'Frog Stand / Crow Pose',category:'Équilibre bras',sets:3,hold:15,rest:120},
+{guide:'G16',name:'L-Sit',category:'Débutant',sets:3,hold:10,rest:150},
+{guide:'G16',name:'Handstand au mur ou libre',category:'Équilibre renversé',sets:4,hold:20,rest:180},
+{guide:'G16',name:'Skin the Cat',category:'Intermédiaire',sets:3,reps:4,rest:180},
+{guide:'G16',name:'Front Lever — progression choisie',category:'Levier',sets:3,hold:10,rest:180},
+
+{guide:'G16',name:'Muscle-up — transition basse',category:'Muscle-up',sets:4,reps:3,rest:180},
+{guide:'G16',name:'Muscle-up à l’élastique',category:'Muscle-up',sets:4,reps:3,rest:180},
+{guide:'G16',name:'Traction explosive poitrine à la barre',category:'Muscle-up',sets:4,reps:3,rest:180},
+{guide:'G16',name:'Planche Lean',category:'Planche',sets:4,hold:15,rest:180},
+{guide:'G16',name:'Tuck Planche',category:'Planche',sets:4,hold:10,rest:180},
+{guide:'G16',name:'Back Lever — progression choisie',category:'Levier',sets:3,hold:10,rest:180},
+
+{guide:'G20-DOIGTS',name:'Finger Extensions',category:'Doigts',sets:3,reps:20,rest:45},
+{guide:'G20-DOIGTS',name:'Rice Bucket',category:'Doigts',sets:3,hold:45,rest:45},
+{guide:'G20-DOIGTS',name:'Finger Rolls',category:'Doigts',sets:3,reps:12,rest:60},
+{guide:'G20-DOIGTS',name:'Suspensions thérapeutiques',category:'Doigts',sets:3,hold:10,rest:120},
+{guide:'G20-POIGNETS',name:'Wrist Curl',category:'Poignets',sets:3,reps:15,rest:60},
+{guide:'G20-POIGNETS',name:'Reverse Wrist Curl',category:'Poignets',sets:3,reps:15,rest:60},
+{guide:'G20-POIGNETS',name:'Pronation élastique ou haltère',category:'Poignets',sets:3,reps:12,rest:60},
+{guide:'G20-POIGNETS',name:'Supination élastique ou haltère',category:'Poignets',sets:3,reps:12,rest:60},
+{guide:'G20-POIGNETS',name:'Déviation radiale',category:'Poignets',sets:3,reps:15,rest:60},
+{guide:'G20-POIGNETS',name:'Déviation ulnaire',category:'Poignets',sets:3,reps:15,rest:60},
+{guide:'G20-COUDES',name:'Tyler Twist',category:'Coudes',sets:3,reps:12,rest:60},
+{guide:'G20-COUDES',name:'Reverse Tyler Twist',category:'Coudes',sets:3,reps:12,rest:60},
+{guide:'G20-COUDES',name:'Wrist Extension Eccentric',category:'Coudes',sets:3,reps:12,rest:60},
+{guide:'G20-COUDES',name:'Wrist Flexion Eccentric',category:'Coudes',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'Face Pull à l’élastique',category:'Épaules',sets:3,reps:15,rest:60},
+{guide:'G20-EPAULES',name:'Rotation externe à l’élastique',category:'Épaules',sets:3,reps:15,rest:60},
+{guide:'G20-EPAULES',name:'Rotation interne à l’élastique',category:'Épaules',sets:3,reps:15,rest:60},
+{guide:'G20-EPAULES',name:'Trap Raise',category:'Épaules',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'Y Raise',category:'Épaules',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'T Raise',category:'Épaules',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'W Raise',category:'Épaules',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'Scapular Push-up',category:'Épaules',sets:3,reps:15,rest:60},
+{guide:'G20-EPAULES',name:'Scapular Pull-up',category:'Épaules',sets:3,reps:12,rest:60},
+{guide:'G20-EPAULES',name:'Serratus Punch à l’élastique',category:'Épaules',sets:3,reps:15,rest:60},
+{guide:'G20-TRONC',name:'Bird Dog',category:'Tronc',sets:3,reps:10,rest:45},
+{guide:'G20-TRONC',name:'Dead Bug',category:'Tronc',sets:3,reps:10,rest:45},
+{guide:'G20-TRONC',name:'Side Plank',category:'Tronc',sets:3,hold:30,rest:45},
+{guide:'G20-MI',name:'Single Leg Calf Raise',category:'Membres inférieurs',sets:3,reps:15,rest:60},
+{guide:'G20-MI',name:'Tibialis Raise',category:'Membres inférieurs',sets:3,reps:15,rest:60},
+{guide:'G20-MI',name:'Nordic Hamstring',category:'Membres inférieurs',sets:3,reps:6,rest:120},
+{guide:'G20-MI',name:'Copenhagen Plank',category:'Membres inférieurs',sets:3,hold:25,rest:60},
+{guide:'G20-MI',name:'Single Leg Romanian Deadlift',category:'Membres inférieurs',sets:3,reps:10,rest:90},
+{guide:'G20-MI',name:'Hip Airplane',category:'Membres inférieurs',sets:3,reps:6,rest:60},
+{guide:'G20-MI',name:'Monster Walk',category:'Membres inférieurs',sets:3,reps:15,rest:45},
+{guide:'G20-MI',name:'Single Leg Squat',category:'Membres inférieurs',sets:3,reps:8,rest:90},
+{guide:'G20',name:'Finger Extensions',category:'Doigts',sets:3,reps:20},
+{guide:'G20',name:'Rice Bucket',category:'Doigts',sets:3,hold:45},
+{guide:'G20',name:'Finger Rolls',category:'Doigts',sets:3,reps:12},
+{guide:'G20',name:'Tyler Twist',category:'Coudes',sets:3,reps:12},
+{guide:'G20',name:'Face Pull',category:'Épaules',sets:3,reps:15},
+{guide:'G20',name:'Single Leg Calf Raise',category:'Membres inférieurs',sets:3,reps:15},
+{guide:'G20',name:'Nordic Hamstring',category:'Membres inférieurs',sets:3,reps:6},
+{guide:'G20',name:'Monster Walk',category:'Membres inférieurs',sets:3,reps:15}
+];
+
+function render(){state.role==='coach'?renderDashboard():renderDaily()}
+window.addEventListener('lts-api-status',()=>{if(state.role==='coach')renderDashboard()});
+render();
+</script><script src="api-client.js"></script></body></html>
