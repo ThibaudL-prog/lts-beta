@@ -42,6 +42,7 @@
         <button class="btn ghost" onclick="pushLocalAthleteData()">Envoyer check-ins et mensurations</button>
       </div>
       <p class="muted small" style="margin-bottom:0">${escapeHtml(c.lastMessage)}${c.lastSync?' · '+new Date(c.lastSync).toLocaleString('fr-FR'):''}</p>
+      ${renderSyncQueuePanel()}
     </div>`
   };
 
@@ -124,10 +125,199 @@
       save();saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Envoi terminé · ${checkins.length} check-ins · ${measurements.length} mesures`});
       if(typeof toast==='function')toast('Données Athlète envoyées')
     }catch(e){
-      saveCfg({connected:false,lastMessage:e.message});
-      if(typeof toast==='function')toast('Envoi impossible')
+      if(checkins.length)upsertQueueItem({
+        queueId:queueId('checkins',cfg().athleteId),
+        type:'checkins',
+        entityId:cfg().athleteId,
+        label:'Check-ins Athlète',
+        records:checkins
+      });
+      if(measurements.length)upsertQueueItem({
+        queueId:queueId('measurements',cfg().athleteId),
+        type:'measurements',
+        entityId:cfg().athleteId,
+        label:'Mensurations Athlète',
+        records:measurements
+      });
+      saveCfg({connected:false,lastMessage:`Données mises en attente · ${e.message}`});
+      if(typeof toast==='function')toast('Données conservées localement et mises en attente')
     }
   };
+
+  const QUEUE_KEY='lts-sync-queue-v053';
+  let queueProcessing=false;
+
+  function loadQueue(){
+    try{
+      const q=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');
+      return Array.isArray(q)?q:[]
+    }catch(error){return []}
+  }
+
+  function saveQueue(queue){
+    localStorage.setItem(QUEUE_KEY,JSON.stringify(queue));
+    window.dispatchEvent(new Event('lts-api-status'))
+  }
+
+  function queueId(type,entityId){
+    return `${type}:${entityId}`
+  }
+
+  function upsertQueueItem(item){
+    const queue=loadQueue();
+    const index=queue.findIndex(q=>q.queueId===item.queueId);
+    const normalized={
+      attempts:0,
+      createdAt:new Date().toISOString(),
+      updatedAt:new Date().toISOString(),
+      lastError:'',
+      ...item
+    };
+    if(index>=0){
+      normalized.createdAt=queue[index].createdAt||normalized.createdAt;
+      normalized.attempts=queue[index].attempts||0;
+      queue[index]={...queue[index],...normalized,updatedAt:new Date().toISOString()}
+    }else{
+      queue.push(normalized)
+    }
+    saveQueue(queue);
+    return normalized
+  }
+
+  function removeQueueItem(id){
+    saveQueue(loadQueue().filter(item=>item.queueId!==id))
+  }
+
+  function markQueueFailure(id,error){
+    const queue=loadQueue();
+    const item=queue.find(q=>q.queueId===id);
+    if(item){
+      item.attempts=(item.attempts||0)+1;
+      item.lastError=error?.message||String(error||'Erreur inconnue');
+      item.updatedAt=new Date().toISOString();
+      saveQueue(queue)
+    }
+  }
+
+  function queueSummary(){
+    const queue=loadQueue();
+    return {
+      total:queue.length,
+      executions:queue.filter(q=>q.type==='execution').length,
+      plans:queue.filter(q=>q.type==='plan').length,
+      checkins:queue.filter(q=>q.type==='checkins').length,
+      measurements:queue.filter(q=>q.type==='measurements').length
+    }
+  }
+
+  window.renderSyncQueuePanel=function(){
+    const queue=loadQueue();
+    const summary=queueSummary();
+    if(!queue.length){
+      return `<div class="queuePanel"><div class="row"><div><b>File de synchronisation</b><div class="muted small">Aucun élément en attente.</div></div><span class="queueCount">0</span></div></div>`
+    }
+    return `<div class="queuePanel">
+      <div class="sectiontitle"><div><h3 style="margin:0">File de synchronisation</h3><p class="muted small">${summary.total} élément(s) en attente</p></div><span class="queueCount">${summary.total}</span></div>
+      <div class="dataTools">
+        <button class="btn secondary" onclick="retrySyncQueue()">Relancer maintenant</button>
+        <button class="btn ghost" onclick="toggleSyncQueueDetails()">Détails</button>
+      </div>
+      <div id="syncQueueDetails" style="display:none;margin-top:8px">
+        ${queue.slice(0,20).map(item=>`<div class="queueItem">
+          <div class="queueMeta"><b>${escapeHtml(item.label||item.type)}</b><span class="muted small">${escapeHtml(item.type)}</span><span class="muted small">tentatives ${item.attempts||0}</span></div>
+          ${item.lastError?`<div class="muted small">${escapeHtml(item.lastError)}</div>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`
+  };
+
+  window.toggleSyncQueueDetails=function(){
+    const el=document.getElementById('syncQueueDetails');
+    if(el)el.style.display=el.style.display==='none'?'block':'none'
+  };
+
+  function queueExecutionPayload(session,found){
+    const e=session.execution||{};
+    const payloads=[
+      {action:'execution.upsert',payload:{record:buildExecutionRecord(session,found.week)}}
+    ];
+    const sets=buildSetRows(session);
+    if(sets.length||e.type==='SETS'||e.type==='EXERCISES'){
+      payloads.push({action:'sets.replace',payload:{session_execution_id:executionId(session.sessionId),records:sets}})
+    }
+    const climbing=buildClimbingRows(session);
+    if(climbing.length||e.type==='CLIMBING'){
+      payloads.push({action:'climbing.replace',payload:{session_execution_id:executionId(session.sessionId),records:climbing}})
+    }
+    const running=buildRunningRecord(session);
+    if(running){
+      payloads.push({action:'running.upsert',payload:{record:running}})
+    }
+    return payloads
+  }
+
+  async function executeQueueItem(item){
+    if(item.type==='execution'){
+      for(const step of item.payloads){
+        await request(step.action,{method:'POST',payload:step.payload})
+      }
+      const found=findSession(item.entityId);
+      if(found?.session?.execution){
+        found.session.execution.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow()}
+      }
+    }else if(item.type==='plan'){
+      const result=await request('plan.publish',{method:'POST',payload:item.payload});
+      const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
+      if(week){
+        week.planSync={status:'synced',message:`Version ${week.publicationVersion} publiée`,updatedAt:isoNow(),remoteWeekId:result.training_week_id}
+      }
+    }else if(item.type==='checkins'){
+      for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
+    }else if(item.type==='measurements'){
+      if((item.records||[]).length)await request('measurements.append',{method:'POST',payload:{records:item.records}})
+    }else{
+      throw new Error('Type de file inconnu : '+item.type)
+    }
+  }
+
+  window.retrySyncQueue=async function(){
+    if(queueProcessing)return;
+    if(!navigator.onLine){
+      if(typeof toast==='function')toast('Toujours hors ligne');
+      return
+    }
+    queueProcessing=true;
+    try{
+      const queue=[...loadQueue()];
+      if(!queue.length){
+        if(typeof toast==='function')toast('Aucun élément en attente');
+        return
+      }
+      for(const item of queue){
+        try{
+          await executeQueueItem(item);
+          removeQueueItem(item.queueId)
+        }catch(error){
+          markQueueFailure(item.queueId,error)
+        }
+      }
+      if(typeof save==='function')save();
+      saveCfg({lastSync:isoNow(),lastMessage:`File traitée · ${loadQueue().length} restant(s)`});
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast(loadQueue().length?'Certaines synchronisations restent en attente':'Toutes les synchronisations sont à jour')
+    }finally{
+      queueProcessing=false
+    }
+  };
+
+  window.addEventListener('online',()=>{
+    saveCfg({lastMessage:'Connexion rétablie · reprise de la synchronisation'});
+    setTimeout(()=>retrySyncQueue(),800)
+  });
+  window.addEventListener('offline',()=>{
+    saveCfg({connected:false,lastMessage:'Hors ligne · les données seront mises en attente'})
+  });
+
   function currentApiConfig(){return cfg()}
 
   function isoNow(){return new Date().toISOString()}
@@ -292,24 +482,12 @@
     e.sync={status:'pending',message:'Synchronisation en cours',updatedAt:isoNow()};
     refreshExecutionViews();
 
+    const payloads=queueExecutionPayload(session,found);
     try{
-      await request('execution.upsert',{method:'POST',payload:{record:buildExecutionRecord(session,found.week)}});
-
-      const sets=buildSetRows(session);
-      if(sets.length||e.type==='SETS'||e.type==='EXERCISES'){
-        await request('sets.replace',{method:'POST',payload:{session_execution_id:executionId(sessionId),records:sets}})
+      for(const step of payloads){
+        await request(step.action,{method:'POST',payload:step.payload})
       }
-
-      const climbing=buildClimbingRows(session);
-      if(climbing.length||e.type==='CLIMBING'){
-        await request('climbing.replace',{method:'POST',payload:{session_execution_id:executionId(sessionId),records:climbing}})
-      }
-
-      const running=buildRunningRecord(session);
-      if(running){
-        await request('running.upsert',{method:'POST',payload:{record:running}})
-      }
-
+      removeQueueItem(queueId('execution',sessionId));
       e.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow()};
       if(typeof logAudit==='function')logAudit('SYNC_EXECUTION','SESSION',sessionId,session.title||'');
       saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Séance synchronisée · ${session.title||sessionId}`});
@@ -317,10 +495,17 @@
       if(typeof toast==='function')toast('Séance synchronisée')
     }catch(error){
       console.error('Synchronisation séance',error);
-      e.sync={status:'error',message:error.message||'Synchronisation impossible',updatedAt:isoNow()};
-      saveCfg({connected:false,lastMessage:error.message||'Synchronisation impossible'});
+      const queued=upsertQueueItem({
+        queueId:queueId('execution',sessionId),
+        type:'execution',
+        entityId:sessionId,
+        label:session.title||sessionId,
+        payloads
+      });
+      e.sync={status:'error',message:`En attente de synchronisation · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId};
+      saveCfg({connected:false,lastMessage:`Séance mise en attente · ${error.message||'Erreur réseau'}`});
       refreshExecutionViews();
-      if(typeof toast==='function')toast('Séance conservée localement · erreur de synchronisation')
+      if(typeof toast==='function')toast('Séance conservée localement et mise en attente')
     }
   };
 
@@ -494,6 +679,7 @@
       if(!payload.sessions?.length)throw new Error('Aucun conteneur de séance à publier');
       if(!payload.blocks?.length)throw new Error('Aucune prescription à publier');
       const result=await request('plan.publish',{method:'POST',payload});
+      removeQueueItem(queueId('plan',week.weekId||week.number));
       week.planSync={
         status:'synced',
         message:`Version ${week.publicationVersion} publiée · ${result.counts?.sessions||0} séance(s)`,
@@ -506,11 +692,18 @@
       if(typeof toast==='function')toast('Semaine synchronisée avec Google Sheets')
     }catch(error){
       console.error('Publication semaine',error);
-      week.planSync={status:'error',message:error.message||'Publication impossible',updatedAt:isoNow()};
-      saveCfg({connected:false,lastMessage:error.message||'Publication impossible'});
+      const payload=buildPlanPayload(week);
+      const queued=upsertQueueItem({
+        queueId:queueId('plan',week.weekId||week.number),
+        type:'plan',
+        entityId:week.weekId||String(week.number),
+        label:`Semaine ${week.number} v${week.publicationVersion||1}`,
+        payload
+      });
+      week.planSync={status:'error',message:`En attente · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId};
+      saveCfg({connected:false,lastMessage:`Publication mise en attente · ${error.message||'Erreur réseau'}`});
       save();renderWeeks();
-      if(typeof toast==='function')toast(`Erreur publication : ${error.message||'cause inconnue'}`);
-      setTimeout(()=>{try{alert(`Google Sheets a refusé la publication :\n\n${error.message||'Cause inconnue'}\n\nConsulte aussi la dernière ligne plan.publish dans API_LOG.`)}catch(e){}},100)
+      if(typeof toast==='function')toast('Publication conservée localement et mise en attente')
     }
   };
 
