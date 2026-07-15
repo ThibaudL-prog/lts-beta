@@ -67,6 +67,24 @@
     state.remoteSnapshot=snapshot;
     const rebuiltRemoteWeeks=rebuildRemoteWeeks(snapshot);
     state.remoteWeeks=rebuiltRemoteWeeks;
+
+    // Reconcile Coach-side publication badges with the source of truth.
+    (state.weeks||[]).forEach(localWeek=>{
+      const candidates=rebuiltRemoteWeeks.filter(remoteWeek=>Number(remoteWeek.number)===Number(localWeek.number));
+      if(!candidates.length)return;
+      const latest=candidates.sort((a,b)=>Number(b.publicationVersion||0)-Number(a.publicationVersion||0))[0];
+      const sameOrNewer=Number(latest.publicationVersion||0)>=Number(localWeek.publicationVersion||0);
+      if(localWeek.status==='PUBLISHED'&&sameOrNewer){
+        localWeek.publicationVersion=Number(latest.publicationVersion)||localWeek.publicationVersion||1;
+        localWeek.planSync={
+          status:'synced',
+          message:`Google Sheets v${latest.publicationVersion||1}`,
+          updatedAt:new Date().toISOString(),
+          remoteWeekId:latest.remoteTrainingWeekId
+        };
+      }
+    });
+
     state.apiSync=state.apiSync||{};
     state.apiSync.lastPulledAt=new Date().toISOString();
     if(snapshot.athlete){
