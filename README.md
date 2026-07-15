@@ -1,11 +1,10 @@
-# LTS Beta v0.5.2.2 — déduplication des publications
+# LTS Beta v0.5.2.3 — priorité stricte à la semaine distante
 
 Correction :
-- republier une semaine sans modification conserve la même `publicationVersion` ;
-- la même version est remplacée dans Google Sheets sans doublon ;
-- une modification réelle de la planification crée une nouvelle version ;
-- les résultats Athlète, badges et métadonnées de synchronisation ne modifient pas l’empreinte de planification.
+- lorsqu’une semaine publiée existe dans l’instantané Google Sheets, elle remplace entièrement la semaine locale du même numéro dans l’espace Athlète ;
+- la version distante la plus récente est sélectionnée ;
+- la recherche d’une prescription ne retombe plus sur la copie locale lorsque la semaine distante existe ;
+- le message de chargement indique les versions distantes réellement chargées ;
+- nouvelle clé locale pour éviter qu’un ancien cache de bêta masque le correctif.
 
-Déploiement :
-- remplacer `index.html` sur GitHub ;
-- aucun changement Apps Script requis.
+Aucun changement Apps Script n’est nécessaire.

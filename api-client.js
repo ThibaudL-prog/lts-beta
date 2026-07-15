@@ -65,7 +65,8 @@
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
     state.remoteSnapshot=snapshot;
-    state.remoteWeeks=rebuildRemoteWeeks(snapshot);
+    const rebuiltRemoteWeeks=rebuildRemoteWeeks(snapshot);
+    state.remoteWeeks=rebuiltRemoteWeeks;
     state.apiSync=state.apiSync||{};
     state.apiSync.lastPulledAt=new Date().toISOString();
     if(snapshot.athlete){
@@ -80,7 +81,8 @@
     try{
       const r=await request('snapshot');
       mapSnapshotToLocal(r.snapshot);
-      saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)`});
+      const loaded=(state.remoteWeeks||[]).map(w=>`S${w.number} v${w.publicationVersion||1}`).join(', ');
+      saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)${loaded?' · '+loaded:''}`});
       render();if(typeof toast==='function')toast('Instantané Google Sheets chargé')
     }catch(e){
       saveCfg({connected:false,lastMessage:e.message});
