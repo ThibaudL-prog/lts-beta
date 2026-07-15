@@ -1,18 +1,13 @@
-# LTS Beta v0.5.2 — synchronisation de la planification Coach
+# LTS Beta v0.5.2.1 — écran Cycle et diagnostic de publication
 
-Ajouts :
-- publication du cycle actif et de la semaine dans Google Sheets ;
-- version immuable de chaque publication (`weekId-vN`) ;
-- synchronisation des conteneurs de séances ;
-- synchronisation des prescriptions ;
-- badge de publication côté Coach ;
-- reconstruction des semaines publiées depuis l’instantané Google Sheets ;
-- affichage de la planification distante côté Athlète ;
-- historique conservé : une nouvelle publication crée une nouvelle version ;
-- une réémission de la même version remplace uniquement cette version.
+Correctifs :
+- restauration complète de l’écran `Cycle` ;
+- consultation du cycle démo ;
+- validation du cycle ;
+- création d’un nouveau cycle lorsqu’aucun cycle n’existe ;
+- contrôles préalables avant publication d’une semaine ;
+- affichage de l’erreur exacte renvoyée par Google Sheets ;
+- conservation locale de la semaine en cas d’échec.
 
-Déploiement :
-1. Remplacer les fichiers du dépôt GitHub.
-2. Remplacer `Code.gs` dans Apps Script.
-3. Déployer une nouvelle version du déploiement existant.
-4. Conserver l’URL `/exec`.
+Le correctif Cycle et diagnostic concerne uniquement la PWA.
+Le fichier `Code.gs` reste inclus mais ne nécessite pas un nouveau déploiement pour ce correctif.

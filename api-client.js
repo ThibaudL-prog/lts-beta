@@ -469,6 +469,10 @@
 
     try{
       const payload=buildPlanPayload(week);
+      if(!payload.cycle?.cycle_id)throw new Error('Identifiant du cycle manquant');
+      if(!payload.week?.training_week_id)throw new Error('Identifiant de semaine manquant');
+      if(!payload.sessions?.length)throw new Error('Aucun conteneur de séance à publier');
+      if(!payload.blocks?.length)throw new Error('Aucune prescription à publier');
       const result=await request('plan.publish',{method:'POST',payload});
       week.planSync={
         status:'synced',
@@ -485,7 +489,8 @@
       week.planSync={status:'error',message:error.message||'Publication impossible',updatedAt:isoNow()};
       saveCfg({connected:false,lastMessage:error.message||'Publication impossible'});
       save();renderWeeks();
-      if(typeof toast==='function')toast('Semaine conservée localement · erreur de publication')
+      if(typeof toast==='function')toast(`Erreur publication : ${error.message||'cause inconnue'}`);
+      setTimeout(()=>{try{alert(`Google Sheets a refusé la publication :\n\n${error.message||'Cause inconnue'}\n\nConsulte aussi la dernière ligne plan.publish dans API_LOG.`)}catch(e){}},100)
     }
   };
 
