@@ -1,10 +1,18 @@
-# LTS Beta v0.5.1.2 — normalisation des cotations d’escalade
+# LTS Beta v0.5.2 — synchronisation de la planification Coach
 
-Corrections :
-- `grading_system` est envoyé sous la valeur autorisée `FONT` ;
-- les cotations sont normalisées en minuscules ;
-- une plage comme `5C-6A` devient `6a` ;
-- une valeur comme `6B` devient `6b` ;
-- les statuts restent `FLASH`, `AFTER_WORK` et `NOT_DONE`.
+Ajouts :
+- publication du cycle actif et de la semaine dans Google Sheets ;
+- version immuable de chaque publication (`weekId-vN`) ;
+- synchronisation des conteneurs de séances ;
+- synchronisation des prescriptions ;
+- badge de publication côté Coach ;
+- reconstruction des semaines publiées depuis l’instantané Google Sheets ;
+- affichage de la planification distante côté Athlète ;
+- historique conservé : une nouvelle publication crée une nouvelle version ;
+- une réémission de la même version remplace uniquement cette version.
 
-Aucune modification Apps Script n’est nécessaire.
+Déploiement :
+1. Remplacer les fichiers du dépôt GitHub.
+2. Remplacer `Code.gs` dans Apps Script.
+3. Déployer une nouvelle version du déploiement existant.
+4. Conserver l’URL `/exec`.

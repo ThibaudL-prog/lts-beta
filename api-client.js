@@ -65,10 +65,9 @@
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
     state.remoteSnapshot=snapshot;
+    state.remoteWeeks=rebuildRemoteWeeks(snapshot);
     state.apiSync=state.apiSync||{};
     state.apiSync.lastPulledAt=new Date().toISOString();
-    // v0.5.0 keeps the local planning UI stable. Remote data is preserved
-    // in remoteSnapshot and progressively mapped in later lots.
     if(snapshot.athlete){
       state.athlete={...state.athlete,name:snapshot.athlete.display_name||state.athlete.name,weight:snapshot.athlete.body_weight_kg||state.athlete.weight}
     }
@@ -306,5 +305,253 @@
   };
 
   window.retrySessionSync=function(sessionId){return window.syncSessionExecution(sessionId)}
+
+  function planIsoDate(date){
+    if(!date)return null;
+    const d=new Date(date);
+    return Number.isNaN(d.getTime())?null:d.toISOString().slice(0,10)
+  }
+  function addDaysIso(date,days){
+    const d=new Date(date||new Date());
+    d.setDate(d.getDate()+days);
+    return d.toISOString().slice(0,10)
+  }
+  function slotTime(slot){
+    return {matin:'07:00',midi:'13:00',soir:'19:30'}[slot]||'13:00'
+  }
+  function planVersionId(base,version){return `${base}-v${version}`}
+  function safeJson(value){try{return JSON.stringify(value)}catch(error){return '{}'}}
+  function parseJson(value,fallback=null){
+    if(!value)return fallback;
+    try{return typeof value==='string'?JSON.parse(value):value}catch(error){return fallback}
+  }
+  function planSyncText(status){
+    return {local:'Local',pending:'Publication…',synced:'Google Sheets',error:'Erreur sync'}[status]||'Local'
+  }
+  window.weekPlanSyncBadge=function(w){
+    if(!w||w.status!=='PUBLISHED')return '';
+    const s=w.planSync?.status||'local';
+    return `<span class="planSyncBadge ${s}" title="${escapeHtml(w.planSync?.message||planSyncText(s))}">${planSyncText(s)}</span>`
+  };
+
+  function buildPlanPayload(week){
+    const c=state.cycle||{};
+    const version=week.publicationVersion||1;
+    const baseWeekId=week.weekId||`week-${week.number}`;
+    const remoteWeekId=planVersionId(baseWeekId,version);
+    const cycleId=c.cycleId||'cycle-local';
+    const cycleStart=planIsoDate(c.start)||new Date().toISOString().slice(0,10);
+    const weekStart=addDaysIso(cycleStart,(Number(week.number||1)-1)*7);
+    const weekEnd=addDaysIso(weekStart,6);
+
+    const cycle={
+      cycle_id:cycleId,
+      athlete_id:cfg().athleteId,
+      name:c.name||'Cycle LTS',
+      start_date:cycleStart,
+      end_date:addDaysIso(cycleStart,55),
+      cycle_type:'8_week',
+      objective_summary:[c.primary,c.secondary].filter(Boolean).join(' + '),
+      structure_code:'3+1+3+1',
+      status:c.status==='VALIDATED'?'active':'draft',
+      version_no:Number(c.version||1),
+      validated_at:c.validatedAt||'',
+      validated_by:'coach',
+      supersedes_cycle_id:''
+    };
+
+    const remoteWeek={
+      training_week_id:remoteWeekId,
+      cycle_id:cycleId,
+      athlete_id:cfg().athleteId,
+      week_no:Number(week.number),
+      start_date:weekStart,
+      end_date:weekEnd,
+      week_type:week.type==='DELOAD'?'deload':week.type==='TESTS'?'tests':'build',
+      load_target:week.type==='DELOAD'?50:100,
+      focus_summary:week.comment||c.primary||'',
+      status:'published',
+      version_no:version,
+      generated_from_diagnostic_id:'',
+      local_week_id:baseWeekId,
+      published_at:week.publishedAt||new Date().toISOString(),
+      g21_status:week.g21Status||'',
+      adaptation_reason:week.adaptationReason||''
+    };
+
+    const sessions=[];
+    const blocks=[];
+    const prescriptions=[];
+
+    (week.containers||[]).forEach((container,containerIndex)=>{
+      const remoteSessionId=planVersionId(container.containerId,version);
+      const sessionDate=addDaysIso(weekStart,({Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6}[container.day]??0));
+      const containerPrescs=(week.sessions||[]).filter(p=>p.containerId===container.containerId);
+      sessions.push({
+        planned_session_id:remoteSessionId,
+        training_week_id:remoteWeekId,
+        athlete_id:cfg().athleteId,
+        session_template_id:'MULTI_PRESCRIPTION',
+        session_date:sessionDate,
+        planned_start_time:slotTime(container.slot),
+        planned_duration_min:containerPrescs.reduce((sum,p)=>sum+(Number(p.duration)||0),0),
+        location_id:'',
+        primary_quality_id:containerPrescs[0]?.domain||'',
+        secondary_quality_id:containerPrescs[1]?.domain||'',
+        session_type:'SESSION_CONTAINER',
+        priority_order:containerIndex+1,
+        status:'published',
+        version_no:version,
+        coach_instructions:safeJson({
+          localContainerId:container.containerId,
+          day:container.day,
+          slot:container.slot,
+          title:container.title,
+          comment:container.comment||''
+        }),
+        cancel_reason:''
+      });
+
+      containerPrescs.forEach((p,pIndex)=>{
+        const blockId=planVersionId(p.sessionId,version);
+        blocks.push({
+          session_block_id:blockId,
+          planned_session_id:remoteSessionId,
+          session_template_id:p.templateId||'',
+          block_order:pIndex+1,
+          block_type:'prescription',
+          name:p.title||'Prescription',
+          duration_target_min:Number(p.duration)||0,
+          objective_text:[p.guide,p.domain].filter(Boolean).join(' · '),
+          completion_rule:'Athlète valide la prescription',
+          notes:safeJson({...p,execution:null,remoteVersion:version,remoteWeekId})
+        });
+
+        const structured=Array.isArray(p.structuredSets)?p.structuredSets:[];
+        const first=structured[0]||{};
+        prescriptions.push({
+          exercise_prescription_id:blockId,
+          session_block_id:blockId,
+          exercise_catalog_id:p.templateId||p.title||'',
+          exercise_order:1,
+          sets_target:structured.length||Number(p.sets)||Number(p.exercises?.[0]?.sets)||1,
+          reps_target_min:Number(first.reps)||Number(p.reps)||Number(p.exercises?.[0]?.reps)||'',
+          reps_target_max:Number(first.reps)||Number(p.reps)||Number(p.exercises?.[0]?.reps)||'',
+          duration_target_s:Number(first.work)||Number(p.workSeconds)||Number(p.exercises?.[0]?.hold)||'',
+          distance_target_m:'',
+          load_target_value:Number(first.load)||Number(p.load)||'',
+          load_target_unit:first.loadMode||'',
+          rir_target:first.rir!==''&&first.rir!==undefined?Number(first.rir):(p.rir??''),
+          rpe_target:p.rpe??'',
+          rest_seconds:Number(first.rest)||Number(p.restSeconds)||'',
+          tempo_code:'',
+          progression_rule_text:'',
+          optional:false,
+          coach_notes:safeJson({notes:p.notes||'',structuredSets:p.structuredSets||[],exercises:p.exercises||[],climbing:p.climbing||null})
+        });
+      });
+    });
+
+    return {cycle,week:remoteWeek,sessions,blocks,prescriptions};
+  }
+
+  window.syncWeekPlan=async function(weekNo){
+    const week=(state.weeks||[]).find(w=>Number(w.number)===Number(weekNo));
+    if(!week||week.status!=='PUBLISHED')return;
+    const c=cfg();
+    if(!c.url){
+      week.planSync={status:'local',message:'Publication locale — API non configurée',updatedAt:isoNow()};
+      save();renderWeeks();return
+    }
+
+    week.planSync={status:'pending',message:'Publication vers Google Sheets',updatedAt:isoNow()};
+    save();renderWeeks();
+
+    try{
+      const payload=buildPlanPayload(week);
+      const result=await request('plan.publish',{method:'POST',payload});
+      week.planSync={
+        status:'synced',
+        message:`Version ${week.publicationVersion} publiée · ${result.counts?.sessions||0} séance(s)`,
+        updatedAt:isoNow(),
+        remoteWeekId:result.training_week_id
+      };
+      if(typeof logAudit==='function')logAudit('SYNC_PLAN','WEEK',week.weekId||String(week.number),`Version ${week.publicationVersion}`);
+      saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Semaine ${week.number} publiée vers Google Sheets`});
+      save();renderWeeks();
+      if(typeof toast==='function')toast('Semaine synchronisée avec Google Sheets')
+    }catch(error){
+      console.error('Publication semaine',error);
+      week.planSync={status:'error',message:error.message||'Publication impossible',updatedAt:isoNow()};
+      saveCfg({connected:false,lastMessage:error.message||'Publication impossible'});
+      save();renderWeeks();
+      if(typeof toast==='function')toast('Semaine conservée localement · erreur de publication')
+    }
+  };
+
+  function rebuildRemoteWeeks(snapshot){
+    const remoteWeeks=snapshot?.weeks||[];
+    const remoteSessions=snapshot?.sessions||[];
+    const remoteBlocks=snapshot?.blocks||[];
+    if(!remoteWeeks.length)return [];
+
+    const latestByNo=new Map();
+    remoteWeeks.filter(w=>String(w.status).toLowerCase()==='published').forEach(w=>{
+      const no=Number(w.week_no);
+      const current=latestByNo.get(no);
+      if(!current||Number(w.version_no||0)>Number(current.version_no||0))latestByNo.set(no,w)
+    });
+
+    return [...latestByNo.values()].sort((a,b)=>Number(a.week_no)-Number(b.week_no)).map(w=>{
+      const sessionRows=remoteSessions.filter(s=>String(s.training_week_id)===String(w.training_week_id));
+      const containers=[];
+      const prescriptions=[];
+      sessionRows.forEach((s,sessionIndex)=>{
+        const meta=parseJson(s.coach_instructions,{})||{};
+        const containerId=meta.localContainerId||String(s.planned_session_id);
+        containers.push({
+          containerId,
+          day:meta.day||['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][new Date(s.session_date).getDay()===0?6:new Date(s.session_date).getDay()-1]||'Lun',
+          slot:meta.slot||'midi',
+          title:meta.title||`Séance ${sessionIndex+1}`,
+          comment:meta.comment||'',
+          status:'PLANNED',
+          remotePlannedSessionId:s.planned_session_id
+        });
+        remoteBlocks
+          .filter(b=>String(b.planned_session_id)===String(s.planned_session_id))
+          .sort((a,b)=>Number(a.block_order)-Number(b.block_order))
+          .forEach(b=>{
+            const p=parseJson(b.notes,{})||{};
+            const sessionId=p.sessionId||String(b.session_block_id).replace(/-v\d+$/,'');
+            prescriptions.push({
+              ...p,
+              sessionId,
+              containerId,
+              day:meta.day||p.day||'Lun',
+              slot:meta.slot||p.slot||'midi',
+              title:p.title||b.name||'Prescription',
+              duration:Number(p.duration||b.duration_target_min)||0,
+              execution:null,
+              remoteBlockId:b.session_block_id,
+              remoteWeekId:w.training_week_id
+            })
+          })
+      });
+      return {
+        weekId:w.local_week_id||String(w.training_week_id).replace(/-v\d+$/,''),
+        remoteTrainingWeekId:w.training_week_id,
+        number:Number(w.week_no),
+        type:String(w.week_type).toLowerCase()==='deload'?'DELOAD':String(w.week_type).toLowerCase()==='tests'?'TESTS':'WORK',
+        status:'PUBLISHED',
+        publicationVersion:Number(w.version_no)||1,
+        comment:w.focus_summary||'',
+        containers,
+        sessions:prescriptions,
+        remoteOrigin:true,
+        isDemo:false
+      }
+    })
+  }
 
 })();

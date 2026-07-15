@@ -30,6 +30,7 @@ function handleRequest_(method, p) {
     else if (action === 'sets.replace') { assertWriteEnabled_(); result = replaceChildren_('SET_RESULTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'climbing.replace') { assertWriteEnabled_(); result = replaceChildren_('CLIMBING_ATTEMPTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'running.upsert') { assertWriteEnabled_(); result = upsertById_('RUNNING_RESULTS','running_result_id',p.record || {}); }
+    else if (action === 'plan.publish') { assertWriteEnabled_(); result = publishPlan_(p); }
     else throw new Error('Action inconnue : ' + action);
     writeLog_(requestId, method, action, p, 'OK', Date.now()-started, '');
     return json_(Object.assign({ok:true,request_id:requestId},result));
@@ -72,6 +73,66 @@ function snapshot_(athleteId) {
     snapshot:{athlete,profile,cycles,weeks,sessions,blocks,prescriptions,executions,set_results:setResults,climbing_attempts:climbing,running_results:running,checkins,measurements},
     counts:{cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,prescriptions:prescriptions.length,executions:executions.length}
   };
+}
+
+
+function publishPlan_(payload) {
+  const cycle = payload.cycle || {};
+  const week = payload.week || {};
+  const sessions = payload.sessions || [];
+  const blocks = payload.blocks || [];
+  const prescriptions = payload.prescriptions || [];
+
+  if (!cycle.cycle_id) throw new Error('cycle_id obligatoire');
+  if (!week.training_week_id) throw new Error('training_week_id obligatoire');
+  if (!week.athlete_id) throw new Error('athlete_id obligatoire');
+
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  try {
+    upsertById_('CYCLES', 'cycle_id', cycle);
+    upsertById_('WEEKS', 'training_week_id', week);
+
+    replaceRowsByValue_('SESSIONS', 'training_week_id', week.training_week_id, sessions);
+
+    const sessionIds = sessions.map(r => String(r.planned_session_id));
+    replaceRowsByValues_('SESSION_BLOCKS', 'planned_session_id', sessionIds, blocks);
+
+    const blockIds = blocks.map(r => String(r.session_block_id));
+    replaceRowsByValues_('EXERCISE_PRESCRIPTIONS', 'session_block_id', blockIds, prescriptions);
+
+    return {
+      training_week_id: week.training_week_id,
+      version_no: week.version_no,
+      counts: {
+        sessions: sessions.length,
+        blocks: blocks.length,
+        prescriptions: prescriptions.length
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function replaceRowsByValue_(sheetName, columnName, value, records) {
+  return replaceRowsByValues_(sheetName, columnName, [String(value)], records);
+}
+
+function replaceRowsByValues_(sheetName, columnName, valuesToReplace, records) {
+  const sheet = sheet_(sheetName);
+  const data = sheet.getDataRange().getValues();
+  if (!data.length) throw new Error('Feuille vide : ' + sheetName);
+  const headers = data[0].map(String);
+  const columnIndex = headers.indexOf(columnName);
+  if (columnIndex < 0) throw new Error('Colonne absente : ' + columnName);
+
+  const wanted = new Set((valuesToReplace || []).map(String));
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (wanted.has(String(data[i][columnIndex]))) sheet.deleteRow(i + 1);
+  }
+  appendObjects_(sheetName, records || []);
+  return {written:(records || []).length};
 }
 
 function upsertCheckin_(record, athleteId) {
