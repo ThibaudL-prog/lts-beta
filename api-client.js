@@ -325,10 +325,43 @@
         found.session.execution.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow()}
       }
     }else if(item.type==='plan'){
-      const result=await request('plan.publish',{method:'POST',payload:item.payload});
       const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
+      if(!week)throw new Error('Semaine locale introuvable');
+
+      const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
+      if(!force){
+        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
+        const known=week.planSync?.remoteFingerprint||null;
+        const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
+        const sameVersion=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0);
+        const changed=sameVersion&&known&&meta.fingerprint!==known;
+        const baselineMissing=sameVersion&&!known;
+
+        if(newer||changed||baselineMissing){
+          const c=addConflict({
+            conflictId:conflictId('plan',week.weekId||week.number),
+            entityType:'plan',
+            entityId:week.weekId||String(week.number),
+            weekNo:week.number,
+            label:`Semaine ${week.number}`,
+            message:newer?'Une version distante plus récente existe.':baselineMissing?'Référence distante absente : recharge l’instantané.':'La même version a été modifiée ailleurs.'
+          });
+          week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};
+          save();
+          throw new Error('CONFLICT_BLOCKED');
+        }
+      }
+
+      const result=await request('plan.publish',{method:'POST',payload:item.payload});
       if(week){
-        week.planSync={status:'synced',message:`Version ${week.publicationVersion} publiée`,updatedAt:isoNow(),remoteWeekId:result.training_week_id}
+        const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
+        week.planSync={
+          status:'synced',
+          message:`Version ${week.publicationVersion} publiée`,
+          updatedAt:isoNow(),
+          remoteWeekId:result.training_week_id,
+          remoteFingerprint:freshMeta.fingerprint||null
+        }
       }
     }else if(item.type==='checkins'){
       for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
@@ -357,7 +390,11 @@
           await executeQueueItem(item);
           removeQueueItem(item.queueId)
         }catch(error){
-          markQueueFailure(item.queueId,error)
+          if(String(error?.message||error)==='CONFLICT_BLOCKED'){
+            removeQueueItem(item.queueId)
+          }else{
+            markQueueFailure(item.queueId,error)
+          }
         }
       }
       if(typeof save==='function')save();
@@ -753,7 +790,11 @@
         const baselineMissing=sameVersion&&!known;
         if(newer||changed||baselineMissing){
           const c=addConflict({conflictId:conflictId('plan',week.weekId||week.number),entityType:'plan',entityId:week.weekId||String(week.number),weekNo:week.number,label:`Semaine ${week.number}`,message:newer?'Une version distante plus récente existe.':baselineMissing?'Référence distante absente : recharge l’instantané avant de publier.':'La même version a été modifiée ailleurs.'});
-          week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};save();renderWeeks();if(typeof toast==='function')toast('Conflit détecté');return
+          removeQueueItem(queueId('plan',week.weekId||week.number));
+          week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};
+          save();renderWeeks();
+          if(typeof toast==='function')toast('Conflit détecté · publication bloquée');
+          return
         }
       }
       if(!payload.cycle?.cycle_id)throw new Error('Identifiant du cycle manquant');

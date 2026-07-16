@@ -1,9 +1,9 @@
-# LTS Beta v0.5.4.1 — correctif de référence de conflit
+# LTS Beta v0.5.4.2 — verrou des conflits dans la file
 
-- récupération de l’empreinte distante après chaque chargement d’instantané ;
-- détection effective des modifications concurrentes ;
-- blocage si aucune référence distante fiable n’est disponible ;
-- `SESSIONS.planned_duration_min` reste la somme des prescriptions du conteneur ;
-- la durée individuelle reste dans `SESSION_BLOCKS.duration_target_min`.
+Correction :
+- lorsqu’un conflit de semaine est détecté, toute publication en attente pour cette semaine est supprimée de la file ;
+- la file de synchronisation effectue désormais le même contrôle de conflit avant `plan.publish` ;
+- une opération bloquée pour conflit n’est plus relancée automatiquement ;
+- aucune ligne de planification ne doit être écrite avant le choix explicite du Coach.
 
-Aucun changement Apps Script n’est nécessaire.
+Aucun changement Apps Script n’est requis.
