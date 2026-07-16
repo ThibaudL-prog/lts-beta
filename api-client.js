@@ -209,9 +209,16 @@
 
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'&&navigator.onLine&&!backgroundSyncSuspended){
-      scheduleBackgroundSync('visible')
+      if(loadQueue().length)scheduleBackgroundSync('queue-added');
+      else scheduleBackgroundSync('visible')
     }
   });
+
+  setTimeout(()=>{
+    if(navigator.onLine&&loadQueue().length&&!backgroundSyncSuspended){
+      scheduleBackgroundSync('queue-added')
+    }
+  },1200);
 
   let globalSyncRunning=false;
   let globalSyncProgress={step:0,total:6,label:'Prête',done:false};
@@ -593,7 +600,17 @@
 
   function saveQueue(queue){
     localStorage.setItem(QUEUE_KEY,JSON.stringify(queue));
-    window.dispatchEvent(new Event('lts-api-status'))
+    if(Array.isArray(queue)&&queue.length&&navigator.onLine){
+      setTimeout(()=>{
+        try{
+          if(!backgroundSyncRunning&&!globalSyncRunning&&!backgroundSyncSuspended){
+            scheduleBackgroundSync('queue-added')
+          }
+        }catch(error){
+          console.error('Programmation de la reprise de file',error)
+        }
+      },0)
+    }
   }
 
   function queueId(type,entityId){
