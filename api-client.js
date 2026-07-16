@@ -106,6 +106,45 @@
     if(filtered.length!==rows.length)saveConflicts(filtered)
   }
 
+  function replaceCoachPublishedWeeksFromRemote(){
+    const remoteWeeks=state.remoteWeeks||[];
+    if(!remoteWeeks.length)return;
+
+    remoteWeeks.forEach(remoteWeek=>{
+      const localIndex=(state.weeks||[]).findIndex(w=>Number(w.number)===Number(remoteWeek.number));
+      const localWeek=localIndex>=0?state.weeks[localIndex]:null;
+
+      const executionBySessionId=new Map();
+      (localWeek?.sessions||[]).forEach(p=>{
+        if(p.sessionId&&p.execution)executionBySessionId.set(String(p.sessionId),p.execution)
+      });
+
+      const replacement={
+        ...remoteWeek,
+        remoteOrigin:false,
+        importedFromGoogleSheets:true,
+        status:'PUBLISHED',
+        planSync:{
+          status:'synced',
+          message:`Google Sheets v${remoteWeek.publicationVersion||1}`,
+          updatedAt:new Date().toISOString(),
+          remoteWeekId:remoteWeek.remoteTrainingWeekId,
+          remoteFingerprint:remoteWeek.remoteFingerprint||null,
+          remoteUpdatedAt:remoteWeek.remoteUpdatedAt||remoteWeek.publishedAt||null
+        },
+        sessions:(remoteWeek.sessions||[]).map(p=>({
+          ...p,
+          execution:executionBySessionId.get(String(p.sessionId))||p.execution||null
+        }))
+      };
+
+      if(localIndex>=0)state.weeks[localIndex]=replacement;
+      else state.weeks.push(replacement);
+    });
+
+    state.weeks.sort((a,b)=>Number(a.number)-Number(b.number))
+  }
+
   async function hydratePlanConflictBaselines(){
     const remoteWeeks=state.remoteWeeks||[];
     for(const remoteWeek of remoteWeeks){
@@ -131,6 +170,8 @@
       const r=await request('snapshot');
       mapSnapshotToLocal(r.snapshot);
       await hydratePlanConflictBaselines();
+      replaceCoachPublishedWeeksFromRemote();
+      if(typeof save==='function')save();
       const loaded=(state.remoteWeeks||[]).map(w=>`S${w.number} v${w.publicationVersion||1}`).join(', ');
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)${loaded?' · '+loaded:''}`});
       render();if(typeof toast==='function')toast('Instantané Google Sheets chargé')
@@ -206,7 +247,10 @@
   window.resolveConflictUseRemote=async function(id){
     const r=loadConflicts().find(x=>x.conflictId===id);if(!r)return;
     try{
-      const response=await request('snapshot');mapSnapshotToLocal(response.snapshot);
+      const response=await request('snapshot');
+      mapSnapshotToLocal(response.snapshot);
+      await hydratePlanConflictBaselines();
+      replaceCoachPublishedWeeksFromRemote();
       removeQueueItem(queueId(r.entityType==='execution'?'execution':'plan',r.entityId));
       removeConflict(id);
       if(r.entityType==='plan'){
