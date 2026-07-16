@@ -1,15 +1,21 @@
-# LTS Beta v0.5.6.7 — normalisation du numéro de semaine
+# LTS Beta v0.5.6.8 — migration et nettoyage du stockage local
 
-Cause corrigée :
-- après synchronisation, `week.number` peut être une chaîne (`"1"`) ;
-- les boutons transmettent un nombre (`1`) ;
-- la comparaison stricte empêchait de retrouver la semaine ;
-- l’exécution s’arrêtait avant la fermeture de l’éditeur.
+Cause :
+- chaque version utilisait une nouvelle clé `lts-v…`;
+- chaque clé contenait une copie complète de l’application;
+- le navigateur mobile a atteint son quota local;
+- `localStorage.setItem()` échouait avant la fermeture des éditeurs.
 
 Corrections :
-- toutes les recherches du flux d’ajout utilisent `Number(x.number) === Number(n)` ;
-- les identifiants de séance utilisent une comparaison par chaîne stable ;
-- messages explicites si la semaine, la séance ou la prescription est introuvable ;
-- protection `try/catch` autour de l’ajout.
+- clé permanente : `lts-current`;
+- migration automatique depuis la dernière clé `lts-v…`;
+- suppression ciblée des anciennes copies d’état;
+- conservation de :
+  - l’URL Apps Script;
+  - la file de synchronisation;
+  - les conflits;
+  - les choix de synchronisation;
+- nouvelle tentative automatique en cas de quota dépassé;
+- les prochaines versions conserveront la même clé permanente.
 
 Aucun changement Apps Script n’est nécessaire.
