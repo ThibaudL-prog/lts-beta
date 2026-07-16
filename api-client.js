@@ -86,6 +86,8 @@
   }
 
   function scheduleBackgroundSync(reason='local-change'){
+    if(window.__LTS_SUPPRESS_LOCAL_CHANGE__)return;
+    if(backgroundSyncRunning&&reason==='local-change')return;
     if(!cfg().url)return;
     if(!navigator.onLine)return;
     if(loadConflicts().some(x=>x.status==='open'))return;
@@ -133,21 +135,18 @@
     backgroundSyncQueued=false;
     setBackgroundSyncBadge('running','Synchronisation en arrière-plan…');
 
+    const previousSuppressState=window.__LTS_SUPPRESS_LOCAL_CHANGE__;
+    window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
+
     try{
-      // Preserve local edits: first retry explicit queued writes, then push local changes.
+      // Toutes les écritures réalisées ici sont techniques.
+      // Elles ne doivent jamais être interprétées comme une nouvelle modification Coach.
       pruneStaleQueueItems();
       await retrySyncQueue({silent:true});
       await syncPublishedPlans();
       await syncUnsyncedExecutions();
       await pushLocalAthleteData({silent:true});
-
-      // Pull the final source of truth only after local changes are sent.
-      window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
-      try{
-        await syncSheetsSnapshot({silent:true})
-      }finally{
-        window.__LTS_SUPPRESS_LOCAL_CHANGE__=false
-      }
+      await syncSheetsSnapshot({silent:true});
 
       pruneStaleQueueItems();
       backgroundSyncFailureCount=0;
@@ -185,9 +184,12 @@
         backgroundSyncTimer=setTimeout(()=>runBackgroundSync('retry'),delay)
       }
     }finally{
+      window.__LTS_SUPPRESS_LOCAL_CHANGE__=previousSuppressState;
       backgroundSyncRunning=false;
+
       if(backgroundSyncQueued&&!backgroundSyncSuspended&&backgroundSyncFailureCount===0){
-        scheduleBackgroundSync('queued')
+        if(hasAnythingToBackgroundSync())scheduleBackgroundSync('queued');
+        else backgroundSyncQueued=false
       }
     }
   }
@@ -881,6 +883,8 @@
     }
 
     globalSyncRunning=true;
+    const previousSuppressState=window.__LTS_SUPPRESS_LOCAL_CHANGE__;
+    window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
     globalSyncProgress={step:0,total:6,label:'Préparation…',done:false};
     updateGlobalSyncProgress(0,'Préparation…');
     saveCfg({lastMessage:'Synchronisation globale en cours…'});
@@ -926,6 +930,8 @@
       globalSyncProgress={step:0,total:6,label:`Échec : ${error.message||'erreur inconnue'}`,done:false};
       if(typeof render==='function')render();
       if(typeof toast==='function')toast('Synchronisation incomplète')
+    }finally{
+      window.__LTS_SUPPRESS_LOCAL_CHANGE__=previousSuppressState
     }
   };
 

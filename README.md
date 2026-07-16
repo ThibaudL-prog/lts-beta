@@ -1,15 +1,15 @@
-# LTS Beta v0.5.6.9 — protection après publication
+# LTS Beta v0.5.6.10 — fin des relances internes de synchronisation
 
 Cause :
-- après `plan.publish`, la synchronisation automatique rechargeait immédiatement un snapshot ;
-- Google Sheets pouvait encore renvoyer momentanément le contenu précédent pour la même version ;
-- la copie Coach fraîchement publiée était alors remplacée à l’écran.
+- les fonctions de synchronisation appelaient `save()`;
+- chaque sauvegarde technique déclenchait un nouvel événement local;
+- la synchronisation se reprogrammait elle-même en boucle.
 
 Corrections :
-- une publication confirmée est protégée pendant 2 minutes ;
-- un snapshot de même version ne remplace pas cette copie fraîche ;
-- une version distante plus ancienne ne peut jamais écraser une version locale plus récente ;
-- une version distante réellement supérieure reste prioritaire ;
-- « Utiliser distant » force toujours le remplacement demandé par le Coach.
+- suppression des événements de changement local pendant toute synchronisation;
+- distinction entre modification Coach et écriture technique;
+- la programmation automatique ignore les sauvegardes internes;
+- vérification finale avant toute relance;
+- même protection appliquée au bouton « Synchroniser maintenant ».
 
 Aucun changement Apps Script n’est nécessaire.
