@@ -27,24 +27,78 @@
   }
 
   window.renderApiPanel=function(){
+    return renderGlobalSyncCenter()
+  };
+
+  function globalSyncState(){
     const c=cfg();
-    const cls=c.connected?'ok':(c.url?'error':'');
-    const label=c.connected?'Connectée':(c.url?'À vérifier':'Non configurée');
-    return `<div class="apiPanel"><div class="sectiontitle"><div><h3>Google Sheets</h3><p class="muted small">Connexion manuelle via Apps Script — v0.5.0</p></div><span class="apiStatus ${cls}">${label}</span></div>
-      <div class="apiGrid">
-        <div class="field"><label>URL de l’application Web Apps Script</label><input id="apiUrl" value="${escapeHtml(c.url)}" placeholder="https://script.google.com/macros/s/.../exec"></div>
-        <div class="field"><label>Athlète</label><input id="apiAthlete" value="${escapeHtml(c.athleteId)}"></div>
+    const queue=loadQueue();
+    const conflicts=loadConflicts().filter(x=>x.status==='open');
+    if(!c.url)return {status:'unconfigured',label:'Non configurée',message:'Renseigne l’URL Apps Script.'};
+    if(!navigator.onLine)return {status:'offline',label:'Hors ligne',message:`${queue.length} élément(s) seront envoyés au retour du réseau.`};
+    if(conflicts.length)return {status:'conflict',label:'Conflit',message:`${conflicts.length} conflit(s) à résoudre.`};
+    if(queue.length)return {status:'pending',label:'En attente',message:`${queue.length} élément(s) restent à synchroniser.`};
+    if(c.connected)return {status:'synced',label:'À jour',message:c.lastMessage||'Google Sheets est à jour.'};
+    return {status:'pending',label:'À vérifier',message:c.lastMessage||'Teste la connexion.'}
+  }
+
+  window.renderGlobalSyncCenter=function(){
+    const c=cfg();
+    const s=globalSyncState();
+    const queue=loadQueue();
+    const conflicts=loadConflicts().filter(x=>x.status==='open');
+    const localWeeks=(state.weeks||[]).filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced').length;
+    const unsyncedExecutions=(state.weeks||[]).flatMap(w=>w.sessions||[]).filter(p=>p.execution&&p.execution.sync?.status!=='synced').length;
+
+    return `<div class="syncCenter">
+      <div class="syncCenterHeader">
+        <div>
+          <h3 style="margin:0">Synchronisation Google Sheets</h3>
+          <p class="muted small" style="margin:4px 0 0">${escapeHtml(s.message)}</p>
+        </div>
+        <span class="syncGlobalStatus ${s.status}"><span class="syncDot"></span>${s.label}</span>
       </div>
-      <div class="dataTools">
-        <button class="btn secondary" onclick="saveApiSettings()">Enregistrer</button>
-        <button class="btn ghost" onclick="testSheetsApi()">Tester la connexion</button>
-        <button class="btn" onclick="syncSheetsSnapshot()">Charger l’instantané</button>
-        <button class="btn ghost" onclick="pushLocalAthleteData()">Envoyer check-ins et mensurations</button>
+
+      <div class="syncStats">
+        <div class="syncStat"><span class="muted small">En attente</span><b>${queue.length}</b></div>
+        <div class="syncStat"><span class="muted small">Conflits</span><b>${conflicts.length}</b></div>
+        <div class="syncStat"><span class="muted small">Non synchronisés</span><b>${localWeeks+unsyncedExecutions}</b></div>
       </div>
-      <p class="muted small" style="margin-bottom:0">${escapeHtml(c.lastMessage)}${c.lastSync?' · '+new Date(c.lastSync).toLocaleString('fr-FR'):''}</p>
-      ${renderSyncQueuePanel()}
-      ${renderConflictPanel()}
+
+      <div class="syncActions">
+        <button class="btn" onclick="synchronizeEverything()">Synchroniser maintenant</button>
+        <button class="btn secondary" onclick="toggleSyncSettings()">Réglages</button>
+        ${conflicts.length?`<button class="btn ghost" onclick="toggleConflictDetails()">Voir les conflits</button>`:''}
+      </div>
+
+      <div id="syncSettings" style="display:${c.url?'none':'block'};margin-top:12px">
+        <div class="apiGrid">
+          <div class="field"><label>URL Apps Script</label><input id="apiUrl" value="${escapeHtml(c.url)}" placeholder="https://script.google.com/macros/s/.../exec"></div>
+          <div class="field"><label>Athlète</label><input id="apiAthlete" value="${escapeHtml(c.athleteId)}"></div>
+        </div>
+        <div class="dataTools">
+          <button class="btn secondary" onclick="saveApiSettings()">Enregistrer</button>
+          <button class="btn ghost" onclick="testSheetsApi()">Tester la connexion</button>
+        </div>
+      </div>
+
+      <div id="syncDetails" style="margin-top:12px">
+        ${renderSyncQueuePanel()}
+        <div id="conflictDetails" style="display:${conflicts.length?'block':'none'}">${renderConflictPanel()}</div>
+      </div>
+
+      <div class="syncLast">Dernière synchronisation : ${c.lastSync?new Date(c.lastSync).toLocaleString('fr-FR'):'jamais'}</div>
     </div>`
+  };
+
+  window.toggleSyncSettings=function(){
+    const el=document.getElementById('syncSettings');
+    if(el)el.style.display=el.style.display==='none'?'block':'none'
+  };
+
+  window.toggleConflictDetails=function(){
+    const el=document.getElementById('conflictDetails');
+    if(el)el.style.display=el.style.display==='none'?'block':'none'
   };
 
   window.saveApiSettings=function(){
@@ -164,7 +218,7 @@
     if(typeof save==='function')save()
   }
 
-  window.syncSheetsSnapshot=async function(){
+  window.syncSheetsSnapshot=async function(options={}){
     saveApiSettings();saveCfg({lastMessage:'Chargement de l’instantané…'});
     try{
       const r=await request('snapshot');
@@ -174,14 +228,14 @@
       if(typeof save==='function')save();
       const loaded=(state.remoteWeeks||[]).map(w=>`S${w.number} v${w.publicationVersion||1}`).join(', ');
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)${loaded?' · '+loaded:''}`});
-      render();if(typeof toast==='function')toast('Instantané Google Sheets chargé')
+      render();if(!options.silent&&typeof toast==='function')toast('Instantané Google Sheets chargé')
     }catch(e){
       saveCfg({connected:false,lastMessage:e.message});
-      if(typeof toast==='function')toast('Synchronisation impossible')
+      if(!options.silent&&typeof toast==='function')toast('Synchronisation impossible')
     }
   };
 
-  window.pushLocalAthleteData=async function(){
+  window.pushLocalAthleteData=async function(options={}){
     saveApiSettings();saveCfg({lastMessage:'Envoi des données Athlète…'});
     try{
       const checkins=(state.records?.checkins||[]).map(r=>({...r,athlete_id:cfg().athleteId}));
@@ -195,7 +249,7 @@
       if(measurements.length)await request('measurements.append',{method:'POST',payload:{records:measurements}});
       if(typeof logAudit==='function')logAudit('SYNC_PUSH','API',cfg().athleteId,`${checkins.length} check-ins · ${measurements.length} mesures`);
       save();saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Envoi terminé · ${checkins.length} check-ins · ${measurements.length} mesures`});
-      if(typeof toast==='function')toast('Données Athlète envoyées')
+      if(!options.silent&&typeof toast==='function')toast('Données Athlète envoyées')
     }catch(e){
       if(checkins.length)upsertQueueItem({
         queueId:queueId('checkins',cfg().athleteId),
@@ -212,7 +266,7 @@
         records:measurements
       });
       saveCfg({connected:false,lastMessage:`Données mises en attente · ${e.message}`});
-      if(typeof toast==='function')toast('Données conservées localement et mises en attente')
+      if(!options.silent&&typeof toast==='function')toast('Données conservées localement et mises en attente')
     }
   };
 
@@ -430,17 +484,17 @@
     }
   }
 
-  window.retrySyncQueue=async function(){
+  window.retrySyncQueue=async function(options={}){
     if(queueProcessing)return;
     if(!navigator.onLine){
-      if(typeof toast==='function')toast('Toujours hors ligne');
+      if(!options.silent&&typeof toast==='function')toast('Toujours hors ligne');
       return
     }
     queueProcessing=true;
     try{
       const queue=[...loadQueue()];
       if(!queue.length){
-        if(typeof toast==='function')toast('Aucun élément en attente');
+        if(!options.silent&&typeof toast==='function')toast('Aucun élément en attente');
         return
       }
       for(const item of queue){
@@ -458,7 +512,7 @@
       if(typeof save==='function')save();
       saveCfg({lastSync:isoNow(),lastMessage:`File traitée · ${loadQueue().length} restant(s)`});
       if(typeof render==='function')render();
-      if(typeof toast==='function')toast(loadQueue().length?'Certaines synchronisations restent en attente':'Toutes les synchronisations sont à jour')
+      if(!options.silent&&typeof toast==='function')toast(loadQueue().length?'Certaines synchronisations restent en attente':'Toutes les synchronisations sont à jour')
     }finally{
       queueProcessing=false
     }
@@ -471,6 +525,54 @@
   window.addEventListener('offline',()=>{
     saveCfg({connected:false,lastMessage:'Hors ligne · les données seront mises en attente'})
   });
+
+
+  async function syncPublishedPlans(){
+    const weeks=(state.weeks||[]).filter(w=>w.status==='PUBLISHED');
+    for(const week of weeks){
+      if(week.planSync?.status==='synced')continue;
+      await syncWeekPlan(week.number)
+    }
+  }
+
+  async function syncUnsyncedExecutions(){
+    const sessions=(state.weeks||[]).flatMap(w=>w.sessions||[]);
+    for(const session of sessions){
+      if(!session.execution)continue;
+      if(session.execution.sync?.status==='synced')continue;
+      await syncSessionExecution(session.sessionId)
+    }
+  }
+
+  window.synchronizeEverything=async function(){
+    const c=cfg();
+    if(!c.url){
+      toggleSyncSettings();
+      if(typeof toast==='function')toast('Configure d’abord Google Sheets');
+      return
+    }
+    if(!navigator.onLine){
+      if(typeof toast==='function')toast('Hors ligne · les données restent en attente');
+      return
+    }
+    saveCfg({lastMessage:'Synchronisation globale en cours…'});
+
+    try{
+      await retrySyncQueue({silent:true});
+      await syncPublishedPlans();
+      await syncUnsyncedExecutions();
+      await pushLocalAthleteData({silent:true});
+      await syncSheetsSnapshot({silent:true});
+      saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Toutes les données sont à jour'});
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast('Synchronisation terminée')
+    }catch(error){
+      console.error('Synchronisation globale',error);
+      saveCfg({connected:false,lastMessage:error.message||'Synchronisation incomplète'});
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast('Synchronisation incomplète')
+    }
+  };
 
   function currentApiConfig(){return cfg()}
 

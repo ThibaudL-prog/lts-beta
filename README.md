@@ -1,13 +1,18 @@
-# LTS Beta v0.5.4.6 — actualisation Coach depuis Google Sheets
+# LTS Beta v0.5.5 — centre global de synchronisation
 
-Correction :
-- « Charger l’instantané » remplace la copie locale Coach des semaines publiées par la dernière version Google Sheets ;
-- « Utiliser distant » applique immédiatement la version distante à l’écran Coach ;
-- les conteneurs, prescriptions, charges, durées et commentaires sont actualisés ;
-- les exécutions Athlète locales sont conservées lorsque les identifiants correspondent.
-
-Règle :
-- après une modification faite sur un autre appareil, utiliser « Charger l’instantané » sur l’appareil qui n’a pas publié ;
-- après « Utiliser distant », l’actualisation est automatique.
+Ajouts :
+- statut global unique : À jour, En attente, Conflit, Hors ligne ou Non configurée ;
+- bouton unique « Synchroniser maintenant » ;
+- synchronisation en une action :
+  - file locale ;
+  - semaines publiées ;
+  - résultats Athlète ;
+  - check-ins ;
+  - mensurations ;
+  - chargement du dernier instantané ;
+- horodatage de la dernière synchronisation ;
+- compteurs : éléments en attente, conflits et données non synchronisées ;
+- réglages Apps Script repliables ;
+- conservation des panneaux détaillés de file et de conflits.
 
 Aucun changement Apps Script n’est requis.
