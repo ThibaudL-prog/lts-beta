@@ -1,15 +1,10 @@
-# LTS Beta v0.5.6.13 — stabilisation de la synchronisation des plans
+# LTS Beta v0.5.6.14 — réconciliation du statut de synchronisation
 
-Décision de stabilisation :
-- suppression automatique des anciennes entrées `plan` bloquées ;
-- arrêt des tentatives automatiques pour les plans ;
-- aucune création de file en cas d’échec de publication d’une semaine ;
-- publication d’un plan uniquement via :
-  - « Publier » ;
-  - « Synchroniser maintenant » ;
-- erreur affichée directement et conservée dans le statut de la semaine ;
-- la file hors ligne reste disponible pour les données Athlète.
-
-Cette version privilégie la fiabilité et la lisibilité à l’automatisation.
+Correction :
+- après le chargement final de Google Sheets, les semaines publiées sont rapprochées de leur version distante ;
+- si la version distante est identique ou plus récente et qu’aucun conflit n’est ouvert, la semaine passe à `synced` ;
+- le compteur « Non synchronisés » retombe à 0 ;
+- le statut global ne peut plus afficher « À jour » si un élément reste réellement non synchronisé ;
+- les anciens statuts `error` ou `pending` sont nettoyés après une synchronisation confirmée.
 
 Aucun changement Apps Script n’est nécessaire.

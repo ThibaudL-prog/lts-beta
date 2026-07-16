@@ -145,6 +145,7 @@
       await syncUnsyncedExecutions();
       await pushLocalAthleteData({silent:true});
       await syncSheetsSnapshot({silent:true});
+      reconcilePublishedWeekSyncStatus();
 
       pruneStaleQueueItems();
       backgroundSyncFailureCount=0;
@@ -255,6 +256,18 @@
     if(!navigator.onLine)return {status:'offline',label:'Hors ligne',message:`${queue.length} élément(s) seront envoyés au retour du réseau.`};
     if(conflicts.length)return {status:'conflict',label:'Conflit',message:`${conflicts.length} conflit(s) à résoudre.`};
     if(queue.length)return {status:'pending',label:'En attente',message:`${queue.length} élément(s) restent à synchroniser.`};
+
+    const unsyncedPlans=(state.weeks||[]).filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced').length;
+    const unsyncedExecutions=(state.weeks||[]).flatMap(w=>w.sessions||[]).filter(p=>p.execution&&p.execution.sync?.status!=='synced').length;
+
+    if(unsyncedPlans+unsyncedExecutions){
+      return {
+        status:'pending',
+        label:'En attente',
+        message:`${unsyncedPlans+unsyncedExecutions} élément(s) restent à synchroniser.`
+      }
+    }
+
     if(c.connected)return {status:'synced',label:'À jour',message:c.lastMessage||'Google Sheets est à jour.'};
     return {status:'pending',label:'À vérifier',message:c.lastMessage||'Teste la connexion.'}
   }
@@ -850,6 +863,43 @@
     if(filtered.length!==rows.length)saveConflicts(filtered)
   }
 
+  function reconcilePublishedWeekSyncStatus(){
+    const remoteWeeks=state.remoteWeeks||[];
+
+    (state.weeks||[]).forEach(week=>{
+      if(week.status!=='PUBLISHED')return;
+
+      const remote=remoteWeeks.find(r=>Number(r.number)===Number(week.number));
+      if(!remote)return;
+
+      const localVersion=Number(week.publicationVersion||0);
+      const remoteVersion=Number(remote.publicationVersion||0);
+
+      // When the remote version is the same or newer, and there is no
+      // explicit open conflict, the plan is considered synchronized.
+      const hasOpenConflict=loadConflicts().some(c=>
+        c.status==='open' &&
+        c.entityType==='plan' &&
+        Number(c.weekNo)===Number(week.number)
+      );
+
+      if(!hasOpenConflict && remoteVersion>=localVersion){
+        week.planSync={
+          ...(week.planSync||{}),
+          status:'synced',
+          message:`Google Sheets v${remoteVersion||localVersion||1}`,
+          updatedAt:isoNow(),
+          remoteWeekId:remote.remoteTrainingWeekId||week.planSync?.remoteWeekId||null,
+          remoteFingerprint:remote.remoteFingerprint||week.planSync?.remoteFingerprint||null,
+          remoteUpdatedAt:remote.remoteUpdatedAt||remote.publishedAt||null
+        };
+        delete week.planSync.queueId
+      }
+    });
+
+    if(typeof save==='function')save()
+  }
+
   async function syncPublishedPlans(){
     const weeks=(state.weeks||[]).filter(w=>w.status==='PUBLISHED');
     for(const week of weeks){
@@ -914,9 +964,20 @@
 
       updateGlobalSyncProgress(6,'Vérification finale…');
       await syncSheetsSnapshot({silent:true});
+      reconcilePublishedWeekSyncStatus();
       pruneStaleQueueItems();
 
-      saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Toutes les données sont à jour'});
+      const remainingPlans=(state.weeks||[]).filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced').length;
+      const remainingQueue=loadQueue().length;
+      const openConflicts=loadConflicts().filter(c=>c.status==='open').length;
+
+      saveCfg({
+        connected:true,
+        lastSync:new Date().toISOString(),
+        lastMessage:(remainingPlans||remainingQueue||openConflicts)
+          ?'Synchronisation terminée avec éléments restant à traiter'
+          :'Toutes les données sont à jour'
+      });
       globalSyncRunning=false;
       globalSyncProgress={step:6,total:6,label:'Terminée',done:true};
       if(typeof render==='function')render();
