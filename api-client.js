@@ -527,10 +527,31 @@
   });
 
 
+  function weekHasRealLocalChanges(week){
+    if(!week||week.status!=='PUBLISHED')return false;
+    if(week.planSync?.status==='pending')return true;
+    if(week.planSync?.status==='error'&&week.planSync?.message!=='Conflit multi-appareils')return true;
+    if(week.lastPublishedFingerprint&&typeof weekPlanningFingerprint==='function'){
+      try{return weekPlanningFingerprint(week)!==week.lastPublishedFingerprint}catch(error){}
+    }
+    return false
+  }
+
+  function clearResolvedOrStaleConflicts(){
+    const rows=loadConflicts();
+    const filtered=rows.filter(row=>{
+      if(row.entityType!=='plan')return true;
+      const week=(state.weeks||[]).find(w=>Number(w.number)===Number(row.weekNo));
+      if(!week)return false;
+      return weekHasRealLocalChanges(week)
+    });
+    if(filtered.length!==rows.length)saveConflicts(filtered)
+  }
+
   async function syncPublishedPlans(){
     const weeks=(state.weeks||[]).filter(w=>w.status==='PUBLISHED');
     for(const week of weeks){
-      if(week.planSync?.status==='synced')continue;
+      if(!weekHasRealLocalChanges(week))continue;
       await syncWeekPlan(week.number)
     }
   }
@@ -558,11 +579,23 @@
     saveCfg({lastMessage:'Synchronisation globale en cours…'});
 
     try{
+      // 1. Pull remote source of truth first.
+      await syncSheetsSnapshot({silent:true});
+
+      // 2. Remove stale conflicts that no longer correspond to a local change.
+      clearResolvedOrStaleConflicts();
+
+      // 3. Retry explicit queued operations.
       await retrySyncQueue({silent:true});
+
+      // 4. Push only genuine local changes.
       await syncPublishedPlans();
       await syncUnsyncedExecutions();
       await pushLocalAthleteData({silent:true});
+
+      // 5. Final pull so both devices end on the same state.
       await syncSheetsSnapshot({silent:true});
+
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Toutes les données sont à jour'});
       if(typeof render==='function')render();
       if(typeof toast==='function')toast('Synchronisation terminée')
