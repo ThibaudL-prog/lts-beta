@@ -1,13 +1,18 @@
-# LTS Beta v0.5.5.3 — progression de synchronisation
+# LTS Beta v0.5.6 — synchronisation automatique en arrière-plan
 
 Ajouts :
-- bouton désactivé pendant la synchronisation ;
-- animation de chargement ;
-- progression en 6 étapes ;
-- libellé de l’étape en cours ;
-- compteur de progression ;
-- confirmation finale visible pendant 5 secondes ;
-- protection contre les doubles clics ;
-- message explicite en cas d’échec.
+- détection automatique des modifications locales ;
+- synchronisation différée après 3,5 secondes ;
+- aucune synchronisation pendant qu’un éditeur ou une fiche est ouvert ;
+- reprise automatique au retour du réseau ;
+- reprise lorsque l’application redevient visible ;
+- indicateur discret en bas d’écran ;
+- protection contre les doubles synchronisations ;
+- protection contre les boucles créées par le chargement de l’instantané ;
+- le bouton manuel reste disponible comme filet de sécurité.
 
-Aucun changement Apps Script n’est nécessaire.
+Règle :
+- les modifications locales sont envoyées avant le chargement final de Google Sheets ;
+- les conflits ouverts bloquent la synchronisation automatique jusqu’à arbitrage.
+
+Aucun changement Apps Script n’est requis.

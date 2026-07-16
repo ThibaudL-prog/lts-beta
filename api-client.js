@@ -30,6 +30,137 @@
     return renderGlobalSyncCenter()
   };
 
+
+  let backgroundSyncTimer=null;
+  let backgroundSyncRunning=false;
+  let backgroundSyncQueued=false;
+  let backgroundSyncLastRequestAt=0;
+  const BACKGROUND_SYNC_DELAY_MS=3500;
+  const BACKGROUND_SYNC_MIN_INTERVAL_MS=12000;
+
+  function setBackgroundSyncBadge(mode,text){
+    const badge=document.getElementById('backgroundSyncBadge');
+    const label=document.getElementById('backgroundSyncBadgeText');
+    if(!badge||!label)return;
+    badge.classList.remove('show','done','error');
+    if(mode==='hidden')return;
+    badge.classList.add('show');
+    if(mode==='done')badge.classList.add('done');
+    if(mode==='error')badge.classList.add('error');
+    label.textContent=text;
+  }
+
+  function hideBackgroundSyncBadge(delay=1200){
+    setTimeout(()=>setBackgroundSyncBadge('hidden',''),delay)
+  }
+
+  function hasOpenEditor(){
+    return !!document.querySelector('.sheetwrap, .modal, [data-editing="true"]')
+  }
+
+  function hasAnythingToBackgroundSync(){
+    if(loadQueue().length)return true;
+    if(loadConflicts().some(x=>x.status==='open'))return false;
+
+    const dirtyPlan=(state.weeks||[]).some(w=>weekHasRealLocalChanges(w));
+    if(dirtyPlan)return true;
+
+    const dirtyExecution=(state.weeks||[])
+      .flatMap(w=>w.sessions||[])
+      .some(p=>p.execution&&p.execution.sync?.status!=='synced');
+    if(dirtyExecution)return true;
+
+    const dirtyCheckin=(state.checkins||[]).some(c=>!c.remoteSyncedAt);
+    const dirtyMeasurement=(state.measurements||[]).some(m=>!m.remoteSyncedAt);
+    return dirtyCheckin||dirtyMeasurement
+  }
+
+  function scheduleBackgroundSync(reason='local-change'){
+    if(!cfg().url)return;
+    if(!navigator.onLine)return;
+    if(loadConflicts().some(x=>x.status==='open'))return;
+
+    backgroundSyncLastRequestAt=Date.now();
+    backgroundSyncQueued=true;
+
+    clearTimeout(backgroundSyncTimer);
+    backgroundSyncTimer=setTimeout(()=>{
+      runBackgroundSync(reason)
+    },BACKGROUND_SYNC_DELAY_MS)
+  }
+
+  async function runBackgroundSync(reason='scheduled'){
+    if(backgroundSyncRunning||globalSyncRunning)return;
+    if(!navigator.onLine||!cfg().url)return;
+    if(loadConflicts().some(x=>x.status==='open'))return;
+
+    if(hasOpenEditor()){
+      scheduleBackgroundSync('editor-open');
+      return
+    }
+
+    if(!hasAnythingToBackgroundSync()){
+      backgroundSyncQueued=false;
+      return
+    }
+
+    const sinceLast=Date.now()-(cfg().lastSync?new Date(cfg().lastSync).getTime():0);
+    if(sinceLast<BACKGROUND_SYNC_MIN_INTERVAL_MS&&reason!=='online'){
+      scheduleBackgroundSync('min-interval');
+      return
+    }
+
+    backgroundSyncRunning=true;
+    backgroundSyncQueued=false;
+    setBackgroundSyncBadge('running','Synchronisation en arrière-plan…');
+
+    try{
+      // Preserve local edits: first retry explicit queued writes, then push local changes.
+      pruneStaleQueueItems();
+      await retrySyncQueue({silent:true});
+      await syncPublishedPlans();
+      await syncUnsyncedExecutions();
+      await pushLocalAthleteData({silent:true});
+
+      // Pull the final source of truth only after local changes are sent.
+      window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
+      try{
+        await syncSheetsSnapshot({silent:true})
+      }finally{
+        window.__LTS_SUPPRESS_LOCAL_CHANGE__=false
+      }
+
+      pruneStaleQueueItems();
+      saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Synchronisation automatique terminée'});
+      setBackgroundSyncBadge('done','Synchronisation automatique terminée');
+      hideBackgroundSyncBadge(1800);
+      if(typeof render==='function')render()
+    }catch(error){
+      console.error('Synchronisation arrière-plan',error);
+      saveCfg({connected:false,lastMessage:`Synchronisation automatique en attente · ${error.message||'Erreur'}`});
+      setBackgroundSyncBadge('error','Synchronisation reportée');
+      hideBackgroundSyncBadge(2200)
+    }finally{
+      backgroundSyncRunning=false;
+      if(backgroundSyncQueued)scheduleBackgroundSync('queued')
+    }
+  }
+
+  window.addEventListener('lts-local-change',()=>{
+    if(window.__LTS_SUPPRESS_LOCAL_CHANGE__)return;
+    scheduleBackgroundSync('local-change')
+  });
+
+  window.addEventListener('online',()=>{
+    setTimeout(()=>runBackgroundSync('online'),1000)
+  });
+
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'&&navigator.onLine){
+      scheduleBackgroundSync('visible')
+    }
+  });
+
   let globalSyncRunning=false;
   let globalSyncProgress={step:0,total:6,label:'Prête',done:false};
 
@@ -256,10 +387,15 @@
     saveApiSettings();saveCfg({lastMessage:'Chargement de l’instantané…'});
     try{
       const r=await request('snapshot');
-      mapSnapshotToLocal(r.snapshot);
-      await hydratePlanConflictBaselines();
-      replaceCoachPublishedWeeksFromRemote();
-      if(typeof save==='function')save();
+      window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
+      try{
+        mapSnapshotToLocal(r.snapshot);
+        await hydratePlanConflictBaselines();
+        replaceCoachPublishedWeeksFromRemote();
+        if(typeof save==='function')save();
+      }finally{
+        window.__LTS_SUPPRESS_LOCAL_CHANGE__=false
+      }
       const loaded=(state.remoteWeeks||[]).map(w=>`S${w.number} v${w.publicationVersion||1}`).join(', ');
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)${loaded?' · '+loaded:''}`});
       render();if(!options.silent&&typeof toast==='function')toast('Instantané Google Sheets chargé')
@@ -632,7 +768,9 @@
   }
 
   window.synchronizeEverything=async function(){
-    if(globalSyncRunning)return;
+    if(globalSyncRunning||backgroundSyncRunning)return;
+    clearTimeout(backgroundSyncTimer);
+    backgroundSyncQueued=false;
 
     const c=cfg();
     if(!c.url){
