@@ -312,13 +312,24 @@
     if(el)el.style.display=el.style.display==='none'?'block':'none'
   };
 
-  window.saveApiSettings=function(){
-    saveCfg({url:document.getElementById('apiUrl')?.value.trim()||'',athleteId:document.getElementById('apiAthlete')?.value.trim()||'ath_demo_001',connected:false,lastMessage:'Configuration enregistrée'});
-    if(typeof toast==='function')toast('Configuration API enregistrée')
+  window.saveApiSettings=function(options={}){
+    const current=cfg();
+    const urlField=document.getElementById('apiUrl');
+    const athleteField=document.getElementById('apiAthlete');
+
+    const next={
+      url:urlField?urlField.value.trim():current.url,
+      athleteId:athleteField?(athleteField.value.trim()||current.athleteId||'ath_demo_001'):current.athleteId,
+      connected:current.connected,
+      lastMessage:options.silent?current.lastMessage:'Configuration enregistrée'
+    };
+
+    saveCfg(next);
+    if(!options.silent&&typeof toast==='function')toast('Configuration API enregistrée')
   };
 
   window.testSheetsApi=async function(){
-    saveApiSettings();saveCfg({lastMessage:'Test en cours…'});
+    saveApiSettings({silent:true});saveCfg({lastMessage:'Test en cours…'});
     try{
       const r=await request('health');
       saveCfg({connected:true,lastSync:new Date().toISOString(),schemaVersion:r.schema_version,lastMessage:`API disponible · schéma ${r.schema_version}`});
@@ -430,7 +441,7 @@
   }
 
   window.syncSheetsSnapshot=async function(options={}){
-    saveApiSettings();saveCfg({lastMessage:'Chargement de l’instantané…'});
+    saveApiSettings({silent:true});saveCfg({lastMessage:'Chargement de l’instantané…'});
     try{
       const r=await request('snapshot');
       window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
@@ -452,7 +463,7 @@
   };
 
   window.pushLocalAthleteData=async function(options={}){
-    saveApiSettings();saveCfg({lastMessage:'Envoi des données Athlète…'});
+    saveApiSettings({silent:true});saveCfg({lastMessage:'Envoi des données Athlète…'});
     let checkins=[];
     let measurements=[];
     try{
