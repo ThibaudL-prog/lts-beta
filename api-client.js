@@ -30,6 +30,30 @@
     return renderGlobalSyncCenter()
   };
 
+  let globalSyncRunning=false;
+  let globalSyncProgress={step:0,total:6,label:'Prête',done:false};
+
+  function updateGlobalSyncProgress(step,label,done=false){
+    globalSyncProgress={step,total:6,label,done};
+    const bar=document.getElementById('globalSyncProgressBar');
+    const text=document.getElementById('globalSyncProgressLabel');
+    const count=document.getElementById('globalSyncProgressCount');
+    const button=document.getElementById('globalSyncButton');
+    const doneBox=document.getElementById('globalSyncDone');
+
+    if(bar)bar.style.width=`${Math.min(100,Math.round(step/6*100))}%`;
+    if(text)text.textContent=label;
+    if(count)count.textContent=`${Math.min(step,6)}/6`;
+    if(button){
+      button.disabled=globalSyncRunning;
+      button.innerHTML=globalSyncRunning?`<span class="syncSpinner"></span>Synchronisation…`:'Synchroniser maintenant'
+    }
+    if(doneBox){
+      doneBox.style.display=done?'block':'none';
+      doneBox.textContent=done?'Synchronisation terminée · toutes les données sont à jour':''
+    }
+  }
+
   function globalSyncState(){
     const c=cfg();
     const queue=loadQueue();
@@ -67,9 +91,18 @@
       </div>
 
       <div class="syncActions">
-        <button class="btn" onclick="synchronizeEverything()">Synchroniser maintenant</button>
+        <button id="globalSyncButton" class="btn" onclick="synchronizeEverything()" ${globalSyncRunning?'disabled':''}>${globalSyncRunning?'<span class="syncSpinner"></span>Synchronisation…':'Synchroniser maintenant'}</button>
         <button class="btn secondary" onclick="toggleSyncSettings()">Réglages</button>
         ${conflicts.length?`<button class="btn ghost" onclick="toggleConflictDetails()">Voir les conflits</button>`:''}
+      </div>
+
+      <div class="syncProgressWrap">
+        <div class="syncProgressTrack"><div id="globalSyncProgressBar" class="syncProgressBar" style="width:${Math.round((globalSyncProgress.step||0)/6*100)}%"></div></div>
+        <div class="syncProgressText">
+          <span id="globalSyncProgressLabel">${escapeHtml(globalSyncProgress.label||'Prête')}</span>
+          <span id="globalSyncProgressCount">${globalSyncProgress.step||0}/6</span>
+        </div>
+        <div id="globalSyncDone" class="syncDone" style="display:${globalSyncProgress.done?'block':'none'}">${globalSyncProgress.done?'Synchronisation terminée · toutes les données sont à jour':''}</div>
       </div>
 
       <div id="syncSettings" style="display:${c.url?'none':'block'};margin-top:12px">
@@ -599,6 +632,8 @@
   }
 
   window.synchronizeEverything=async function(){
+    if(globalSyncRunning)return;
+
     const c=cfg();
     if(!c.url){
       toggleSyncSettings();
@@ -609,35 +644,51 @@
       if(typeof toast==='function')toast('Hors ligne · les données restent en attente');
       return
     }
+
+    globalSyncRunning=true;
+    globalSyncProgress={step:0,total:6,label:'Préparation…',done:false};
+    updateGlobalSyncProgress(0,'Préparation…');
     saveCfg({lastMessage:'Synchronisation globale en cours…'});
 
     try{
       pruneStaleQueueItems();
 
-      // 1. Pull remote source of truth first.
+      updateGlobalSyncProgress(1,'Lecture de Google Sheets…');
       await syncSheetsSnapshot({silent:true});
 
-      // 2. Remove stale conflicts that no longer correspond to a local change.
+      updateGlobalSyncProgress(2,'Nettoyage des conflits obsolètes…');
       clearResolvedOrStaleConflicts();
 
-      // 3. Retry explicit queued operations.
+      updateGlobalSyncProgress(3,'Traitement de la file locale…');
       await retrySyncQueue({silent:true});
 
-      // 4. Push only genuine local changes.
+      updateGlobalSyncProgress(4,'Envoi des plans et performances…');
       await syncPublishedPlans();
       await syncUnsyncedExecutions();
+
+      updateGlobalSyncProgress(5,'Envoi des check-ins et mensurations…');
       await pushLocalAthleteData({silent:true});
 
-      // 5. Final pull so both devices end on the same state.
+      updateGlobalSyncProgress(6,'Vérification finale…');
       await syncSheetsSnapshot({silent:true});
       pruneStaleQueueItems();
 
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Toutes les données sont à jour'});
+      globalSyncRunning=false;
+      globalSyncProgress={step:6,total:6,label:'Terminée',done:true};
       if(typeof render==='function')render();
-      if(typeof toast==='function')toast('Synchronisation terminée')
+      updateGlobalSyncProgress(6,'Terminée',true);
+      if(typeof toast==='function')toast('Synchronisation terminée');
+
+      setTimeout(()=>{
+        globalSyncProgress={step:0,total:6,label:'Prête',done:false};
+        if(typeof render==='function')render()
+      },5000)
     }catch(error){
       console.error('Synchronisation globale',error);
       saveCfg({connected:false,lastMessage:error.message||'Synchronisation incomplète'});
+      globalSyncRunning=false;
+      globalSyncProgress={step:0,total:6,label:`Échec : ${error.message||'erreur inconnue'}`,done:false};
       if(typeof render==='function')render();
       if(typeof toast==='function')toast('Synchronisation incomplète')
     }
