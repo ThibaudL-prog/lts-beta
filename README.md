@@ -1,11 +1,10 @@
-# LTS Beta v0.5.5.1 — ordre de synchronisation corrigé
+# LTS Beta v0.5.5.2 — nettoyage des éléments de file obsolètes
 
 Correction :
-- « Synchroniser maintenant » charge d’abord Google Sheets ;
-- la copie locale Coach est actualisée avant toute tentative d’envoi ;
-- seules les vraies modifications locales sont ensuite publiées ;
-- les conflits devenus obsolètes sont supprimés ;
-- un second chargement final aligne les appareils ;
-- une semaine simplement plus ancienne localement ne déclenche plus un faux conflit.
+- les opérations déjà synchronisées sont retirées automatiquement de la file ;
+- les publications dont la semaine est déjà `synced` sont supprimées ;
+- les exécutions déjà synchronisées sont supprimées ;
+- les entrées sans entité locale correspondante sont supprimées ;
+- nettoyage avant l’affichage, avant la synchronisation et après la synchronisation.
 
 Aucun changement Apps Script n’est nécessaire.

@@ -43,6 +43,7 @@
   }
 
   window.renderGlobalSyncCenter=function(){
+    pruneStaleQueueItems();
     const c=cfg();
     const s=globalSyncState();
     const queue=loadQueue();
@@ -527,6 +528,38 @@
   });
 
 
+  function pruneStaleQueueItems(){
+    const queue=loadQueue();
+    const filtered=queue.filter(item=>{
+      if(item.type==='plan'){
+        const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
+        if(!week)return false;
+        if(week.planSync?.status==='synced'&&!weekHasRealLocalChanges(week))return false;
+      }
+
+      if(item.type==='execution'){
+        const found=typeof findSession==='function'?findSession(item.entityId):null;
+        if(!found?.session?.execution)return false;
+        if(found.session.execution.sync?.status==='synced')return false;
+      }
+
+      if(item.type==='checkins'){
+        const pending=(state.checkins||[]).some(c=>!c.remoteSyncedAt);
+        if(!pending)return false;
+      }
+
+      if(item.type==='measurements'){
+        const pending=(state.measurements||[]).some(m=>!m.remoteSyncedAt);
+        if(!pending)return false;
+      }
+
+      return true
+    });
+
+    if(filtered.length!==queue.length)saveQueue(filtered);
+    return queue.length-filtered.length
+  }
+
   function weekHasRealLocalChanges(week){
     if(!week||week.status!=='PUBLISHED')return false;
     if(week.planSync?.status==='pending')return true;
@@ -579,6 +612,8 @@
     saveCfg({lastMessage:'Synchronisation globale en cours…'});
 
     try{
+      pruneStaleQueueItems();
+
       // 1. Pull remote source of truth first.
       await syncSheetsSnapshot({silent:true});
 
@@ -595,6 +630,7 @@
 
       // 5. Final pull so both devices end on the same state.
       await syncSheetsSnapshot({silent:true});
+      pruneStaleQueueItems();
 
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Toutes les données sont à jour'});
       if(typeof render==='function')render();
