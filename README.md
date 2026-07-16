@@ -1,17 +1,11 @@
-# LTS Beta v0.5.6.5 — enregistrements non bloquants
+# LTS Beta v0.5.6.6 — identifiants stables dans les éditeurs
 
-Correction principale :
-- `save()` écrit d’abord les données locales puis rend immédiatement la main à l’interface ;
-- la notification de synchronisation est déclenchée ensuite, de manière asynchrone ;
-- une erreur de synchronisation ne peut plus empêcher la fermeture d’une fenêtre ;
-- le gestionnaire de synchronisation automatique est protégé par un `try/catch` ;
-- lors d’une publication, la fenêtre se ferme avant le démarrage de l’envoi Google Sheets.
-
-Cela concerne notamment :
-- Enregistrer une prescription ;
-- Enregistrer les modifications ;
-- Enregistrer une semaine ;
-- Publier une semaine ;
-- les autres formulaires utilisant la fonction commune `save()`.
+Corrections :
+- l’ajout d’une prescription transporte explicitement l’identifiant de la séance cible ;
+- il ne dépend plus de `state.pendingContainerId` après une synchronisation ;
+- la modification utilise `sessionId`, et non plus la position de la prescription dans un tableau ;
+- les boutons utilisent `type="button"` ;
+- les fenêtres disposent d’identifiants explicites ;
+- les erreurs d’enregistrement sont désormais affichées au lieu de laisser un bouton apparemment inactif.
 
 Aucun changement Apps Script n’est nécessaire.
