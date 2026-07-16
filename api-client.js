@@ -346,7 +346,7 @@
             label:`Semaine ${week.number}`,
             message:newer?'Une version distante plus récente existe.':baselineMissing?'Référence distante absente : recharge l’instantané.':'La même version a été modifiée ailleurs.'
           });
-          week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};
+          week.planSync={...previousPlanSync,status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId,remoteFingerprint:knownRemoteFingerprint};
           save();
           throw new Error('CONFLICT_BLOCKED');
         }
@@ -775,7 +775,14 @@
       save();renderWeeks();return
     }
 
-    week.planSync={status:'pending',message:'Publication vers Google Sheets',updatedAt:isoNow()};
+    const previousPlanSync={...(week.planSync||{})};
+    const knownRemoteFingerprint=previousPlanSync.remoteFingerprint||null;
+    week.planSync={
+      ...previousPlanSync,
+      status:'pending',
+      message:'Publication vers Google Sheets',
+      updatedAt:isoNow()
+    };
     save();renderWeeks();
 
     try{
@@ -783,7 +790,7 @@
       const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
       if(!force){
         const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
-        const known=week.planSync?.remoteFingerprint||null;
+        const known=knownRemoteFingerprint;
         const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
         const sameVersion=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0);
         const changed=sameVersion&&known&&meta.fingerprint!==known;
@@ -825,7 +832,7 @@
         label:`Semaine ${week.number} v${week.publicationVersion||1}`,
         payload
       });
-      week.planSync={status:'error',message:`En attente · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId};
+      week.planSync={...previousPlanSync,status:'error',message:`En attente · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId,remoteFingerprint:knownRemoteFingerprint};
       saveCfg({connected:false,lastMessage:`Publication mise en attente · ${error.message||'Erreur réseau'}`});
       save();renderWeeks();
       if(typeof toast==='function')toast('Publication conservée localement et mise en attente')
