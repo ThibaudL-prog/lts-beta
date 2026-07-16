@@ -1,18 +1,15 @@
-# LTS Beta v0.5.6 — synchronisation automatique en arrière-plan
+# LTS Beta v0.5.6.1 — arrêt des boucles de synchronisation
 
-Ajouts :
-- détection automatique des modifications locales ;
-- synchronisation différée après 3,5 secondes ;
-- aucune synchronisation pendant qu’un éditeur ou une fiche est ouvert ;
-- reprise automatique au retour du réseau ;
-- reprise lorsque l’application redevient visible ;
-- indicateur discret en bas d’écran ;
-- protection contre les doubles synchronisations ;
-- protection contre les boucles créées par le chargement de l’instantané ;
-- le bouton manuel reste disponible comme filet de sécurité.
+Correction :
+- maximum de 2 tentatives automatiques rapprochées ;
+- délais progressifs de 15 s puis 45 s ;
+- arrêt automatique après deux échecs ;
+- message stable « Synchronisation en attente » ;
+- reprise seulement après :
+  - une nouvelle modification locale ;
+  - un retour du réseau ;
+  - un clic sur « Synchroniser maintenant » ;
+- le retour au premier plan ne réveille plus une synchronisation suspendue ;
+- une synchronisation réussie remet les compteurs d’échec à zéro.
 
-Règle :
-- les modifications locales sont envoyées avant le chargement final de Google Sheets ;
-- les conflits ouverts bloquent la synchronisation automatique jusqu’à arbitrage.
-
-Aucun changement Apps Script n’est requis.
+Aucun changement Apps Script n’est nécessaire.

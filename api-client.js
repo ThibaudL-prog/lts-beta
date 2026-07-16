@@ -35,8 +35,13 @@
   let backgroundSyncRunning=false;
   let backgroundSyncQueued=false;
   let backgroundSyncLastRequestAt=0;
+  let backgroundSyncFailureCount=0;
+  let backgroundSyncSuspended=false;
+  let backgroundSyncLastError='';
   const BACKGROUND_SYNC_DELAY_MS=3500;
   const BACKGROUND_SYNC_MIN_INTERVAL_MS=12000;
+  const BACKGROUND_SYNC_MAX_FAILURES=2;
+  const BACKGROUND_SYNC_BACKOFF_MS=[15000,45000];
 
   function setBackgroundSyncBadge(mode,text){
     const badge=document.getElementById('backgroundSyncBadge');
@@ -79,6 +84,15 @@
     if(!cfg().url)return;
     if(!navigator.onLine)return;
     if(loadConflicts().some(x=>x.status==='open'))return;
+
+    // A genuine new local change or a network return re-enables background sync.
+    if(reason==='local-change'||reason==='online'||reason==='manual-reset'){
+      backgroundSyncSuspended=false;
+      backgroundSyncFailureCount=0;
+      backgroundSyncLastError='';
+    }
+
+    if(backgroundSyncSuspended)return;
 
     backgroundSyncLastRequestAt=Date.now();
     backgroundSyncQueued=true;
@@ -131,18 +145,45 @@
       }
 
       pruneStaleQueueItems();
+      backgroundSyncFailureCount=0;
+      backgroundSyncSuspended=false;
+      backgroundSyncLastError='';
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:'Synchronisation automatique terminée'});
       setBackgroundSyncBadge('done','Synchronisation automatique terminée');
       hideBackgroundSyncBadge(1800);
       if(typeof render==='function')render()
     }catch(error){
       console.error('Synchronisation arrière-plan',error);
-      saveCfg({connected:false,lastMessage:`Synchronisation automatique en attente · ${error.message||'Erreur'}`});
-      setBackgroundSyncBadge('error','Synchronisation reportée');
-      hideBackgroundSyncBadge(2200)
+      backgroundSyncFailureCount+=1;
+      backgroundSyncLastError=error.message||'Erreur';
+
+      if(backgroundSyncFailureCount>=BACKGROUND_SYNC_MAX_FAILURES){
+        backgroundSyncSuspended=true;
+        backgroundSyncQueued=false;
+        clearTimeout(backgroundSyncTimer);
+        saveCfg({
+          connected:false,
+          lastMessage:`Synchronisation en attente · ${backgroundSyncLastError}`
+        });
+        setBackgroundSyncBadge('error','Synchronisation en attente');
+        hideBackgroundSyncBadge(2600)
+      }else{
+        const delay=BACKGROUND_SYNC_BACKOFF_MS[Math.min(backgroundSyncFailureCount-1,BACKGROUND_SYNC_BACKOFF_MS.length-1)];
+        saveCfg({
+          connected:false,
+          lastMessage:`Nouvelle tentative automatique dans ${Math.round(delay/1000)} s · ${backgroundSyncLastError}`
+        });
+        setBackgroundSyncBadge('error',`Nouvelle tentative dans ${Math.round(delay/1000)} s`);
+        hideBackgroundSyncBadge(2200);
+        clearTimeout(backgroundSyncTimer);
+        backgroundSyncQueued=true;
+        backgroundSyncTimer=setTimeout(()=>runBackgroundSync('retry'),delay)
+      }
     }finally{
       backgroundSyncRunning=false;
-      if(backgroundSyncQueued)scheduleBackgroundSync('queued')
+      if(backgroundSyncQueued&&!backgroundSyncSuspended&&backgroundSyncFailureCount===0){
+        scheduleBackgroundSync('queued')
+      }
     }
   }
 
@@ -156,7 +197,7 @@
   });
 
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&navigator.onLine){
+    if(document.visibilityState==='visible'&&navigator.onLine&&!backgroundSyncSuspended){
       scheduleBackgroundSync('visible')
     }
   });
@@ -771,6 +812,9 @@
     if(globalSyncRunning||backgroundSyncRunning)return;
     clearTimeout(backgroundSyncTimer);
     backgroundSyncQueued=false;
+    backgroundSyncSuspended=false;
+    backgroundSyncFailureCount=0;
+    backgroundSyncLastError='';
 
     const c=cfg();
     if(!c.url){
