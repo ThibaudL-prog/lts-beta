@@ -723,6 +723,8 @@
       const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
       if(!week)throw new Error('Semaine locale introuvable');
 
+      const previousPlanSync={...(week.planSync||{})};
+      const knownRemoteFingerprint=previousPlanSync.remoteFingerprint||null;
       const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
       if(!force){
         const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
@@ -747,7 +749,19 @@
         }
       }
 
-      const result=await request('plan.publish',{method:'POST',payload:item.payload});
+      week.planSync={
+        ...previousPlanSync,
+        status:'pending',
+        message:'Reprise de la publication vers Google Sheets',
+        updatedAt:isoNow(),
+        remoteFingerprint:knownRemoteFingerprint
+      };
+      save();
+
+      // Rebuild from the current local week so the queue never republishes
+      // an obsolete payload after later Coach edits.
+      const currentPayload=buildPlanPayload(week);
+      const result=await request('plan.publish',{method:'POST',payload:currentPayload});
       if(week){
         const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
         week.planSync={
@@ -758,7 +772,8 @@
           remoteFingerprint:freshMeta.fingerprint||null
         };
         week.localPublishConfirmedAt=isoNow();
-        week.localPublishConfirmedVersion=Number(week.publicationVersion||1)
+        week.localPublishConfirmedVersion=Number(week.publicationVersion||1);
+        delete week.planSync.queueId
       }
     }else if(item.type==='checkins'){
       for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
