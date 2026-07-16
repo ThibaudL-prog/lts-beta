@@ -96,6 +96,16 @@
     save()
   }
 
+  function clearObsoleteBaselineConflict(week){
+    const rows=loadConflicts();
+    const filtered=rows.filter(row=>{
+      const samePlan=row.entityType==='plan'&&Number(row.weekNo)===Number(week.number);
+      const obsolete=samePlan&&String(row.message||'').includes('Référence distante absente');
+      return !obsolete
+    });
+    if(filtered.length!==rows.length)saveConflicts(filtered)
+  }
+
   async function hydratePlanConflictBaselines(){
     const remoteWeeks=state.remoteWeeks||[];
     for(const remoteWeek of remoteWeeks){
@@ -104,6 +114,7 @@
         if(!meta.found)continue;
         remoteWeek.remoteFingerprint=meta.fingerprint||null;
         remoteWeek.remoteUpdatedAt=meta.updated_at||null;
+        clearObsoleteBaselineConflict(remoteWeek);
         const localWeek=(state.weeks||[]).find(w=>Number(w.number)===Number(remoteWeek.number));
         if(localWeek&&localWeek.status==='PUBLISHED'){
           localWeek.planSync={...(localWeek.planSync||{}),status:'synced',message:`Google Sheets v${meta.version_no||remoteWeek.publicationVersion||1}`,updatedAt:new Date().toISOString(),remoteWeekId:meta.training_week_id||remoteWeek.remoteTrainingWeekId,remoteFingerprint:meta.fingerprint||null,remoteUpdatedAt:meta.updated_at||null};
@@ -198,6 +209,9 @@
       const response=await request('snapshot');mapSnapshotToLocal(response.snapshot);
       removeQueueItem(queueId(r.entityType==='execution'?'execution':'plan',r.entityId));
       removeConflict(id);
+      if(r.entityType==='plan'){
+        clearObsoleteBaselineConflict({number:r.weekNo})
+      }
       if(typeof logAudit==='function')logAudit('CONFLICT_USE_REMOTE',r.entityType,r.entityId,r.message||'');
       save();render();if(typeof toast==='function')toast('Version distante conservée')
     }catch(e){if(typeof toast==='function')toast('Impossible de charger la version distante')}
