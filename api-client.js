@@ -96,11 +96,30 @@
     save()
   }
 
+  async function hydratePlanConflictBaselines(){
+    const remoteWeeks=state.remoteWeeks||[];
+    for(const remoteWeek of remoteWeeks){
+      try{
+        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:remoteWeek.number});
+        if(!meta.found)continue;
+        remoteWeek.remoteFingerprint=meta.fingerprint||null;
+        remoteWeek.remoteUpdatedAt=meta.updated_at||null;
+        const localWeek=(state.weeks||[]).find(w=>Number(w.number)===Number(remoteWeek.number));
+        if(localWeek&&localWeek.status==='PUBLISHED'){
+          localWeek.planSync={...(localWeek.planSync||{}),status:'synced',message:`Google Sheets v${meta.version_no||remoteWeek.publicationVersion||1}`,updatedAt:new Date().toISOString(),remoteWeekId:meta.training_week_id||remoteWeek.remoteTrainingWeekId,remoteFingerprint:meta.fingerprint||null,remoteUpdatedAt:meta.updated_at||null};
+          localWeek.publicationVersion=Math.max(Number(localWeek.publicationVersion||0),Number(meta.version_no||0))||1;
+        }
+      }catch(error){console.warn('Baseline semaine indisponible',remoteWeek.number,error)}
+    }
+    if(typeof save==='function')save()
+  }
+
   window.syncSheetsSnapshot=async function(){
     saveApiSettings();saveCfg({lastMessage:'Chargement de l’instantané…'});
     try{
       const r=await request('snapshot');
       mapSnapshotToLocal(r.snapshot);
+      await hydratePlanConflictBaselines();
       const loaded=(state.remoteWeeks||[]).map(w=>`S${w.number} v${w.publicationVersion||1}`).join(', ');
       saveCfg({connected:true,lastSync:new Date().toISOString(),lastMessage:`Instantané chargé · ${r.counts?.weeks||0} semaine(s), ${r.counts?.sessions||0} séance(s)${loaded?' · '+loaded:''}`});
       render();if(typeof toast==='function')toast('Instantané Google Sheets chargé')
@@ -729,9 +748,11 @@
         const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
         const known=week.planSync?.remoteFingerprint||null;
         const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
-        const changed=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0)&&known&&meta.fingerprint!==known;
-        if(newer||changed){
-          const c=addConflict({conflictId:conflictId('plan',week.weekId||week.number),entityType:'plan',entityId:week.weekId||String(week.number),weekNo:week.number,label:`Semaine ${week.number}`,message:newer?'Une version distante plus récente existe.':'La même version a été modifiée ailleurs.'});
+        const sameVersion=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0);
+        const changed=sameVersion&&known&&meta.fingerprint!==known;
+        const baselineMissing=sameVersion&&!known;
+        if(newer||changed||baselineMissing){
+          const c=addConflict({conflictId:conflictId('plan',week.weekId||week.number),entityType:'plan',entityId:week.weekId||String(week.number),weekNo:week.number,label:`Semaine ${week.number}`,message:newer?'Une version distante plus récente existe.':baselineMissing?'Référence distante absente : recharge l’instantané avant de publier.':'La même version a été modifiée ailleurs.'});
           week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};save();renderWeeks();if(typeof toast==='function')toast('Conflit détecté');return
         }
       }
