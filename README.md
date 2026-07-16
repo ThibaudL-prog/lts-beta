@@ -1,14 +1,14 @@
-# LTS Beta v0.5.3 — file d’attente hors ligne
+# LTS Beta v0.5.4 — conflits multi-appareils
 
-Ajouts :
-- file locale de synchronisation ;
-- conservation des séances, plans, check-ins et mensurations après échec ;
-- compteur des éléments en attente ;
-- détail des erreurs ;
-- bouton « Relancer maintenant » ;
-- reprise automatique lorsque le réseau revient ;
-- prévention de deux traitements simultanés ;
-- déduplication par type + identifiant d’entité ;
-- aucune perte de saisie : le local est toujours enregistré en premier.
+- contrôle distant avant écriture ;
+- empreinte SHA-256 des semaines et exécutions ;
+- blocage des écrasements silencieux ;
+- choix explicite « Conserver local » ou « Utiliser distant » ;
+- journalisation de la résolution ;
+- file hors ligne v0.5.3 conservée.
 
-Aucun changement Apps Script n’est requis.
+Déploiement :
+1. Remplacer les fichiers GitHub.
+2. Remplacer Code.gs dans Apps Script.
+3. Créer une nouvelle version du déploiement existant.
+4. Conserver la même URL /exec.

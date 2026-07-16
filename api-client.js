@@ -43,6 +43,7 @@
       </div>
       <p class="muted small" style="margin-bottom:0">${escapeHtml(c.lastMessage)}${c.lastSync?' · '+new Date(c.lastSync).toLocaleString('fr-FR'):''}</p>
       ${renderSyncQueuePanel()}
+      ${renderConflictPanel()}
     </div>`
   };
 
@@ -144,7 +145,46 @@
     }
   };
 
-  const QUEUE_KEY='lts-sync-queue-v053';
+
+  const CONFLICT_KEY='lts-sync-conflicts-v054';
+  const FORCE_KEY='lts-sync-force-v054';
+
+  function loadConflicts(){try{const v=JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+  function saveConflicts(v){localStorage.setItem(CONFLICT_KEY,JSON.stringify(v));window.dispatchEvent(new Event('lts-api-status'))}
+  function addConflict(c){const rows=loadConflicts();const i=rows.findIndex(x=>x.conflictId===c.conflictId);const n={createdAt:new Date().toISOString(),status:'open',...c};if(i>=0)rows[i]={...rows[i],...n};else rows.unshift(n);saveConflicts(rows.slice(0,100));return n}
+  function removeConflict(id){saveConflicts(loadConflicts().filter(x=>x.conflictId!==id))}
+  function conflictId(type,id){return `conflict:${type}:${id}`}
+
+  function setForceOnce(key){let d={};try{d=JSON.parse(localStorage.getItem(FORCE_KEY)||'{}')}catch(e){}d[key]=true;localStorage.setItem(FORCE_KEY,JSON.stringify(d))}
+  function consumeForceOnce(key){let d={};try{d=JSON.parse(localStorage.getItem(FORCE_KEY)||'{}')}catch(e){}const ok=!!d[key];if(ok){delete d[key];localStorage.setItem(FORCE_KEY,JSON.stringify(d))}return ok}
+
+  window.renderConflictPanel=function(){
+    const rows=loadConflicts().filter(x=>x.status==='open');
+    if(!rows.length)return `<div class="conflictPanel" style="border-color:#d9e3f3;background:#f8fbff"><div class="row"><div><b>Conflits multi-appareils</b><div class="muted small">Aucun conflit détecté.</div></div><span class="queueCount">0</span></div></div>`;
+    return `<div class="conflictPanel"><div class="sectiontitle"><div><h3 style="margin:0">Conflits multi-appareils</h3><p class="muted small">Une version distante a changé.</p></div><span class="conflictCount">${rows.length}</span></div>${rows.map(r=>`<div class="conflictItem"><b>${escapeHtml(r.label||r.entityId)}</b><div class="muted small">${escapeHtml(r.message||'Conflit détecté')}</div><div class="conflictActions"><button class="btn secondary" onclick="resolveConflictKeepLocal('${escapeHtml(r.conflictId)}')">Conserver local</button><button class="btn ghost" onclick="resolveConflictUseRemote('${escapeHtml(r.conflictId)}')">Utiliser distant</button></div></div>`).join('')}</div>`
+  };
+
+  async function fetchSyncMeta(entityType,params){return request('sync.meta',{payload:{entity_type:entityType,...params}})}
+
+  window.resolveConflictKeepLocal=async function(id){
+    const r=loadConflicts().find(x=>x.conflictId===id);if(!r)return;
+    setForceOnce(`${r.entityType}:${r.entityId}`);removeConflict(id);
+    if(typeof logAudit==='function')logAudit('CONFLICT_KEEP_LOCAL',r.entityType,r.entityId,r.message||'');
+    if(r.entityType==='execution')await syncSessionExecution(r.entityId);else await syncWeekPlan(r.weekNo)
+  };
+
+  window.resolveConflictUseRemote=async function(id){
+    const r=loadConflicts().find(x=>x.conflictId===id);if(!r)return;
+    try{
+      const response=await request('snapshot');mapSnapshotToLocal(response.snapshot);
+      removeQueueItem(queueId(r.entityType==='execution'?'execution':'plan',r.entityId));
+      removeConflict(id);
+      if(typeof logAudit==='function')logAudit('CONFLICT_USE_REMOTE',r.entityType,r.entityId,r.message||'');
+      save();render();if(typeof toast==='function')toast('Version distante conservée')
+    }catch(e){if(typeof toast==='function')toast('Impossible de charger la version distante')}
+  };
+
+  const QUEUE_KEY='lts-sync-queue-v054';
   let queueProcessing=false;
 
   function loadQueue(){
@@ -484,11 +524,21 @@
 
     const payloads=queueExecutionPayload(session,found);
     try{
+      const force=consumeForceOnce(`execution:${sessionId}`);
+      if(!force){
+        const meta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
+        const known=e.sync?.remoteFingerprint||null;
+        if(meta.found&&known&&meta.fingerprint!==known){
+          const c=addConflict({conflictId:conflictId('execution',sessionId),entityType:'execution',entityId:sessionId,label:session.title||sessionId,message:'Cette séance a été modifiée sur un autre appareil.'});
+          e.sync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};refreshExecutionViews();if(typeof toast==='function')toast('Conflit détecté');return
+        }
+      }
       for(const step of payloads){
         await request(step.action,{method:'POST',payload:step.payload})
       }
       removeQueueItem(queueId('execution',sessionId));
-      e.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow()};
+      const freshMeta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
+      e.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow(),remoteFingerprint:freshMeta.fingerprint||null};
       if(typeof logAudit==='function')logAudit('SYNC_EXECUTION','SESSION',sessionId,session.title||'');
       saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Séance synchronisée · ${session.title||sessionId}`});
       refreshExecutionViews();
@@ -674,17 +724,30 @@
 
     try{
       const payload=buildPlanPayload(week);
+      const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
+      if(!force){
+        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
+        const known=week.planSync?.remoteFingerprint||null;
+        const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
+        const changed=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0)&&known&&meta.fingerprint!==known;
+        if(newer||changed){
+          const c=addConflict({conflictId:conflictId('plan',week.weekId||week.number),entityType:'plan',entityId:week.weekId||String(week.number),weekNo:week.number,label:`Semaine ${week.number}`,message:newer?'Une version distante plus récente existe.':'La même version a été modifiée ailleurs.'});
+          week.planSync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};save();renderWeeks();if(typeof toast==='function')toast('Conflit détecté');return
+        }
+      }
       if(!payload.cycle?.cycle_id)throw new Error('Identifiant du cycle manquant');
       if(!payload.week?.training_week_id)throw new Error('Identifiant de semaine manquant');
       if(!payload.sessions?.length)throw new Error('Aucun conteneur de séance à publier');
       if(!payload.blocks?.length)throw new Error('Aucune prescription à publier');
       const result=await request('plan.publish',{method:'POST',payload});
       removeQueueItem(queueId('plan',week.weekId||week.number));
+      const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
       week.planSync={
         status:'synced',
         message:`Version ${week.publicationVersion} publiée · ${result.counts?.sessions||0} séance(s)`,
         updatedAt:isoNow(),
-        remoteWeekId:result.training_week_id
+        remoteWeekId:result.training_week_id,
+        remoteFingerprint:freshMeta.fingerprint||null
       };
       if(typeof logAudit==='function')logAudit('SYNC_PLAN','WEEK',week.weekId||String(week.number),`Version ${week.publicationVersion}`);
       saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Semaine ${week.number} publiée vers Google Sheets`});

@@ -30,6 +30,7 @@ function handleRequest_(method, p) {
     else if (action === 'sets.replace') { assertWriteEnabled_(); result = replaceChildren_('SET_RESULTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'climbing.replace') { assertWriteEnabled_(); result = replaceChildren_('CLIMBING_ATTEMPTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'running.upsert') { assertWriteEnabled_(); result = upsertById_('RUNNING_RESULTS','running_result_id',p.record || {}); }
+    else if (action === 'sync.meta') { result = syncMeta_(p); }
     else if (action === 'plan.publish') { assertWriteEnabled_(); result = publishPlan_(p); }
     else throw new Error('Action inconnue : ' + action);
     writeLog_(requestId, method, action, p, 'OK', Date.now()-started, '');
@@ -75,6 +76,40 @@ function snapshot_(athleteId) {
   };
 }
 
+
+
+function syncMeta_(payload) {
+  const type = String(payload.entity_type || '');
+  if (type === 'execution') {
+    const id = String(payload.entity_id || '');
+    const row = rows_('SESSION_EXECUTIONS').find(r => String(r.session_execution_id) === id);
+    return row ? {found:true,entity_type:type,entity_id:id,updated_at:row.ended_at||row.started_at||'',fingerprint:fingerprintObject_(row)} : {found:false,entity_type:type,entity_id:id};
+  }
+  if (type === 'plan') {
+    const athleteId=String(payload.athlete_id||''), weekNo=Number(payload.week_no||0);
+    const weeks=rows_('WEEKS').filter(r=>String(r.athlete_id)===athleteId&&Number(r.week_no)===weekNo&&String(r.status).toLowerCase()==='published').sort((a,b)=>Number(b.version_no||0)-Number(a.version_no||0));
+    if(!weeks.length)return {found:false,entity_type:type,athlete_id:athleteId,week_no:weekNo};
+    const week=weeks[0];
+    const sessions=rows_('SESSIONS').filter(r=>String(r.training_week_id)===String(week.training_week_id));
+    const sessionIds=new Set(sessions.map(r=>String(r.planned_session_id)));
+    const blocks=rows_('SESSION_BLOCKS').filter(r=>sessionIds.has(String(r.planned_session_id)));
+    const blockIds=new Set(blocks.map(r=>String(r.session_block_id)));
+    const prescriptions=rows_('EXERCISE_PRESCRIPTIONS').filter(r=>blockIds.has(String(r.session_block_id)));
+    return {found:true,entity_type:type,athlete_id:athleteId,week_no:weekNo,training_week_id:week.training_week_id,version_no:Number(week.version_no||0),updated_at:week.published_at||'',fingerprint:fingerprintObject_({week,sessions,blocks,prescriptions})};
+  }
+  throw new Error('Type sync.meta inconnu : '+type);
+}
+
+function fingerprintObject_(value) {
+  const json=JSON.stringify(sortObject_(value));
+  const bytes=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,json,Utilities.Charset.UTF_8);
+  return bytes.map(b=>('0'+(b&255).toString(16)).slice(-2)).join('');
+}
+function sortObject_(value) {
+  if(Array.isArray(value))return value.map(sortObject_);
+  if(value&&typeof value==='object'&&!(value instanceof Date)){const out={};Object.keys(value).sort().forEach(k=>out[k]=sortObject_(value[k]));return out}
+  return value;
+}
 
 function publishPlan_(payload) {
   const cycle = payload.cycle || {};
