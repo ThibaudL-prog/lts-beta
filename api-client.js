@@ -75,8 +75,13 @@
       .some(p=>p.execution&&p.execution.sync?.status!=='synced');
     if(dirtyExecution)return true;
 
-    const dirtyCheckin=(state.checkins||[]).some(c=>!c.remoteSyncedAt);
-    const dirtyMeasurement=(state.measurements||[]).some(m=>!m.remoteSyncedAt);
+    const lastSyncTime=cfg().lastSync?new Date(cfg().lastSync).getTime():0;
+    const isNewerThanLastSync=r=>{
+      const t=new Date(r?.date||0).getTime();
+      return Number.isFinite(t)&&t>lastSyncTime
+    };
+    const dirtyCheckin=(state.records?.checkins||[]).some(isNewerThanLastSync);
+    const dirtyMeasurement=(state.records?.measurements||[]).some(isNewerThanLastSync);
     return dirtyCheckin||dirtyMeasurement
   }
 
@@ -448,9 +453,11 @@
 
   window.pushLocalAthleteData=async function(options={}){
     saveApiSettings();saveCfg({lastMessage:'Envoi des données Athlète…'});
+    let checkins=[];
+    let measurements=[];
     try{
-      const checkins=(state.records?.checkins||[]).map(r=>({...r,athlete_id:cfg().athleteId}));
-      const measurements=(state.records?.measurements||[]).flatMap(r=>{
+      checkins=(state.records?.checkins||[]).map(r=>({...r,athlete_id:cfg().athleteId}));
+      measurements=(state.records?.measurements||[]).flatMap(r=>{
         const mapping={weight:'weight_kg',waist:'waist_cm',chest:'chest_cm',hips:'hips_cm',armRelaxed:'arm_relaxed_cm',armContracted:'arm_contract_cm',thigh:'thigh_cm',calf:'calf_cm'};
         return Object.entries(mapping).filter(([k])=>r[k]!==null&&r[k]!==undefined&&r[k]!=='').map(([k,type])=>({
           body_measurement_id:`bm-${r.date?.slice(0,10)}-${type}`,athlete_id:cfg().athleteId,measured_at:r.date,measurement_type:type,body_side:'none',value:r[k],unit:type==='weight_kg'?'kg':'cm',protocol_code:'PWA',source_type:'athlete',data_quality:'measured',notes:r.source||''
@@ -754,13 +761,11 @@
       }
 
       if(item.type==='checkins'){
-        const pending=(state.checkins||[]).some(c=>!c.remoteSyncedAt);
-        if(!pending)return false;
+        if(!(item.records||[]).length)return false;
       }
 
       if(item.type==='measurements'){
-        const pending=(state.measurements||[]).some(m=>!m.remoteSyncedAt);
-        if(!pending)return false;
+        if(!(item.records||[]).length)return false;
       }
 
       return true
