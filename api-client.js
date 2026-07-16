@@ -67,9 +67,6 @@
     if(loadQueue().length)return true;
     if(loadConflicts().some(x=>x.status==='open'))return false;
 
-    const dirtyPlan=(state.weeks||[]).some(w=>weekHasRealLocalChanges(w));
-    if(dirtyPlan)return true;
-
     const dirtyExecution=(state.weeks||[])
       .flatMap(w=>w.sessions||[])
       .some(p=>p.execution&&p.execution.sync?.status!=='synced');
@@ -143,7 +140,8 @@
       // Elles ne doivent jamais être interprétées comme une nouvelle modification Coach.
       pruneStaleQueueItems();
       await retrySyncQueue({silent:true});
-      await syncPublishedPlans();
+      // Les plans sont volontairement exclus de l’arrière-plan.
+      // Ils sont publiés au clic sur Publier ou Synchroniser maintenant.
       await syncUnsyncedExecutions();
       await pushLocalAthleteData({silent:true});
       await syncSheetsSnapshot({silent:true});
@@ -202,6 +200,11 @@
       console.error('Planification de la synchronisation automatique',error)
     }
   });
+
+  setTimeout(()=>{
+    const removed=discardLegacyPlanQueue();
+    if(removed&&typeof render==='function')render()
+  },300);
 
   window.addEventListener('online',()=>{
     setTimeout(()=>runBackgroundSync('online'),1000)
@@ -599,18 +602,32 @@
   }
 
   function saveQueue(queue){
-    localStorage.setItem(QUEUE_KEY,JSON.stringify(queue));
-    if(Array.isArray(queue)&&queue.length&&navigator.onLine){
-      setTimeout(()=>{
-        try{
-          if(!backgroundSyncRunning&&!globalSyncRunning&&!backgroundSyncSuspended){
-            scheduleBackgroundSync('queue-added')
-          }
-        }catch(error){
-          console.error('Programmation de la reprise de file',error)
-        }
-      },0)
-    }
+    localStorage.setItem(QUEUE_KEY,JSON.stringify(queue))
+  }
+
+  function discardLegacyPlanQueue(){
+    const queue=loadQueue();
+    const planItems=queue.filter(item=>item.type==='plan');
+    if(!planItems.length)return 0;
+
+    const kept=queue.filter(item=>item.type!=='plan');
+    saveQueue(kept);
+
+    planItems.forEach(item=>{
+      const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
+      if(week){
+        week.planSync={
+          ...(week.planSync||{}),
+          status:'error',
+          message:'Publication à relancer manuellement',
+          updatedAt:isoNow()
+        };
+        delete week.planSync.queueId
+      }
+    });
+
+    if(typeof save==='function')save();
+    return planItems.length
   }
 
   function queueId(type,entityId){
@@ -671,7 +688,7 @@
       return `<div class="queuePanel"><div class="row"><div><b>File de synchronisation</b><div class="muted small">Aucun élément en attente.</div></div><span class="queueCount">0</span></div></div>`
     }
     return `<div class="queuePanel">
-      <div class="sectiontitle"><div><h3 style="margin:0">File de synchronisation</h3><p class="muted small">${summary.total} élément(s) en attente</p></div><span class="queueCount">${summary.total}</span></div>
+      <div class="sectiontitle"><div><h3 style="margin:0">File de synchronisation</h3><p class="muted small">${summary.total} élément(s) Athlète en attente · plans publiés manuellement</p></div><span class="queueCount">${summary.total}</span></div>
       <div class="dataTools">
         <button class="btn secondary" onclick="retrySyncQueue()">Relancer maintenant</button>
         <button class="btn ghost" onclick="toggleSyncQueueDetails()">Détails</button>
@@ -721,59 +738,14 @@
       }
     }else if(item.type==='plan'){
       const week=(state.weeks||[]).find(w=>String(w.weekId||w.number)===String(item.entityId));
+      removeQueueItem(item.queueId);
       if(!week)throw new Error('Semaine locale introuvable');
 
-      const previousPlanSync={...(week.planSync||{})};
-      const knownRemoteFingerprint=previousPlanSync.remoteFingerprint||null;
-      const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
-      if(!force){
-        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
-        const known=week.planSync?.remoteFingerprint||null;
-        const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
-        const sameVersion=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0);
-        const changed=sameVersion&&known&&meta.fingerprint!==known;
-        const baselineMissing=sameVersion&&!known;
+      setForceOnce(`plan:${week.weekId||week.number}`);
+      await syncWeekPlan(week.number);
 
-        if(newer||changed||baselineMissing){
-          const c=addConflict({
-            conflictId:conflictId('plan',week.weekId||week.number),
-            entityType:'plan',
-            entityId:week.weekId||String(week.number),
-            weekNo:week.number,
-            label:`Semaine ${week.number}`,
-            message:newer?'Une version distante plus récente existe.':baselineMissing?'Référence distante absente : recharge l’instantané.':'La même version a été modifiée ailleurs.'
-          });
-          week.planSync={...previousPlanSync,status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId,remoteFingerprint:knownRemoteFingerprint};
-          save();
-          throw new Error('CONFLICT_BLOCKED');
-        }
-      }
-
-      week.planSync={
-        ...previousPlanSync,
-        status:'pending',
-        message:'Reprise de la publication vers Google Sheets',
-        updatedAt:isoNow(),
-        remoteFingerprint:knownRemoteFingerprint
-      };
-      save();
-
-      // Rebuild from the current local week so the queue never republishes
-      // an obsolete payload after later Coach edits.
-      const currentPayload=buildPlanPayload(week);
-      const result=await request('plan.publish',{method:'POST',payload:currentPayload});
-      if(week){
-        const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
-        week.planSync={
-          status:'synced',
-          message:`Version ${week.publicationVersion} publiée`,
-          updatedAt:isoNow(),
-          remoteWeekId:result.training_week_id,
-          remoteFingerprint:freshMeta.fingerprint||null
-        };
-        week.localPublishConfirmedAt=isoNow();
-        week.localPublishConfirmedVersion=Number(week.publicationVersion||1);
-        delete week.planSync.queueId
+      if(week.planSync?.status!=='synced'){
+        throw new Error(week.planSync?.message||'Publication du plan non confirmée')
       }
     }else if(item.type==='checkins'){
       for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
@@ -1379,18 +1351,18 @@
       if(typeof toast==='function')toast('Semaine synchronisée avec Google Sheets')
     }catch(error){
       console.error('Publication semaine',error);
-      const payload=buildPlanPayload(week);
-      const queued=upsertQueueItem({
-        queueId:queueId('plan',week.weekId||week.number),
-        type:'plan',
-        entityId:week.weekId||String(week.number),
-        label:`Semaine ${week.number} v${week.publicationVersion||1}`,
-        payload
-      });
-      week.planSync={...previousPlanSync,status:'error',message:`En attente · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId,remoteFingerprint:knownRemoteFingerprint};
-      saveCfg({connected:false,lastMessage:`Publication mise en attente · ${error.message||'Erreur réseau'}`});
+      removeQueueItem(queueId('plan',week.weekId||week.number));
+      week.planSync={
+        ...previousPlanSync,
+        status:'error',
+        message:`Échec de publication · ${error.message||'Erreur réseau'}`,
+        updatedAt:isoNow(),
+        remoteFingerprint:knownRemoteFingerprint
+      };
+      delete week.planSync.queueId;
+      saveCfg({connected:false,lastMessage:`Échec de publication · ${error.message||'Erreur réseau'}`});
       save();renderWeeks();
-      if(typeof toast==='function')toast('Publication conservée localement et mise en attente')
+      if(typeof toast==='function')toast(`Publication non envoyée : ${error.message||'Erreur réseau'}`)
     }
   };
 
