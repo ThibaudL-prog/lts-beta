@@ -193,8 +193,12 @@
   }
 
   window.addEventListener('lts-local-change',()=>{
-    if(window.__LTS_SUPPRESS_LOCAL_CHANGE__)return;
-    scheduleBackgroundSync('local-change')
+    try{
+      if(window.__LTS_SUPPRESS_LOCAL_CHANGE__)return;
+      scheduleBackgroundSync('local-change')
+    }catch(error){
+      console.error('Planification de la synchronisation automatique',error)
+    }
   });
 
   window.addEventListener('online',()=>{

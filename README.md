@@ -1,11 +1,17 @@
-# LTS Beta v0.5.6.4 — URL persistante et fermeture des prescriptions
+# LTS Beta v0.5.6.5 — enregistrements non bloquants
 
-Corrections :
-- l’URL Apps Script n’est plus effacée lorsque les champs Réglages ne sont pas affichés ;
-- les synchronisations automatiques conservent la configuration existante ;
-- l’ajout d’une prescription ferme tous les panneaux empilés une seule fois ;
-- seule la semaine mise à jour est ensuite rouverte ;
-- l’éditeur de prescription ne reste plus visuellement affiché ;
-- les appels internes n’affichent plus de faux message « Configuration enregistrée ».
+Correction principale :
+- `save()` écrit d’abord les données locales puis rend immédiatement la main à l’interface ;
+- la notification de synchronisation est déclenchée ensuite, de manière asynchrone ;
+- une erreur de synchronisation ne peut plus empêcher la fermeture d’une fenêtre ;
+- le gestionnaire de synchronisation automatique est protégé par un `try/catch` ;
+- lors d’une publication, la fenêtre se ferme avant le démarrage de l’envoi Google Sheets.
+
+Cela concerne notamment :
+- Enregistrer une prescription ;
+- Enregistrer les modifications ;
+- Enregistrer une semaine ;
+- Publier une semaine ;
+- les autres formulaires utilisant la fonction commune `save()`.
 
 Aucun changement Apps Script n’est nécessaire.
