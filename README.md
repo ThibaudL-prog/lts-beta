@@ -1,21 +1,15 @@
-# LTS Beta v0.5.6.8 — migration et nettoyage du stockage local
+# LTS Beta v0.5.6.9 — protection après publication
 
 Cause :
-- chaque version utilisait une nouvelle clé `lts-v…`;
-- chaque clé contenait une copie complète de l’application;
-- le navigateur mobile a atteint son quota local;
-- `localStorage.setItem()` échouait avant la fermeture des éditeurs.
+- après `plan.publish`, la synchronisation automatique rechargeait immédiatement un snapshot ;
+- Google Sheets pouvait encore renvoyer momentanément le contenu précédent pour la même version ;
+- la copie Coach fraîchement publiée était alors remplacée à l’écran.
 
 Corrections :
-- clé permanente : `lts-current`;
-- migration automatique depuis la dernière clé `lts-v…`;
-- suppression ciblée des anciennes copies d’état;
-- conservation de :
-  - l’URL Apps Script;
-  - la file de synchronisation;
-  - les conflits;
-  - les choix de synchronisation;
-- nouvelle tentative automatique en cas de quota dépassé;
-- les prochaines versions conserveront la même clé permanente.
+- une publication confirmée est protégée pendant 2 minutes ;
+- un snapshot de même version ne remplace pas cette copie fraîche ;
+- une version distante plus ancienne ne peut jamais écraser une version locale plus récente ;
+- une version distante réellement supérieure reste prioritaire ;
+- « Utiliser distant » force toujours le remplacement demandé par le Coach.
 
 Aucun changement Apps Script n’est nécessaire.

@@ -386,13 +386,44 @@
     if(filtered.length!==rows.length)saveConflicts(filtered)
   }
 
-  function replaceCoachPublishedWeeksFromRemote(){
+  function replaceCoachPublishedWeeksFromRemote(options={}){
     const remoteWeeks=state.remoteWeeks||[];
     if(!remoteWeeks.length)return;
+
+    const force=options.force===true;
+    const now=Date.now();
+    const protectionMs=2*60*1000;
 
     remoteWeeks.forEach(remoteWeek=>{
       const localIndex=(state.weeks||[]).findIndex(w=>Number(w.number)===Number(remoteWeek.number));
       const localWeek=localIndex>=0?state.weeks[localIndex]:null;
+
+      if(localWeek&&!force){
+        const localVersion=Number(localWeek.publicationVersion||0);
+        const remoteVersion=Number(remoteWeek.publicationVersion||0);
+        const confirmedAt=localWeek.localPublishConfirmedAt?new Date(localWeek.localPublishConfirmedAt).getTime():0;
+        const freshlyConfirmed=confirmedAt>0&&(now-confirmedAt)<protectionMs;
+        const sameConfirmedVersion=Number(localWeek.localPublishConfirmedVersion||0)===localVersion;
+        const sameVersion=remoteVersion===localVersion;
+
+        // Google Sheets may briefly return the previous snapshot immediately
+        // after plan.publish. Keep the just-confirmed local plan in that case.
+        if(freshlyConfirmed&&sameConfirmedVersion&&sameVersion){
+          localWeek.planSync={
+            ...(localWeek.planSync||{}),
+            status:'synced',
+            message:`Google Sheets v${localVersion}`,
+            updatedAt:new Date().toISOString(),
+            remoteWeekId:remoteWeek.remoteTrainingWeekId,
+            remoteFingerprint:remoteWeek.remoteFingerprint||localWeek.planSync?.remoteFingerprint||null,
+            remoteUpdatedAt:remoteWeek.remoteUpdatedAt||remoteWeek.publishedAt||null
+          };
+          return
+        }
+
+        // Never downgrade to an older remote version.
+        if(remoteVersion<localVersion)return
+      }
 
       const executionBySessionId=new Map();
       (localWeek?.sessions||[]).forEach(p=>{
@@ -537,7 +568,7 @@
       const response=await request('snapshot');
       mapSnapshotToLocal(response.snapshot);
       await hydratePlanConflictBaselines();
-      replaceCoachPublishedWeeksFromRemote();
+      replaceCoachPublishedWeeksFromRemote({force:true});
       removeQueueItem(queueId(r.entityType==='execution'?'execution':'plan',r.entityId));
       removeConflict(id);
       if(r.entityType==='plan'){
@@ -706,7 +737,9 @@
           updatedAt:isoNow(),
           remoteWeekId:result.training_week_id,
           remoteFingerprint:freshMeta.fingerprint||null
-        }
+        };
+        week.localPublishConfirmedAt=isoNow();
+        week.localPublishConfirmedVersion=Number(week.publicationVersion||1)
       }
     }else if(item.type==='checkins'){
       for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
@@ -1300,6 +1333,8 @@
         remoteWeekId:result.training_week_id,
         remoteFingerprint:freshMeta.fingerprint||null
       };
+      week.localPublishConfirmedAt=isoNow();
+      week.localPublishConfirmedVersion=Number(week.publicationVersion||1);
       if(typeof logAudit==='function')logAudit('SYNC_PLAN','WEEK',week.weekId||String(week.number),`Version ${week.publicationVersion}`);
       saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Semaine ${week.number} publiée vers Google Sheets`});
       save();renderWeeks();
