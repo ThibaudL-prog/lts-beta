@@ -424,6 +424,9 @@
       const localWeek=localIndex>=0?state.weeks[localIndex]:null;
 
       if(localWeek&&!force){
+        // A real local draft must never be overwritten by an automatic pull.
+        if(weekHasUnpublishedLocalContent(localWeek))return;
+
         const localVersion=Number(localWeek.publicationVersion||0);
         const remoteVersion=Number(remoteWeek.publicationVersion||0);
         const confirmedAt=localWeek.localPublishConfirmedAt?new Date(localWeek.localPublishConfirmedAt).getTime():0;
@@ -471,7 +474,12 @@
         sessions:(remoteWeek.sessions||[]).map(p=>({
           ...p,
           execution:executionBySessionId.get(String(p.sessionId))||p.execution||null
-        }))
+        })),
+        localPublishConfirmedAt:null,
+        localPublishConfirmedVersion:null,
+        lastPublishedFingerprint:typeof weekPlanningFingerprint==='function'
+          ? weekPlanningFingerprint(remoteWeek)
+          : localWeek?.lastPublishedFingerprint||null
       };
 
       if(localIndex>=0)state.weeks[localIndex]=replacement;
@@ -508,7 +516,7 @@
       try{
         mapSnapshotToLocal(r.snapshot);
         await hydratePlanConflictBaselines();
-        replaceCoachPublishedWeeksFromRemote();
+        replaceCoachPublishedWeeksFromRemote({force:options.forceRemote===true});
         if(typeof save==='function')save();
       }finally{
         window.__LTS_SUPPRESS_LOCAL_CHANGE__=false
@@ -842,6 +850,21 @@
     return queue.length-filtered.length
   }
 
+  function weekHasUnpublishedLocalContent(week){
+    if(!week)return false;
+    if(week.status==='DRAFT')return true;
+
+    if(week.lastPublishedFingerprint&&typeof weekPlanningFingerprint==='function'){
+      try{
+        return weekPlanningFingerprint(week)!==week.lastPublishedFingerprint
+      }catch(error){
+        console.warn('Empreinte locale indisponible',error)
+      }
+    }
+
+    return false
+  }
+
   function weekHasRealLocalChanges(week){
     if(!week||week.status!=='PUBLISHED')return false;
     if(week.planSync?.status==='pending')return true;
@@ -946,8 +969,13 @@
     try{
       pruneStaleQueueItems();
 
+      const hasLocalPlanEditsBeforePull=(state.weeks||[]).some(weekHasUnpublishedLocalContent);
+
       updateGlobalSyncProgress(1,'Lecture de Google Sheets…');
-      await syncSheetsSnapshot({silent:true});
+      await syncSheetsSnapshot({
+        silent:true,
+        forceRemote:!hasLocalPlanEditsBeforePull
+      });
 
       updateGlobalSyncProgress(2,'Nettoyage des conflits obsolètes…');
       clearResolvedOrStaleConflicts();
@@ -963,7 +991,11 @@
       await pushLocalAthleteData({silent:true});
 
       updateGlobalSyncProgress(6,'Vérification finale…');
-      await syncSheetsSnapshot({silent:true});
+      const hasLocalPlanEditsAfterPush=(state.weeks||[]).some(weekHasUnpublishedLocalContent);
+      await syncSheetsSnapshot({
+        silent:true,
+        forceRemote:!hasLocalPlanEditsAfterPush
+      });
       reconcilePublishedWeekSyncStatus();
       pruneStaleQueueItems();
 
