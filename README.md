@@ -1,15 +1,24 @@
-# LTS Beta v0.5.6.15 — récupération multi-appareils corrigée
+# LTS Beta v0.5.7.0 — consolidation du modèle Séance → prescriptions
 
-Cause :
-- un téléphone pouvait conserver sa copie locale d’une semaine publiée ;
-- un ancien statut de synchronisation ou une protection locale empêchait le remplacement ;
-- la version publiée depuis le PC était bien dans Google Sheets mais n’apparaissait pas sur le téléphone.
+Base : v0.5.6.15 Stable Sync Baseline.
 
-Corrections :
-- « Synchroniser maintenant » force la récupération distante lorsqu’aucune modification locale non publiée n’existe ;
-- les anciens statuts `error` ou `pending` ne sont plus assimilés à une modification métier ;
-- une vraie semaine en brouillon reste protégée ;
-- les exécutions Athlète locales sont conservées par `sessionId` ;
-- les marqueurs de publication de l’ancien appareil sont retirés lors de l’adoption de la version distante.
+Cette version ne modifie ni Apps Script ni le moteur de synchronisation.
 
-Aucun changement Apps Script n’est nécessaire.
+## Ajouts
+- schéma local v0.5.7.0 ;
+- migration idempotente des anciennes semaines ;
+- identifiant stable pour chaque séance réelle ;
+- identifiant stable pour chaque prescription ;
+- rattachement réparé des prescriptions orphelines ;
+- ordre préparé pour les séances et prescriptions ;
+- conservation des exécutions Athlète ;
+- audit visuel de la structure par semaine ;
+- validation structurelle obligatoire avant publication ;
+- blocage des séances vides, identifiants dupliqués et prescriptions orphelines.
+
+## Modèle consolidé
+Semaine → séance réelle / créneau → plusieurs prescriptions → résultats.
+
+## Déploiement
+À tester uniquement sur la branche `dev-v0.5.7-session-structure`.
+Ne pas modifier `main` et ne pas redéployer Apps Script.
