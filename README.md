@@ -1,12 +1,20 @@
-# LTS Beta v0.5.7.3 — séances réelles côté Athlète
+# LTS v0.5.7.4 — Release Candidate
 
-Ajouts :
-- `Aujourd’hui` affiche une carte par séance réelle, plus une carte par prescription ;
-- les prescriptions restent regroupées et ordonnées dans leur séance ;
-- progression visible pour chaque séance : nombre terminé, pourcentage et barre ;
-- état explicite par prescription : À faire, En cours ou Terminée ;
-- bouton de séance ouvrant automatiquement la prochaine prescription non terminée ;
-- durée totale de la séance et nombre de prescriptions visibles ;
-- même composant de séance dans `Aujourd’hui` et `Ma semaine`.
+Cette version clôt le lot « Semaine → séance réelle → prescriptions → résultats ».
 
-Le moteur de synchronisation, Apps Script et le format des résultats ne sont pas modifiés.
+## Stabilisation
+- diagnostic global en lecture seule dans le tableau de bord Coach ;
+- contrôle des identifiants, rattachements, jours, créneaux et ordres ;
+- détection des doublons entre semaines locales ;
+- contrôle des dernières versions récupérées depuis Google Sheets ;
+- visibilité sur les plans et résultats encore non synchronisés ;
+- sauvegarde JSON accessible depuis le diagnostic ;
+- numéro de version correct dans l’export JSON.
+
+## Ordre publié
+- les séances sont envoyées vers Google Sheets dans l’ordre lundi → dimanche ;
+- pour un même jour : matin → midi → soir ;
+- l’ordre des prescriptions est conservé ;
+- la reconstruction distante reprend `priority_order` et `block_order`.
+
+`Code.gs` et le contrat des feuilles Google Sheets ne sont pas modifiés.

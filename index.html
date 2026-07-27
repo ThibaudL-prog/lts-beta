@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.3</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.4</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -247,6 +247,19 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .athletePrescriptionMain{display:flex;gap:10px;align-items:flex-start}
 .athletePrescriptionState{white-space:nowrap}
 @media(max-width:520px){.athletePrescriptionState{white-space:normal}.athletePrescriptionMain{align-items:center}}
+
+.releaseAuditCard{border:1px solid #cbd9ef;background:linear-gradient(180deg,#f8fbff,#fff);border-radius:18px;padding:15px;margin:14px 0}
+.releaseAuditCard.ready{border-color:#b9dfce;background:linear-gradient(180deg,#f4fbf7,#fff)}
+.releaseAuditCard.warning{border-color:#ecd89e;background:linear-gradient(180deg,#fffaf0,#fff)}
+.releaseAuditCard.invalid{border-color:#efc2c2;background:linear-gradient(180deg,#fff7f7,#fff)}
+.releaseAuditGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:11px}
+.releaseAuditStat{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px}
+.releaseAuditStat b{display:block;font-size:20px;margin-top:3px}
+.releaseAuditSection{margin-top:14px}
+.releaseAuditWeek{border:1px solid var(--line);border-radius:13px;padding:10px;margin-top:8px;background:#fff}
+.releaseAuditIssue{border-left:4px solid #d94b4b;background:#fff6f6;border-radius:8px;padding:8px 10px;margin-top:7px;font-size:13px}
+.releaseAuditWarning{border-left-color:#d59a21;background:#fff9ed}
+@media(max-width:650px){.releaseAuditGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><div id="app" class="app"></div>
 <script src="api-client.js"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
@@ -509,12 +522,40 @@ function validateWeekSessionStructureV0570(w){
   if(!SESSION_STRUCTURE_SLOTS.includes(c.slot))errors.push(`${label} : créneau invalide`);
  });
 
+ const containerById=new Map(containers.filter(c=>c.containerId).map(c=>[String(c.containerId),c]));
+ const sessionOrderKeys=new Set();
+
+ containers.forEach((c,index)=>{
+  const label=c.title||`Séance ${index+1}`;
+  const order=Number(c.sessionOrder);
+  if(!Number.isFinite(order)||order<1)errors.push(`${label} : ordre de séance invalide`);
+  else{
+   const orderKey=`${c.day}|${c.slot}|${order}`;
+   if(sessionOrderKeys.has(orderKey))errors.push(`${label} : ordre de séance dupliqué sur ce créneau`);
+   else sessionOrderKeys.add(orderKey)
+  }
+ });
+
+ const prescriptionOrderKeys=new Set();
  prescriptions.forEach((p,index)=>{
   const label=p.title||`Prescription ${index+1}`;
   if(!p.sessionId)errors.push(`${label} : identifiant de prescription manquant`);
   else if(prescriptionIds.has(String(p.sessionId)))errors.push(`${label} : identifiant de prescription dupliqué`);
   else prescriptionIds.add(String(p.sessionId));
-  if(!p.containerId||!containerIds.has(String(p.containerId)))errors.push(`${label} : séance de destination introuvable`);
+
+  const container=p.containerId?containerById.get(String(p.containerId)):null;
+  if(!container)errors.push(`${label} : séance de destination introuvable`);
+  else{
+   if(p.day!==container.day)errors.push(`${label} : jour différent de la séance parente`);
+   if(p.slot!==container.slot)errors.push(`${label} : créneau différent de la séance parente`);
+   const order=Number(p.prescriptionOrder);
+   if(!Number.isFinite(order)||order<1)errors.push(`${label} : ordre de prescription invalide`);
+   else{
+    const orderKey=`${p.containerId}|${order}`;
+    if(prescriptionOrderKeys.has(orderKey))errors.push(`${label} : ordre de prescription dupliqué dans la séance`);
+    else prescriptionOrderKeys.add(orderKey)
+   }
+  }
  });
 
  containers.forEach(c=>{
@@ -556,6 +597,148 @@ function openWeekStructureAudit(n){
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="structureAuditSheet"><div class="sheet"><div class="sheethead"><div><h2>Structure de la semaine ${n}</h2><p class="muted">Une séance réelle correspond à un conteneur ; chaque prescription possède son identifiant propre.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('structureAuditSheet')">Fermer</button></div>
  <div class="sessionModelCard ${check.valid?'valid':'invalid'}"><b>${check.valid?'Structure valide':'Structure à corriger avant publication'}</b><div class="sessionModelStats"><span class="sessionModelStat">${check.stats.containers} séance(s)</span><span class="sessionModelStat">${check.stats.prescriptions} prescription(s)</span><span class="sessionModelStat">${check.stats.executions} résultat(s)</span></div>${check.errors.length?`<div class="structureIssues">${check.errors.map(x=>`<div class="structureIssue">${x}</div>`).join('')}</div>`:''}</div>
  ${rows||'<div class="card"><p class="muted">Aucune séance planifiée.</p></div>'}
+ </div></div>`)
+}
+
+
+function duplicateAuditValues(values){
+ const counts=new Map();
+ values.filter(Boolean).forEach(value=>{
+  const key=String(value);
+  counts.set(key,(counts.get(key)||0)+1)
+ });
+ return [...counts.entries()].filter(([,count])=>count>1).map(([value,count])=>({value,count}))
+}
+
+function latestRemoteWeeksForV057Audit(){
+ const latest=new Map();
+ (state.remoteWeeks||[])
+  .filter(w=>w.status==='PUBLISHED')
+  .forEach(w=>{
+   const number=Number(w.number);
+   const current=latest.get(number);
+   if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0)){
+    latest.set(number,w)
+   }
+  });
+ return [...latest.values()].sort((a,b)=>Number(a.number)-Number(b.number))
+}
+
+function collectV057ReleaseAudit(){
+ const localWeeks=state.weeks||[];
+ const remoteWeeks=latestRemoteWeeksForV057Audit();
+ const errors=[];
+ const warnings=[];
+ const localChecks=localWeeks.map(w=>({week:w,check:validateWeekSessionStructureV0570(w)}));
+ const remoteChecks=remoteWeeks.map(w=>({week:w,check:validateWeekSessionStructureV0570(w)}));
+
+ localChecks.forEach(({week,check})=>{
+  check.errors.forEach(issue=>errors.push(`Locale S${week.number} : ${issue}`))
+ });
+ remoteChecks.forEach(({week,check})=>{
+  check.errors.forEach(issue=>errors.push(`Google Sheets S${week.number} : ${issue}`))
+ });
+
+ const duplicateWeekNumbers=duplicateAuditValues(localWeeks.map(w=>w.number));
+ duplicateWeekNumbers.forEach(x=>errors.push(`Numéro de semaine locale dupliqué : S${x.value} (${x.count} occurrences)`));
+
+ const duplicateWeekIds=duplicateAuditValues(localWeeks.map(w=>w.weekId));
+ duplicateWeekIds.forEach(x=>errors.push(`Identifiant de semaine locale dupliqué : ${x.value}`));
+
+ const localContainers=localWeeks.flatMap(w=>w.containers||[]);
+ const localPrescriptions=localWeeks.flatMap(w=>w.sessions||[]);
+ const duplicateContainerIds=duplicateAuditValues(localContainers.map(c=>c.containerId));
+ duplicateContainerIds.forEach(x=>errors.push(`Identifiant de séance dupliqué entre plusieurs semaines : ${x.value}`));
+
+ const duplicatePrescriptionIds=duplicateAuditValues(localPrescriptions.map(p=>p.sessionId));
+ duplicatePrescriptionIds.forEach(x=>errors.push(`Identifiant de prescription dupliqué entre plusieurs semaines : ${x.value}`));
+
+ const invalidPublishedVersions=localWeeks.filter(w=>w.status==='PUBLISHED'&&Number(w.publicationVersion||0)<1);
+ invalidPublishedVersions.forEach(w=>errors.push(`S${w.number} publiée sans numéro de version valide`));
+
+ const missingFingerprints=localWeeks.filter(w=>w.status==='PUBLISHED'&&!w.lastPublishedFingerprint);
+ missingFingerprints.forEach(w=>warnings.push(`S${w.number} publiée sans empreinte locale enregistrée`));
+
+ const unsyncedPlans=localWeeks.filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced');
+ const executed=localPrescriptions.filter(p=>p.execution);
+ const unsyncedExecutions=executed.filter(p=>p.execution?.sync?.status!=='synced');
+
+ if(unsyncedPlans.length)warnings.push(`${unsyncedPlans.length} semaine(s) publiée(s) ne sont pas marquées synchronisées`);
+ if(unsyncedExecutions.length)warnings.push(`${unsyncedExecutions.length} résultat(s) ne sont pas marqués synchronisés`);
+ if(!remoteWeeks.length)warnings.push('Aucune semaine publiée distante n’est actuellement chargée dans cette prévisualisation');
+
+ const stats={
+  localWeeks:localWeeks.length,
+  remoteWeeks:remoteWeeks.length,
+  containers:localContainers.length,
+  prescriptions:localPrescriptions.length,
+  executions:executed.length,
+  unsyncedPlans:unsyncedPlans.length,
+  unsyncedExecutions:unsyncedExecutions.length
+ };
+ const fullyReady=errors.length===0&&unsyncedPlans.length===0&&unsyncedExecutions.length===0;
+ return {
+  valid:errors.length===0,
+  fullyReady,
+  errors,
+  warnings,
+  stats,
+  localChecks,
+  remoteChecks,
+  migration:state.sessionStructureMigration||null
+ }
+}
+
+function renderV057ReleaseReadiness(){
+ const audit=collectV057ReleaseAudit();
+ const cls=!audit.valid?'invalid':audit.fullyReady?'ready':'warning';
+ const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
+ return `<div class="releaseAuditCard ${cls}">
+  <div class="sectiontitle">
+   <div><h3 style="margin:0">Stabilisation v0.5.7</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
+  </div>
+  <div class="releaseAuditGrid">
+   <div class="releaseAuditStat"><span class="muted small">Semaines locales</span><b>${audit.stats.localWeeks}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Séances</span><b>${audit.stats.containers}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Prescriptions</span><b>${audit.stats.prescriptions}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Résultats</span><b>${audit.stats.executions}</b></div>
+  </div>
+  <div class="dataTools" style="margin-top:11px">
+   <button type="button" class="btn secondary" onclick="openV057ReleaseAudit()">Ouvrir le diagnostic</button>
+   <button type="button" class="btn ghost" onclick="exportLtsData()">Exporter une sauvegarde JSON</button>
+  </div>
+ </div>`
+}
+
+function renderAuditWeekRows(rows,label){
+ if(!rows.length)return `<div class="releaseAuditSection"><h3>${label}</h3><p class="muted">Aucune semaine.</p></div>`;
+ return `<div class="releaseAuditSection"><h3>${label}</h3>${rows.map(({week,check})=>`
+  <div class="releaseAuditWeek">
+   <div class="row"><div><b>Semaine ${week.number}</b><div class="muted small">Version ${week.publicationVersion||0} · ${check.stats.containers} séance(s) · ${check.stats.prescriptions} prescription(s) · ${check.stats.executions} résultat(s)</div></div><span class="pill ${check.valid?'green':'orange'}">${check.valid?'Valide':'À corriger'}</span></div>
+   ${check.errors.map(issue=>`<div class="releaseAuditIssue">${issue}</div>`).join('')}
+  </div>`).join('')}</div>`
+}
+
+function openV057ReleaseAudit(){
+ const audit=collectV057ReleaseAudit();
+ const migration=audit.migration;
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.7</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
+   <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
+   <div class="releaseAuditGrid">
+    <div class="releaseAuditStat"><span class="muted small">Semaines Google Sheets</span><b>${audit.stats.remoteWeeks}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Plans non synchronisés</span><b>${audit.stats.unsyncedPlans}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Résultats non synchronisés</span><b>${audit.stats.unsyncedExecutions}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Migration</span><b>${migration?'OK':'—'}</b></div>
+   </div>
+  </div>
+  ${audit.errors.length?`<div class="releaseAuditSection"><h3>Erreurs</h3>${audit.errors.map(issue=>`<div class="releaseAuditIssue">${issue}</div>`).join('')}</div>`:''}
+  ${audit.warnings.length?`<div class="releaseAuditSection"><h3>Points à vérifier</h3>${audit.warnings.map(issue=>`<div class="releaseAuditIssue releaseAuditWarning">${issue}</div>`).join('')}</div>`:''}
+  ${renderAuditWeekRows(audit.localChecks,'Semaines locales')}
+  ${renderAuditWeekRows(audit.remoteChecks,'Dernières versions Google Sheets')}
+  <div class="dataTools" style="margin-top:14px"><button type="button" class="btn" onclick="exportLtsData()">Exporter une sauvegarde JSON</button><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
  </div></div>`)
 }
 
@@ -627,7 +810,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.7.3';
+const LTS_SCHEMA_VERSION='0.5.7.4';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -658,7 +841,7 @@ function buildExportPayload(){
  return {
    schemaVersion:LTS_SCHEMA_VERSION,
    exportedAt:new Date().toISOString(),
-   appVersion:'0.5.7.0',
+   appVersion:LTS_SCHEMA_VERSION,
    data:state
  }
 }
@@ -842,7 +1025,7 @@ function coachShell(content,active='dashboard'){
  app.innerHTML=`<div class="coach"><aside class="side"><div class="logo">LTS Coach</div><div class="nav">${[['dashboard','Tableau de bord'],['cycle','Cycle'],['weeks','Semaines'],['analytics','Suivi']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</div><button class="btn full" style="position:absolute;bottom:18px;left:14px;width:202px" onclick="switchRole()">Espace Athlète</button></aside><main class="main"><div class="mobilebar"><b>LTS Coach</b><button class="btn secondary coachTopSwitch" onclick="switchRole()">Athlète</button></div>${content}</main><nav class="coachBottom">${bottom.map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`
 }
 function coach(view){if(view==='cycle')renderCycle();else if(view==='weeks')renderWeeks();else if(view==='tests')renderTests();else if(view==='analytics')renderCoachAnalytics();else renderDashboard()}
-function renderDashboard(){const c=state.cycle;coachShell(`<div class="pagehead"><div><h1>Tableau de bord</h1><p class="muted">${c?'Cycle actif : '+c.name:'Aucun cycle actif'}</p></div>${c?'<button class="btn" onclick="renderWeeks()">Préparer la semaine</button>':'<button class="btn" onclick="renderCycle()">Créer un cycle</button>'}</div>${renderApiPanel()}<div class="grid cols3"><div class="card"><h3>Facteur principal</h3><div style="font-size:25px;font-weight:900">${c?c.primary:'À définir'}</div></div><div class="card"><h3>Semaine courante</h3><div style="font-size:25px;font-weight:900">${c?'S'+(c.currentWeek||1)+' / 8':'—'}</div></div><div class="card"><h3>Action attendue</h3><span class="pill ${c?'orange':''}">${c?'Créer la semaine suivante':'Créer le cycle'}</span></div></div>${renderDailyPerformanceTracking()}<div class="grid cols2" style="margin-top:14px"><div class="card"><h3>Derniers niveaux</h3>${state.tests.map(t=>`<div class="row"><div><b>${t.quality}</b><div class="muted small">${t.source}</div></div><div class="level">N${t.level}</div></div>`).join('')}</div><div class="card"><h3>Règles du cycle</h3><div class="row"><span>Structure</span><b>3 + 1 + 3 + 1</b></div><div class="row"><span>Semaine 4</span><b>Deload</b></div><div class="row"><span>Semaine 8</span><b>Tests</b></div><div class="row"><span>Mensurations</span><b>Chaque dimanche</b></div><button class="btn full" style="margin-top:12px" onclick="coach(\'analytics\')">Ouvrir le suivi et les graphiques</button></div></div>`,'dashboard')}
+function renderDashboard(){const c=state.cycle;coachShell(`<div class="pagehead"><div><h1>Tableau de bord</h1><p class="muted">${c?'Cycle actif : '+c.name:'Aucun cycle actif'}</p></div>${c?'<button class="btn" onclick="renderWeeks()">Préparer la semaine</button>':'<button class="btn" onclick="renderCycle()">Créer un cycle</button>'}</div>${renderApiPanel()}${renderV057ReleaseReadiness()}<div class="grid cols3"><div class="card"><h3>Facteur principal</h3><div style="font-size:25px;font-weight:900">${c?c.primary:'À définir'}</div></div><div class="card"><h3>Semaine courante</h3><div style="font-size:25px;font-weight:900">${c?'S'+(c.currentWeek||1)+' / 8':'—'}</div></div><div class="card"><h3>Action attendue</h3><span class="pill ${c?'orange':''}">${c?'Créer la semaine suivante':'Créer le cycle'}</span></div></div>${renderDailyPerformanceTracking()}<div class="grid cols2" style="margin-top:14px"><div class="card"><h3>Derniers niveaux</h3>${state.tests.map(t=>`<div class="row"><div><b>${t.quality}</b><div class="muted small">${t.source}</div></div><div class="level">N${t.level}</div></div>`).join('')}</div><div class="card"><h3>Règles du cycle</h3><div class="row"><span>Structure</span><b>3 + 1 + 3 + 1</b></div><div class="row"><span>Semaine 4</span><b>Deload</b></div><div class="row"><span>Semaine 8</span><b>Tests</b></div><div class="row"><span>Mensurations</span><b>Chaque dimanche</b></div><button class="btn full" style="margin-top:12px" onclick="coach(\'analytics\')">Ouvrir le suivi et les graphiques</button></div></div>`,'dashboard')}
 
 
 function allExecutedSessions(){

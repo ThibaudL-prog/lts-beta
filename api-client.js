@@ -1312,10 +1312,16 @@
     const blocks=[];
     const prescriptions=[];
 
-    (week.containers||[]).forEach((container,containerIndex)=>{
+    const orderedContainers=typeof orderedSessionContainers==='function'
+      ?orderedSessionContainers(week)
+      :[...(week.containers||[])];
+
+    orderedContainers.forEach((container,containerIndex)=>{
       const remoteSessionId=planVersionId(container.containerId,version);
       const sessionDate=addDaysIso(weekStart,({Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6}[container.day]??0));
-      const containerPrescs=(week.sessions||[]).filter(p=>p.containerId===container.containerId);
+      const containerPrescs=typeof orderedContainerPrescriptions==='function'
+        ?orderedContainerPrescriptions(week,container)
+        :(week.sessions||[]).filter(p=>p.containerId===container.containerId);
       sessions.push({
         planned_session_id:remoteSessionId,
         training_week_id:remoteWeekId,
@@ -1486,6 +1492,8 @@
           title:meta.title||`Séance ${sessionIndex+1}`,
           comment:meta.comment||'',
           status:'PLANNED',
+          sessionOrder:Number(s.priority_order)||sessionIndex+1,
+          structureType:'SESSION_CONTAINER',
           remotePlannedSessionId:s.planned_session_id
         });
         remoteBlocks
@@ -1502,6 +1510,8 @@
               slot:meta.slot||p.slot||'midi',
               title:p.title||b.name||'Prescription',
               duration:Number(p.duration||b.duration_target_min)||0,
+              prescriptionOrder:Number(b.block_order)||1,
+              structureType:'PRESCRIPTION',
               execution:null,
               remoteBlockId:b.session_block_id,
               remoteWeekId:w.training_week_id
