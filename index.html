@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.2</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.3</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -237,6 +237,16 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachActions.compact .btn{padding:7px 9px;font-size:12px}
 .orderActions{display:flex;gap:5px;flex-wrap:wrap}
 .moveTarget{width:100%;text-align:left;margin-bottom:8px}
+
+.sessionProgress{height:8px;background:#e9eef7;border-radius:999px;overflow:hidden;margin:10px 0 6px}
+.sessionProgress>span{display:block;height:100%;background:var(--blue);border-radius:999px}
+.sessionProgress.complete>span{background:var(--green)}
+.athleteSessionCard{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fff;margin:12px 0}
+.athleteSessionCard.complete{background:#f5fbf8;border-color:#bfe8d5}
+.athletePrescriptionNumber{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#edf3ff;color:var(--blue);font-weight:900;flex:0 0 auto}
+.athletePrescriptionMain{display:flex;gap:10px;align-items:flex-start}
+.athletePrescriptionState{white-space:nowrap}
+@media(max-width:520px){.athletePrescriptionState{white-space:normal}.athletePrescriptionMain{align-items:center}}
 </style></head><body><div id="app" class="app"></div>
 <script src="api-client.js"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
@@ -617,7 +627,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.7.2';
+const LTS_SCHEMA_VERSION='0.5.7.3';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -1952,35 +1962,102 @@ function saveClimbingExecution(sessionId,count){
  s.execution={type:'CLIMBING',problems:problems,quality:+climbQuality.value||null,enjoyment:+document.getElementById('climbEnjoyment')?.value||null,rpe:+climbRpe.value||null,note:climbNote.value,completed:true,completedAt:new Date().toISOString()};
  save();closeSheet();renderAthleteWeek();syncSessionExecution(sessionId);toast('Séance enregistrée localement')
 }
+
+function prescriptionAthleteStatus(p){
+ if(p?.execution?.completed)return {label:'Terminée',className:'green'};
+ if(p?.execution)return {label:'En cours',className:'orange'};
+ return {label:'À faire',className:''}
+}
+
+function containerProgress(w,c){
+ const ps=orderedContainerPrescriptions(w,c);
+ const done=ps.filter(p=>p.execution?.completed).length;
+ const started=ps.filter(p=>p.execution&&!p.execution?.completed).length;
+ const total=ps.length;
+ const percent=total?Math.round(done/total*100):0;
+ return {ps,done,started,total,percent,complete:total>0&&done===total}
+}
+
+function openNextContainerPrescription(weekNumber,containerId){
+ const w=publishedWeeks().find(x=>Number(x.number)===Number(weekNumber));
+ const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ if(!w||!c)return toast('Séance introuvable');
+ const ps=orderedContainerPrescriptions(w,c);
+ const next=ps.find(p=>!p.execution?.completed)||ps[0];
+ if(!next)return toast('Aucune prescription dans cette séance');
+ openAthleteSession(next.sessionId)
+}
+
+function renderAthleteSessionCard(w,c,compact=false){
+ const progress=containerProgress(w,c);
+ const status=progress.complete?'Terminée':progress.done||progress.started?'En cours':'À faire';
+ const actionLabel=progress.complete?'Revoir la séance':progress.done||progress.started?'Continuer la séance':'Commencer la séance';
+ return `<div class="athleteSessionCard ${progress.complete?'complete':''}">
+  <div class="sessionContainerHeader">
+   <div>
+    <div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div>
+    <h3 style="margin:4px 0">${c.title||'Séance'}</h3>
+    <div class="muted small">${containerDuration(w,c)} min prévues · ${status}</div>
+   </div>
+   <span class="sessionBadge">${progress.done}/${progress.total}</span>
+  </div>
+  <div class="sessionProgress ${progress.complete?'complete':''}"><span style="width:${progress.percent}%"></span></div>
+  <div class="muted small">${progress.percent}% terminé · ${progress.total} prescription(s)</div>
+  ${c.comment?`<p class="muted">${c.comment}</p>`:''}
+  <div class="prescriptionStack">${progress.ps.map((p,index)=>{
+    const pStatus=prescriptionAthleteStatus(p);
+    return `<button type="button" class="prescriptionMini" style="width:100%;text-align:left;border:1px solid var(--line)" onclick="openAthleteSession('${p.sessionId}')">
+      <div class="row" style="padding:0;border:0">
+       <div class="athletePrescriptionMain">
+        <span class="athletePrescriptionNumber">${index+1}</span>
+        <div><b>${p.title}</b><div class="muted small">${p.guide||'Sans guide'} · ${p.duration||0} min</div></div>
+       </div>
+       <div class="athletePrescriptionState" style="display:flex;gap:5px;align-items:center">
+        <span class="pill ${pStatus.className}">${pStatus.label}</span>${executionSyncBadge(p)}
+       </div>
+      </div>
+     </button>`
+  }).join('')}</div>
+  ${progress.total?`<button type="button" class="btn full" style="margin-top:10px" onclick="openNextContainerPrescription(${Number(w.number)},'${c.containerId}')">${actionLabel}</button>`:''}
+ </div>`
+}
+
 function renderAthleteWeek(){
  const weeks=publishedWeeks();
  if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
- const body=weeks.map(w=>`<div class="card"><div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':''}</div>${orderedSessionContainers(w).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>${c.comment?`<p class="muted">${c.comment}</p>`:''}<div class="prescriptionStack">${orderedContainerPrescriptions(w,c).map(p=>`<div class="prescriptionMini" onclick="openAthleteSession('${p.sessionId}')"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Terminée</span>':'<span class="pill">Ouvrir</span>'}${executionSyncBadge(p)}</div></div></div>`).join('')}</div></div>`).join('')}</div>`).join('');
- athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div><div class="demoBanner"><b>Semaine fictive de démonstration</b><div class="muted small">Elle sert uniquement à tester les cartes Athlète.</div></div>'+body,'week')
+ const body=weeks.map(w=>{
+  const sessions=orderedSessionContainers(w);
+  const total=sessions.reduce((sum,c)=>sum+containerProgress(w,c).total,0);
+  const done=sessions.reduce((sum,c)=>sum+containerProgress(w,c).done,0);
+  return `<div class="card">
+   <div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':`<span class="pill">${done}/${total}</span>`}</div>
+   ${sessions.length?sessions.map(c=>renderAthleteSessionCard(w,c)).join(''):'<p class="muted">Aucune séance publiée.</p>'}
+  </div>`
+ }).join('');
+ athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div>'+body,'week')
 }
 function renderToday(){
  const dayMap=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
  const today=dayMap[new Date().getDay()];
  const weeks=publishedWeeks();
- const sessions=weeks.flatMap(w=>(w.sessions||[]).filter(s=>s.day===today)).sort((a,b)=>{
- const slot=(SESSION_SLOT_ORDER[a.slot]??99)-(SESSION_SLOT_ORDER[b.slot]??99);
- if(slot)return slot;
- return (Number(a.prescriptionOrder)||0)-(Number(b.prescriptionOrder)||0)
-});
- let body='';
- if(!sessions.length){
-   body='<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
- }else{
-   body=sessions.map(s=>{
-     return '<div class="athsession published sessionopen '+(s.execution?.completed?'complete':'')+'">'+
-       '<b>'+s.title+'</b>'+(s.execution?.completed?'<span class="pill green" style="margin-left:6px">✓ Terminée</span>':'')+
-       '<div class="sessionmeta"><span class="pill">'+(s.guide||'')+'</span><span class="pill">'+(s.duration||0)+' min</span></div>'+
-       sessionDetails(s)+
-       '<button class="btn full" onclick="openAthleteSession(\''+s.sessionId+'\')">'+(s.execution?.completed?'Modifier la saisie':'Commencer')+'</button>'+
-       '</div>';
-   }).join('');
- }
- athleteShell('<div class="muted">'+today+'</div><h1>Séances du jour</h1>'+body,'today')
+ const rows=[];
+ weeks.forEach(w=>{
+  orderedSessionContainers(w)
+   .filter(c=>c.day===today)
+   .forEach(c=>rows.push({week:w,container:c}))
+ });
+ rows.sort((a,b)=>{
+  const slot=(SESSION_SLOT_ORDER[a.container.slot]??99)-(SESSION_SLOT_ORDER[b.container.slot]??99);
+  if(slot)return slot;
+  const order=(Number(a.container.sessionOrder)||0)-(Number(b.container.sessionOrder)||0);
+  if(order)return order;
+  return Number(a.week.number)-Number(b.week.number)
+ });
+ const body=rows.length
+  ? rows.map(x=>renderAthleteSessionCard(x.week,x.container,true)).join('')
+  : '<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
+ const prescriptionCount=rows.reduce((sum,x)=>sum+containerProgress(x.week,x.container).total,0);
+ athleteShell(`<div class="sectiontitle"><div><div class="muted">${today}</div><h1>Séances du jour</h1></div><span class="pill">${rows.length} séance(s) · ${prescriptionCount} prescription(s)</span></div>${body}`,'today')
 }
 function athlete(view){if(view==='checkup')return renderSunday();if(view==='today')return renderToday();if(view==='week')return renderAthleteWeek();if(view==='profile')return athleteShell(`<div class="sectiontitle"><div><h1>Mon évolution</h1><p class="muted">Performances, tests et mensurations.</p></div><button class="btn" onclick="openAthleteMeasurements()">Saisir mes mensurations</button></div>${trackingRangeBar()}${renderLatestAthleteMeasurements()}<h3>Haut du corps</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Doigts et gainage</h3><div class="chartgrid">${['fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Mesures physiques</h3><div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`,'profile');renderDaily()}
 function draftSlider(key,val){const [part,k]=key.split('.');state.checkins[part][k]=+val;if(state.checkStatus[part]==='VALIDATED')state.checkStatus[part]='DRAFT';else if(state.checkStatus[part]==='NOT_STARTED')state.checkStatus[part]='DRAFT';save()}
