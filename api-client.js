@@ -31,6 +31,7 @@
   };
 
 
+  const executionSyncInFlight=new Map();
   let backgroundSyncTimer=null;
   let backgroundSyncRunning=false;
   let backgroundSyncQueued=false;
@@ -369,6 +370,44 @@
     }
   };
 
+
+  function cloneExecution(value){
+    return value?JSON.parse(JSON.stringify(value)):null
+  }
+
+  function executionTime(value){
+    if(!value)return 0;
+    const candidates=[value.sync?.updatedAt,value.completedAt,value.startedAt];
+    for(const candidate of candidates){
+      const time=candidate?new Date(candidate).getTime():0;
+      if(Number.isFinite(time)&&time>0)return time
+    }
+    return 0
+  }
+
+  function collectExecutionOverlay(){
+    const overlay=new Map();
+    const ingest=weeks=>{
+      (weeks||[]).forEach(w=>(w.sessions||[]).forEach(p=>{
+        if(!p.sessionId||!p.execution)return;
+        const id=String(p.sessionId);
+        const current=overlay.get(id);
+        const currentUnsynced=current&&current.sync?.status!=='synced';
+        const incomingUnsynced=p.execution.sync?.status!=='synced';
+        if(!current||(
+          incomingUnsynced&&!currentUnsynced
+        )||(
+          executionTime(p.execution)>executionTime(current)
+        )){
+          overlay.set(id,cloneExecution(p.execution))
+        }
+      }))
+    };
+    ingest(state.weeks);
+    ingest(state.remoteWeeks);
+    return overlay
+  }
+
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
     state.remoteSnapshot=snapshot;
@@ -453,9 +492,16 @@
         if(remoteVersion<localVersion)return
       }
 
-      const executionBySessionId=new Map();
+      const executionBySessionId=new Map(options.executionOverlay||[]);
       (localWeek?.sessions||[]).forEach(p=>{
-        if(p.sessionId&&p.execution)executionBySessionId.set(String(p.sessionId),p.execution)
+        if(!p.sessionId||!p.execution)return;
+        const id=String(p.sessionId);
+        const current=executionBySessionId.get(id);
+        const currentUnsynced=current&&current.sync?.status!=='synced';
+        const incomingUnsynced=p.execution.sync?.status!=='synced';
+        if(!current||(incomingUnsynced&&!currentUnsynced)||executionTime(p.execution)>executionTime(current)){
+          executionBySessionId.set(id,cloneExecution(p.execution))
+        }
       });
 
       const replacement={
@@ -510,13 +556,14 @@
 
   window.syncSheetsSnapshot=async function(options={}){
     saveApiSettings({silent:true});saveCfg({lastMessage:'Chargement de l’instantané…'});
+    const executionOverlay=collectExecutionOverlay();
     try{
       const r=await request('snapshot');
       window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
       try{
         mapSnapshotToLocal(r.snapshot);
         await hydratePlanConflictBaselines();
-        replaceCoachPublishedWeeksFromRemote({force:options.forceRemote===true});
+        replaceCoachPublishedWeeksFromRemote({force:options.forceRemote===true,executionOverlay});
         if(typeof save==='function')save();
       }finally{
         window.__LTS_SUPPRESS_LOCAL_CHANGE__=false
@@ -932,6 +979,9 @@
   }
 
   async function syncUnsyncedExecutions(){
+    if(typeof migrateAthleteExecutionCanonicalV0575==='function'){
+      migrateAthleteExecutionCanonicalV0575()
+    }
     const sessions=(state.weeks||[]).flatMap(w=>w.sessions||[]);
     for(const session of sessions){
       if(!session.execution)continue;
@@ -968,6 +1018,13 @@
 
     try{
       pruneStaleQueueItems();
+
+      if(typeof migrateAthleteExecutionCanonicalV0575==='function'){
+        migrateAthleteExecutionCanonicalV0575()
+      }
+
+      updateGlobalSyncProgress(1,'Sécurisation des performances locales…');
+      await syncUnsyncedExecutions();
 
       const hasLocalPlanEditsBeforePull=(state.weeks||[]).some(weekHasUnpublishedLocalContent);
 
@@ -1182,54 +1239,106 @@
   }
 
   window.syncSessionExecution=async function(sessionId){
-    if(typeof findSession!=='function')return;
-    const found=findSession(sessionId);
-    if(!found||!found.session.execution)return;
-    const session=found.session,e=session.execution,c=cfg();
+    const key=String(sessionId);
+    if(executionSyncInFlight.has(key))return executionSyncInFlight.get(key);
 
-    if(!c.url){
-      e.sync={status:'local',message:'Enregistrée localement — API non configurée',updatedAt:isoNow()};
+    const task=(async()=>{
+      if(typeof migrateAthleteExecutionCanonicalV0575==='function'){
+        migrateAthleteExecutionCanonicalV0575()
+      }
+      if(typeof findSession!=='function')return;
+      const found=findSession(sessionId);
+      if(!found||!found.session.execution)return;
+      const session=found.session,e=session.execution,c=cfg();
+
+      if(!c.url){
+        e.sync={status:'local',message:'Enregistrée localement — API non configurée',updatedAt:isoNow()};
+        refreshExecutionViews();
+        return
+      }
+
+      e.sync={status:'pending',message:'Synchronisation en cours',updatedAt:isoNow()};
       refreshExecutionViews();
-      return
-    }
 
-    e.sync={status:'pending',message:'Synchronisation en cours',updatedAt:isoNow()};
-    refreshExecutionViews();
+      const payloads=queueExecutionPayload(session,found);
+      try{
+        const force=consumeForceOnce(`execution:${sessionId}`);
+        if(!force){
+          const meta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
+          const known=e.sync?.remoteFingerprint||null;
+          if(meta.found&&known&&meta.fingerprint!==known){
+            const conflict=addConflict({
+              conflictId:conflictId('execution',sessionId),
+              entityType:'execution',
+              entityId:sessionId,
+              label:session.title||sessionId,
+              message:'Cette séance a été modifiée sur un autre appareil.'
+            });
+            e.sync={
+              status:'error',
+              message:'Conflit multi-appareils',
+              updatedAt:isoNow(),
+              conflictId:conflict.conflictId
+            };
+            refreshExecutionViews();
+            if(typeof toast==='function')toast('Conflit détecté');
+            return
+          }
+        }
 
-    const payloads=queueExecutionPayload(session,found);
-    try{
-      const force=consumeForceOnce(`execution:${sessionId}`);
-      if(!force){
-        const meta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
-        const known=e.sync?.remoteFingerprint||null;
-        if(meta.found&&known&&meta.fingerprint!==known){
-          const c=addConflict({conflictId:conflictId('execution',sessionId),entityType:'execution',entityId:sessionId,label:session.title||sessionId,message:'Cette séance a été modifiée sur un autre appareil.'});
-          e.sync={status:'error',message:'Conflit multi-appareils',updatedAt:isoNow(),conflictId:c.conflictId};refreshExecutionViews();if(typeof toast==='function')toast('Conflit détecté');return
+        for(const step of payloads){
+          await request(step.action,{method:'POST',payload:step.payload})
+        }
+
+        removeQueueItem(queueId('execution',sessionId));
+        const freshMeta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
+        e.sync={
+          status:'synced',
+          message:'Synchronisée avec Google Sheets',
+          updatedAt:isoNow(),
+          remoteFingerprint:freshMeta.fingerprint||null
+        };
+        if(typeof logAudit==='function'){
+          logAudit('SYNC_EXECUTION','SESSION',sessionId,session.title||'')
+        }
+        saveCfg({
+          connected:true,
+          lastSync:isoNow(),
+          lastMessage:`Séance synchronisée · ${session.title||sessionId}`
+        });
+        refreshExecutionViews();
+        if(typeof toast==='function')toast('Séance synchronisée')
+      }catch(error){
+        console.error('Synchronisation séance',error);
+        const queued=upsertQueueItem({
+          queueId:queueId('execution',sessionId),
+          type:'execution',
+          entityId:sessionId,
+          label:session.title||sessionId,
+          payloads
+        });
+        e.sync={
+          status:'error',
+          message:`En attente de synchronisation · ${error.message||'Erreur réseau'}`,
+          updatedAt:isoNow(),
+          queueId:queued.queueId
+        };
+        saveCfg({
+          connected:false,
+          lastMessage:`Séance mise en attente · ${error.message||'Erreur réseau'}`
+        });
+        refreshExecutionViews();
+        if(typeof toast==='function'){
+          toast('Séance conservée localement et mise en attente')
         }
       }
-      for(const step of payloads){
-        await request(step.action,{method:'POST',payload:step.payload})
-      }
-      removeQueueItem(queueId('execution',sessionId));
-      const freshMeta=await fetchSyncMeta('execution',{entity_id:executionId(sessionId)});
-      e.sync={status:'synced',message:'Synchronisée avec Google Sheets',updatedAt:isoNow(),remoteFingerprint:freshMeta.fingerprint||null};
-      if(typeof logAudit==='function')logAudit('SYNC_EXECUTION','SESSION',sessionId,session.title||'');
-      saveCfg({connected:true,lastSync:isoNow(),lastMessage:`Séance synchronisée · ${session.title||sessionId}`});
-      refreshExecutionViews();
-      if(typeof toast==='function')toast('Séance synchronisée')
-    }catch(error){
-      console.error('Synchronisation séance',error);
-      const queued=upsertQueueItem({
-        queueId:queueId('execution',sessionId),
-        type:'execution',
-        entityId:sessionId,
-        label:session.title||sessionId,
-        payloads
-      });
-      e.sync={status:'error',message:`En attente de synchronisation · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId};
-      saveCfg({connected:false,lastMessage:`Séance mise en attente · ${error.message||'Erreur réseau'}`});
-      refreshExecutionViews();
-      if(typeof toast==='function')toast('Séance conservée localement et mise en attente')
+    })();
+
+    executionSyncInFlight.set(key,task);
+    try{
+      return await task
+    }finally{
+      executionSyncInFlight.delete(key)
     }
   };
 
@@ -1465,6 +1574,120 @@
     }
   };
 
+
+  function sheetNumber(value){
+    if(value===null||value===undefined||value==='')return null;
+    const number=Number(value);
+    return Number.isFinite(number)?number:null
+  }
+
+  function executionFromSnapshot(snapshot,sessionId,prescription){
+    const executionIdValue=`exec-${sessionId}`;
+    const rows=(snapshot?.executions||[])
+      .filter(row=>
+        String(row.session_execution_id)===executionIdValue||
+        String(row.planned_session_id)===String(sessionId)
+      )
+      .sort((a,b)=>new Date(b.ended_at||b.started_at||0)-new Date(a.ended_at||a.started_at||0));
+    const row=rows[0];
+    if(!row)return null;
+
+    const completed=String(row.status||'').toLowerCase()==='completed'||Number(row.completion_pct||0)>=100;
+    const base={
+      type:'GENERIC',
+      duration:sheetNumber(row.duration_minutes)||sheetNumber(prescription?.duration)||0,
+      rpe:sheetNumber(row.rpe_session),
+      enjoyment:sheetNumber(row.enjoyment),
+      pain:sheetNumber(row.pain_during)||0,
+      note:row.athlete_comment||'',
+      completed,
+      startedAt:row.started_at||null,
+      completedAt:row.ended_at||row.started_at||null,
+      sync:{
+        status:'synced',
+        message:'Chargée depuis Google Sheets',
+        updatedAt:row.ended_at||row.started_at||new Date().toISOString()
+      }
+    };
+
+    const running=(snapshot?.running_results||[])
+      .find(result=>String(result.session_execution_id)===String(row.session_execution_id));
+    if(running){
+      const seconds=sheetNumber(running.time_seconds);
+      const distanceM=sheetNumber(running.distance_m);
+      return {
+        ...base,
+        type:'RUN',
+        duration:seconds!==null?seconds/60:base.duration,
+        distance:distanceM!==null?distanceM/1000:0,
+        speed:sheetNumber(running.speed_kmh),
+        paceMinutes:sheetNumber(running.pace_seconds_per_km)!==null
+          ?sheetNumber(running.pace_seconds_per_km)/60
+          :null,
+        hr:sheetNumber(running.average_hr_bpm),
+        note:running.notes||base.note
+      }
+    }
+
+    const climbing=(snapshot?.climbing_attempts||[])
+      .filter(result=>String(result.session_execution_id)===String(row.session_execution_id))
+      .sort((a,b)=>Number(a.attempt_no||0)-Number(b.attempt_no||0));
+    if(climbing.length){
+      return {
+        ...base,
+        type:'CLIMBING',
+        problems:climbing.map((result,index)=>({
+          name:result.problem_name||`Bloc ${index+1}`,
+          grade:result.grade_code||'',
+          flash:String(result.result_status||'').toUpperCase()==='FLASH',
+          success:['FLASH','AFTER_WORK'].includes(String(result.result_status||'').toUpperCase()),
+          attempts:sheetNumber(result.attempts_to_send)||sheetNumber(result.attempt_no)||1,
+          comment:result.notes||''
+        })),
+        quality:sheetNumber(climbing[0]?.perceived_difficulty)
+      }
+    }
+
+    const setRows=(snapshot?.set_results||[])
+      .filter(result=>String(result.session_execution_id)===String(row.session_execution_id))
+      .sort((a,b)=>Number(a.set_no||0)-Number(b.set_no||0));
+
+    if(setRows.length){
+      const schema=typeof guideSchemaFor==='function'?guideSchemaFor(prescription):null;
+      if(schema?.type==='EXERCISES'){
+        const groups=new Map();
+        setRows.forEach(result=>{
+          const key=String(result.exercise_prescription_id||result.exercise_catalog_id||'exercise');
+          if(!groups.has(key))groups.set(key,[]);
+          groups.get(key).push(result)
+        });
+        return {
+          ...base,
+          type:'EXERCISES',
+          exercises:[...groups.values()].map(group=>({
+            sets:group.length,
+            reps:sheetNumber(group[0]?.reps_completed)??'',
+            hold:sheetNumber(group[0]?.duration_s)??'',
+            quality:sheetNumber(group[0]?.rpe)??''
+          }))
+        }
+      }
+
+      return {
+        ...base,
+        type:'SETS',
+        sets:setRows.map(result=>({
+          load:sheetNumber(result.load_added_kg)??'',
+          reps:sheetNumber(result.reps_completed)??'',
+          rir:sheetNumber(result.rir)??'',
+          completed:result.valid===true||String(result.valid).toLowerCase()==='true'
+        }))
+      }
+    }
+
+    return base
+  }
+
   function rebuildRemoteWeeks(snapshot){
     const remoteWeeks=snapshot?.weeks||[];
     const remoteSessions=snapshot?.sessions||[];
@@ -1502,7 +1725,7 @@
           .forEach(b=>{
             const p=parseJson(b.notes,{})||{};
             const sessionId=p.sessionId||String(b.session_block_id).replace(/-v\d+$/,'');
-            prescriptions.push({
+            const prescription={
               ...p,
               sessionId,
               containerId,
@@ -1515,7 +1738,9 @@
               execution:null,
               remoteBlockId:b.session_block_id,
               remoteWeekId:w.training_week_id
-            })
+            };
+            prescription.execution=executionFromSnapshot(snapshot,sessionId,prescription);
+            prescriptions.push(prescription)
           })
       });
       return {

@@ -1,20 +1,12 @@
-# LTS v0.5.7.4 — Release Candidate
+# LTS v0.5.7.5 — RC2, persistance des résultats Athlète
 
-Cette version clôt le lot « Semaine → séance réelle → prescriptions → résultats ».
+Correctif critique :
+- l’espace Athlète écrit désormais dans la semaine locale canonique ;
+- une synchronisation Coach ne peut plus remplacer un résultat local non sécurisé ;
+- les performances locales sont envoyées avant la première lecture distante lors d’une synchronisation manuelle ;
+- les synchronisations concurrentes d’une même prescription sont dédupliquées ;
+- les exécutions, séries, résultats de course et tentatives d’escalade sont reconstruits depuis Google Sheets ;
+- les anciennes exécutions éventuellement stockées dans `remoteWeeks` sont migrées vers `weeks` ;
+- un overlay local protège les résultats pendant le remplacement des plans par le snapshot distant.
 
-## Stabilisation
-- diagnostic global en lecture seule dans le tableau de bord Coach ;
-- contrôle des identifiants, rattachements, jours, créneaux et ordres ;
-- détection des doublons entre semaines locales ;
-- contrôle des dernières versions récupérées depuis Google Sheets ;
-- visibilité sur les plans et résultats encore non synchronisés ;
-- sauvegarde JSON accessible depuis le diagnostic ;
-- numéro de version correct dans l’export JSON.
-
-## Ordre publié
-- les séances sont envoyées vers Google Sheets dans l’ordre lundi → dimanche ;
-- pour un même jour : matin → midi → soir ;
-- l’ordre des prescriptions est conservé ;
-- la reconstruction distante reprend `priority_order` et `block_order`.
-
-`Code.gs` et le contrat des feuilles Google Sheets ne sont pas modifiés.
+`Code.gs` et le schéma Google Sheets restent inchangés.

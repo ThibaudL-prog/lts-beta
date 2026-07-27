@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.4</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.5</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -742,6 +742,57 @@ function openV057ReleaseAudit(){
  </div></div>`)
 }
 
+
+function executionTimestampV0575(execution){
+ if(!execution)return 0;
+ const candidates=[
+  execution.sync?.updatedAt,
+  execution.completedAt,
+  execution.startedAt
+ ];
+ for(const value of candidates){
+  const time=value?new Date(value).getTime():0;
+  if(Number.isFinite(time)&&time>0)return time
+ }
+ return 0
+}
+
+function migrateAthleteExecutionCanonicalV0575(){
+ const localSessions=new Map();
+ (state.weeks||[]).forEach(w=>(w.sessions||[]).forEach(p=>{
+  if(p.sessionId)localSessions.set(String(p.sessionId),p)
+ }));
+
+ let copied=0;
+ (state.remoteWeeks||[]).forEach(w=>(w.sessions||[]).forEach(remotePrescription=>{
+  if(!remotePrescription.sessionId||!remotePrescription.execution)return;
+  const localPrescription=localSessions.get(String(remotePrescription.sessionId));
+  if(!localPrescription)return;
+
+  const localExecution=localPrescription.execution;
+  const remoteExecution=remotePrescription.execution;
+  const remoteIsUnsynced=remoteExecution.sync?.status!=='synced';
+  const localIsUnsynced=localExecution&&localExecution.sync?.status!=='synced';
+  const shouldCopy=!localExecution||(
+   remoteIsUnsynced&&!localIsUnsynced
+  )||(
+   executionTimestampV0575(remoteExecution)>executionTimestampV0575(localExecution)
+  );
+
+  if(shouldCopy){
+   localPrescription.execution=JSON.parse(JSON.stringify(remoteExecution));
+   copied+=1
+  }
+ }));
+
+ state.executionCanonicalMigration={
+  version:'0.5.7.5',
+  copied,
+  migratedAt:new Date().toISOString()
+ };
+ return copied
+}
+
 function migrateSessionStructureV0570(){
  const report={version:SESSION_STRUCTURE_VERSION,weeks:0,changedWeeks:0,containersCreated:0,containerIdsCreated:0,prescriptionIdsCreated:0,linksRepaired:0,ordersCreated:0,fieldsNormalized:0,arraysRepaired:0};
  (state.weeks||[]).forEach(w=>{
@@ -810,7 +861,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.7.4';
+const LTS_SCHEMA_VERSION='0.5.7.5';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -868,7 +919,7 @@ function importLtsData(input){
      if(!Array.isArray(payload.data.weeks))throw new Error('Semaines manquantes');
      if(!confirm('Importer cette sauvegarde remplacera les données locales de cette bêta. Continuer ?'))return;
      state=payload.data;
-     ensureSessionContainers();ensureStableIds();migrateSessionStructureV0570();
+     ensureSessionContainers();ensureStableIds();migrateSessionStructureV0570();migrateAthleteExecutionCanonicalV0575();
      logAudit('IMPORT','SYSTEM','local',`Import du schéma ${payload.schemaVersion}`);
      save();render();toast('Sauvegarde importée')
    }catch(error){console.error(error);toast('Fichier de sauvegarde invalide')}
@@ -890,7 +941,8 @@ try{
   ensureSessionContainers();
   ensureStableIds();
   const migrationReport=migrateSessionStructureV0570();
-  if(migrationReport.changedWeeks){
+  const executionCopies=migrateAthleteExecutionCanonicalV0575();
+  if(migrationReport.changedWeeks||executionCopies){
     const previousSuppressState=window.__LTS_SUPPRESS_LOCAL_CHANGE__;
     window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
     try{save()}finally{window.__LTS_SUPPRESS_LOCAL_CHANGE__=previousSuppressState}
@@ -1836,16 +1888,20 @@ function attemptPublish(n){
 function athleteShell(content,active='daily'){app.innerHTML=`<div class="athlete"><header class="athhead"><b style="font-size:23px">LTS Athlete</b><button class="btn secondary" onclick="switchRole()">Coach</button></header><main class="athcontent">${content}</main><nav class="bottom" style="grid-template-columns:repeat(5,1fr)">${[['daily','Quotidien'],['today','Aujourd’hui'],['week','Semaine'],['checkup','Dimanche'],['profile','Profil']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="athlete('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`}
 function slider(name,key,val,min=0,max=10,step=1){return `<div class="sliderline"><label>${name}</label><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="this.nextElementSibling.value=this.value;draftSlider('${key}',this.value)"><output>${val}</output></div>`}
 function publishedWeeks(){
+ const local=(state.weeks||[])
+  .filter(w=>w.status==='PUBLISHED')
+  .sort((a,b)=>Number(a.number)-Number(b.number));
+ if(local.length)return local;
+
  const remote=(state.remoteWeeks||[]).filter(w=>w.status==='PUBLISHED');
- if(remote.length){
-  const latestByNumber=new Map();
-  remote.forEach(w=>{
-   const current=latestByNumber.get(Number(w.number));
-   if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0))latestByNumber.set(Number(w.number),w)
-  });
-  return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
- }
- return state.weeks.filter(w=>w.status==='PUBLISHED')
+ const latestByNumber=new Map();
+ remote.forEach(w=>{
+  const current=latestByNumber.get(Number(w.number));
+  if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0)){
+   latestByNumber.set(Number(w.number),w)
+  }
+ });
+ return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
 }
 function sessionDetails(s){
  const sets=s.structuredSets?'<div class="small">'+s.structuredSets.map((x,i)=>
@@ -1864,16 +1920,13 @@ function sessionDetails(s){
  return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'
 }
 function findSession(sessionId){
- const remoteWeeks=publishedWeeks();
- for(const w of remoteWeeks){
-  const s=(w.sessions||[]).find(x=>x.sessionId===sessionId);
-  if(s)return {week:w,session:s}
- }
- const remoteNumbers=new Set(remoteWeeks.map(w=>Number(w.number)));
  for(const w of (state.weeks||[])){
-  if(remoteNumbers.has(Number(w.number)))continue;
-  const s=(w.sessions||[]).find(x=>x.sessionId===sessionId);
-  if(s)return {week:w,session:s}
+  const s=(w.sessions||[]).find(x=>String(x.sessionId)===String(sessionId));
+  if(s)return {week:w,session:s,origin:'local'}
+ }
+ for(const w of (state.remoteWeeks||[])){
+  const s=(w.sessions||[]).find(x=>String(x.sessionId)===String(sessionId));
+  if(s)return {week:w,session:s,origin:'remote'}
  }
  return null
 }
