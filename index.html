@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.0</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.1</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -533,8 +533,8 @@ function renderSessionStructureStatus(w){
 function openWeekStructureAudit(n){
  const w=state.weeks.find(x=>Number(x.number)===Number(n));
  const check=validateWeekSessionStructureV0570(w);
- const rows=(w?.containers||[]).map(c=>{
-  const ps=(w.sessions||[]).filter(p=>String(p.containerId)===String(c.containerId));
+ const rows=orderedSessionContainers(w).map(c=>{
+  const ps=orderedContainerPrescriptions(w,c);
   return `<div class="guidecard"><div class="guidecardhead"><b>${c.day} · ${slotLabel(c.slot)} — ${c.title||'Séance'}</b><span class="sessionBadge">${ps.length} prescription(s)</span></div><div class="guidecardbody">${ps.length?ps.map((p,i)=>`<div class="prescriptionMini"><b>${i+1}. ${p.title||'Prescription'}</b><div class="muted small">${p.sessionId} · ${p.execution?'résultat conservé':'sans résultat'}</div></div>`).join(''):'<p class="muted">Aucune prescription.</p>'}</div></div>`
  }).join('');
 
@@ -573,6 +573,34 @@ function ensureSessionContainers(){
    w.containers.sort((a,b)=>{const d=(dayOrder[a.day]??99)-(dayOrder[b.day]??99);return d||((slotOrder[a.slot]??1)-(slotOrder[b.slot]??1))})
  })
 }
+const SESSION_DAY_ORDER={Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6};
+const SESSION_SLOT_ORDER={matin:0,midi:1,soir:2};
+
+function orderedSessionContainers(w){
+ return [...(w?.containers||[])].sort((a,b)=>{
+  const day=(SESSION_DAY_ORDER[a.day]??99)-(SESSION_DAY_ORDER[b.day]??99);
+  if(day)return day;
+
+  const slot=(SESSION_SLOT_ORDER[a.slot]??99)-(SESSION_SLOT_ORDER[b.slot]??99);
+  if(slot)return slot;
+
+  const order=(Number(a.sessionOrder)||0)-(Number(b.sessionOrder)||0);
+  if(order)return order;
+
+  return String(a.containerId||'').localeCompare(String(b.containerId||''))
+ })
+}
+
+function orderedContainerPrescriptions(w,c){
+ return (w?.sessions||[])
+  .filter(p=>String(p.containerId)===String(c.containerId))
+  .sort((a,b)=>{
+   const order=(Number(a.prescriptionOrder)||0)-(Number(b.prescriptionOrder)||0);
+   if(order)return order;
+   return String(a.sessionId||'').localeCompare(String(b.sessionId||''))
+  })
+}
+
 function containerPrescriptions(w,c){return (w.sessions||[]).filter(p=>p.containerId===c.containerId)}
 function containerDuration(w,c){return containerPrescriptions(w,c).reduce((sum,p)=>sum+(+p.duration||0),0)}
 function containerStatus(w,c){
@@ -584,7 +612,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.7.0';
+const LTS_SCHEMA_VERSION='0.5.7.1';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -1117,7 +1145,7 @@ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class=
 ${renderSessionStructureStatus(w)}${renderG21Status(w)}${renderWeekSummary(w)}${renderG21Alerts(w)}
 <div class="card"><h3>À placer dans cette semaine</h3><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,n)).join('')}</div></div>
 <div class="card" style="margin-top:14px"><div class="sectiontitle"><h3>Planning</h3></div>
-${w.containers?.length?w.containers.map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div><div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>{const i=w.sessions.indexOf(p);return `<div class="prescriptionMini"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Réalisée</span>':''}${executionSyncBadge(p)}</div></div><div class="coachActions" style="margin-top:8px"><button class="btn ghost" onclick="previewSessionForAthlete(${n},${i})">Aperçu</button><button class="btn ghost" onclick="editWeekSessionById(${n},'${p.sessionId}')">Modifier</button><button class="btn ghost" onclick="removeWeekSession(${n},${i})">Retirer</button></div></div>`}).join('')}</div><div class="sessionActions"><button class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button><button class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button><button class="btn ghost" onclick="duplicateSessionContainer(${n},'${c.containerId}')">Dupliquer séance</button><button class="btn ghost" onclick="removeSessionContainer(${n},'${c.containerId}')">Retirer séance</button></div></div>`).join(''):'<p class="muted">Commence par créer une séance matin, midi ou soir.</p>'}</div>
+${w.containers?.length?orderedSessionContainers(w).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div><div class="prescriptionStack">${orderedContainerPrescriptions(w,c).map(p=>{const i=w.sessions.indexOf(p);return `<div class="prescriptionMini"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Réalisée</span>':''}${executionSyncBadge(p)}</div></div><div class="coachActions" style="margin-top:8px"><button class="btn ghost" onclick="previewSessionForAthlete(${n},${i})">Aperçu</button><button class="btn ghost" onclick="editWeekSessionById(${n},'${p.sessionId}')">Modifier</button><button class="btn ghost" onclick="removeWeekSession(${n},${i})">Retirer</button></div></div>`}).join('')}</div><div class="sessionActions"><button class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button><button class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button><button class="btn ghost" onclick="duplicateSessionContainer(${n},'${c.containerId}')">Dupliquer séance</button><button class="btn ghost" onclick="removeSessionContainer(${n},'${c.containerId}')">Retirer séance</button></div></div>`).join(''):'<p class="muted">Commence par créer une séance matin, midi ou soir.</p>'}</div>
 <div class="field"><label>Commentaire coach</label><textarea id="weekComment">${w.comment||w.proposal||''}</textarea></div>
 <div class="card"><label class="row"><span><b>Adaptation volontaire</b><div class="muted small">Maintenir la semaine malgré une alerte justifiée.</div></span><input id="adaptedVoluntary" type="checkbox" ${w.adaptedVoluntarily?'checked':''}></label><div class="field"><label>Justification</label><textarea id="adaptationReason">${w.adaptationReason||''}</textarea></div><button class="btn secondary full" onclick="saveAdaptationChoice(${n})">Enregistrer l’adaptation</button></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn secondary" onclick="saveWeek(${n},'DRAFT')">Enregistrer</button><button class="btn" onclick="attemptPublish(${n})">Publier</button></div></div></div>`)
@@ -1752,14 +1780,18 @@ function saveClimbingExecution(sessionId,count){
 function renderAthleteWeek(){
  const weeks=publishedWeeks();
  if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
- const body=weeks.map(w=>`<div class="card"><div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':''}</div>${(w.containers||[]).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>${c.comment?`<p class="muted">${c.comment}</p>`:''}<div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>`<div class="prescriptionMini" onclick="openAthleteSession('${p.sessionId}')"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Terminée</span>':'<span class="pill">Ouvrir</span>'}${executionSyncBadge(p)}</div></div></div>`).join('')}</div></div>`).join('')}</div>`).join('');
+ const body=weeks.map(w=>`<div class="card"><div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':''}</div>${orderedSessionContainers(w).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>${c.comment?`<p class="muted">${c.comment}</p>`:''}<div class="prescriptionStack">${orderedContainerPrescriptions(w,c).map(p=>`<div class="prescriptionMini" onclick="openAthleteSession('${p.sessionId}')"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Terminée</span>':'<span class="pill">Ouvrir</span>'}${executionSyncBadge(p)}</div></div></div>`).join('')}</div></div>`).join('')}</div>`).join('');
  athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div><div class="demoBanner"><b>Semaine fictive de démonstration</b><div class="muted small">Elle sert uniquement à tester les cartes Athlète.</div></div>'+body,'week')
 }
 function renderToday(){
  const dayMap=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
  const today=dayMap[new Date().getDay()];
  const weeks=publishedWeeks();
- const sessions=weeks.flatMap(w=>(w.sessions||[]).filter(s=>s.day===today));
+ const sessions=weeks.flatMap(w=>(w.sessions||[]).filter(s=>s.day===today)).sort((a,b)=>{
+ const slot=(SESSION_SLOT_ORDER[a.slot]??99)-(SESSION_SLOT_ORDER[b.slot]??99);
+ if(slot)return slot;
+ return (Number(a.prescriptionOrder)||0)-(Number(b.prescriptionOrder)||0)
+});
  let body='';
  if(!sessions.length){
    body='<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
