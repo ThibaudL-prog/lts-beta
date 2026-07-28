@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.5</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.6</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -260,6 +260,11 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .releaseAuditIssue{border-left:4px solid #d94b4b;background:#fff6f6;border-radius:8px;padding:8px 10px;margin-top:7px;font-size:13px}
 .releaseAuditWarning{border-left-color:#d59a21;background:#fff9ed}
 @media(max-width:650px){.releaseAuditGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.athletePreviewInteractive{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.athletePreviewInteractive:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(22,49,92,.12);border-color:#9db8e8}
+.athletePreviewInteractive:focus-visible{outline:3px solid rgba(36,104,220,.28);outline-offset:3px}
+.athletePreviewInteractive:active{transform:translateY(0)}
 </style></head><body><div id="app" class="app"></div>
 <script src="api-client.js"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
@@ -861,7 +866,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.7.5';
+const LTS_SCHEMA_VERSION='0.5.7.6';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -1330,8 +1335,9 @@ function renderWeekSummary(w){
 function previewSessionForAthlete(n,i){
  const w=state.weeks.find(x=>Number(x.number)===Number(n)),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Aperçu Athlète</h2><p class="muted">Voici la carte telle qu’elle sera comprise côté Athlète.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="previewAthlete"><div class="athsession published"><b>${s.title}</b><div class="sessionmeta"><span class="pill">${s.guide||''}</span><span class="pill">${s.duration||0} min</span><span class="pill">${s.day}</span></div>${sessionDetails(s)}<div class="statusline">Touchez la carte pour voir le prévu et saisir le réalisé</div></div></div>
- <button class="btn full" onclick="closeSheet();editWeekSession(${n},${i})">Modifier cette séance</button></div></div>`)
+ <div class="previewAthlete"><div class="athsession published athletePreviewInteractive" role="button" tabindex="0" aria-label="Ouvrir la prescription ${s.title}" onclick="closeSheet();openAthleteSession('${s.sessionId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeSheet();openAthleteSession('${s.sessionId}')}"><b>${s.title}</b><div class="sessionmeta"><span class="pill">${s.guide||''}</span><span class="pill">${s.duration||0} min</span><span class="pill">${s.day}</span></div>${sessionDetails(s)}<div class="statusline">${s.execution?'Touchez la carte pour voir le prévu et le réalisé':'Touchez la carte pour voir le prévu et saisir le réalisé'}</div></div></div>
+ <button type="button" class="btn secondary full" onclick="closeSheet();openAthleteSession('${s.sessionId}')">${s.execution?'Voir le prévu et le réalisé':'Ouvrir comme Athlète'}</button>
+ <button type="button" class="btn ghost full" style="margin-top:8px" onclick="closeSheet();editWeekSession(${n},${i})">Modifier la prescription Coach</button></div></div>`)
 }
 function duplicateWeekSession(n,i){
  const w=state.weeks.find(x=>Number(x.number)===Number(n)),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
