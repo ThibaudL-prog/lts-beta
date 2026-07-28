@@ -1,13 +1,42 @@
 
 (function(){
   const CONFIG_KEY='lts-api-config-v050';
-  const DEFAULT={url:'',athleteId:'ath_demo_001',connected:false,lastSync:null,lastMessage:'Non configuré',schemaVersion:null};
+  const MIGRATION_LOCK_KEY='lts-production-sync-lock-v0580';
+  const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Migration production verrouillée',schemaVersion:null};
+
+  // Cette release est une étape de maintenance. La synchronisation est
+  // volontairement verrouillée jusqu’à la purge et à l’import des données réelles.
+  if(localStorage.getItem(MIGRATION_LOCK_KEY)===null){
+    localStorage.setItem(MIGRATION_LOCK_KEY,'1')
+  }
+
+  function migrationLocked(){
+    return localStorage.getItem(MIGRATION_LOCK_KEY)==='1'
+  }
+
+  try{
+    const existing=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
+    if(!existing.athleteId||existing.athleteId==='ath_demo_001'){
+      localStorage.setItem(CONFIG_KEY,JSON.stringify({
+        ...existing,
+        athleteId:'ath_lgrd_001',
+        connected:false,
+        lastSync:null,
+        lastMessage:'Migration production verrouillée'
+      }))
+    }
+  }catch(error){
+    console.error('Migration de l’identifiant Athlète',error)
+  }
 
   function cfg(){try{return {...DEFAULT,...JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}')}}catch(e){return {...DEFAULT}}}
   function saveCfg(next){localStorage.setItem(CONFIG_KEY,JSON.stringify({...cfg(),...next}));window.dispatchEvent(new Event('lts-api-status'))}
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
   async function request(action,options={}){
+    if(migrationLocked()){
+      throw new Error('Migration production en cours · synchronisation verrouillée')
+    }
     const c=cfg();
     if(!c.url)throw new Error('URL Apps Script manquante');
     const method=options.method||'GET';
@@ -84,6 +113,7 @@
   }
 
   function scheduleBackgroundSync(reason='local-change'){
+    if(migrationLocked())return;
     if(window.__LTS_SUPPRESS_LOCAL_CHANGE__)return;
     if(backgroundSyncRunning&&reason==='local-change')return;
     if(!cfg().url)return;
@@ -109,6 +139,7 @@
   }
 
   async function runBackgroundSync(reason='scheduled'){
+    if(migrationLocked())return;
     if(backgroundSyncRunning||globalSyncRunning)return;
     if(!navigator.onLine||!cfg().url)return;
     if(loadConflicts().some(x=>x.status==='open'))return;
@@ -251,6 +282,13 @@
 
   function globalSyncState(){
     const c=cfg();
+    if(migrationLocked()){
+      return {
+        status:'locked',
+        label:'Verrouillée',
+        message:'Purge et import des données réelles en cours. Aucune donnée ne peut être envoyée.'
+      }
+    }
     const queue=loadQueue();
     const conflicts=loadConflicts().filter(x=>x.status==='open');
     if(!c.url)return {status:'unconfigured',label:'Non configurée',message:'Renseigne l’URL Apps Script.'};
@@ -276,6 +314,7 @@
   window.renderGlobalSyncCenter=function(){
     pruneStaleQueueItems();
     const c=cfg();
+    const locked=migrationLocked();
     const s=globalSyncState();
     const queue=loadQueue();
     const conflicts=loadConflicts().filter(x=>x.status==='open');
@@ -291,6 +330,11 @@
         <span class="syncGlobalStatus ${s.status}"><span class="syncDot"></span>${s.label}</span>
       </div>
 
+      ${locked?`<div class="productionMigrationBanner">
+        <b>Migration production en cours</b>
+        <span class="muted small">L’état DEMO local a été retiré. La synchronisation reste volontairement bloquée jusqu’à la fin de la purge et de l’import.</span>
+      </div>`:''}
+
       <div class="syncStats">
         <div class="syncStat"><span class="muted small">En attente</span><b>${queue.length}</b></div>
         <div class="syncStat"><span class="muted small">Conflits</span><b>${conflicts.length}</b></div>
@@ -298,7 +342,7 @@
       </div>
 
       <div class="syncActions">
-        <button id="globalSyncButton" class="btn" onclick="synchronizeEverything()" ${globalSyncRunning?'disabled':''}>${globalSyncRunning?'<span class="syncSpinner"></span>Synchronisation…':'Synchroniser maintenant'}</button>
+        <button id="globalSyncButton" class="btn" onclick="synchronizeEverything()" ${(locked||globalSyncRunning)?'disabled':''}>${locked?'Migration verrouillée':(globalSyncRunning?'<span class="syncSpinner"></span>Synchronisation…':'Synchroniser maintenant')}</button>
         <button class="btn secondary" onclick="toggleSyncSettings()">Réglages</button>
         ${conflicts.length?`<button class="btn ghost" onclick="toggleConflictDetails()">Voir les conflits</button>`:''}
       </div>
@@ -349,7 +393,7 @@
 
     const next={
       url:urlField?urlField.value.trim():current.url,
-      athleteId:athleteField?(athleteField.value.trim()||current.athleteId||'ath_demo_001'):current.athleteId,
+      athleteId:athleteField?(athleteField.value.trim()||current.athleteId||'ath_lgrd_001'):current.athleteId,
       connected:current.connected,
       lastMessage:options.silent?current.lastMessage:'Configuration enregistrée'
     };
@@ -991,6 +1035,10 @@
   }
 
   window.synchronizeEverything=async function(){
+    if(migrationLocked()){
+      if(typeof toast==='function')toast('Migration production verrouillée');
+      return
+    }
     if(globalSyncRunning||backgroundSyncRunning)return;
     clearTimeout(backgroundSyncTimer);
     backgroundSyncQueued=false;

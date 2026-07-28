@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "0.5.8.0",
+  "appVersion": "0.5.8.0",
+  "data": {
+    "role": "coach",
+    "athlete": {
+      "name": "Thibaud",
+      "weight": 85,
+      "external1rm": {
+        "pull": 44,
+        "dip": 50
+      }
+    },
+    "tests": [
+      {
+        "quality": "Force maximale doigts",
+        "level": 2,
+        "source": "Suspension 20 mm · 5 s · +14 kg"
+      },
+      {
+        "quality": "Endurance doigts",
+        "level": 2,
+        "source": "7 tours au protocole 7/3"
+      },
+      {
+        "quality": "Endurance running",
+        "level": 2,
+        "source": "5 km en 29:00 · 01/04/2026"
+      },
+      {
+        "quality": "Force haut du corps",
+        "level": 3,
+        "source": "Tractions +44 kg · Dips +50 kg"
+      },
+      {
+        "quality": "Endurance haut du corps",
+        "level": 3,
+        "source": "Tractions 22 reps · Dips 34 reps"
+      }
+    ],
+    "cycle": {
+      "name": "Historique réel — juillet 2026",
+      "start": "2026-07-06",
+      "primary": "Force maximale doigts",
+      "secondary": "Endurance running",
+      "comment": "Import contrôlé des semaines réellement effectuées.",
+      "currentWeek": 1,
+      "status": "DRAFT",
+      "validatedAt": null,
+      "isDemo": false,
+      "cycleId": "cycle-lgrd-2026-07"
+    },
+    "weeks": [],
+    "checkins": {
+      "morning": {
+        "sleep": 0,
+        "quality": 0,
+        "mood": 0,
+        "fatigue": 0,
+        "stress": 0,
+        "energy": 0,
+        "motivation": 0,
+        "soreness": 0,
+        "pain": 0
+      },
+      "evening": {
+        "rpe": 0,
+        "fatigue": 0,
+        "soreness": 0,
+        "pain": 0,
+        "bike": 0
+      }
+    },
+    "weekly": {
+      "weight": 85,
+      "waist": 88,
+      "chest": 114,
+      "hips": 92,
+      "armRelaxed": 36,
+      "armFlexed": 39,
+      "thigh": 54,
+      "calf": 37,
+      "hrSupine": 65,
+      "hrStanding": 76,
+      "availability": "",
+      "pain": "",
+      "comment": ""
+    },
+    "checkStatus": {
+      "morning": "NOT_STARTED",
+      "evening": "NOT_STARTED",
+      "sunday": "NOT_STARTED"
+    },
+    "records": {
+      "measurements": [],
+      "checkins": [],
+      "tests": []
+    },
+    "trackingRange": "30d",
+    "history": {},
+    "schemaVersion": "0.5.8.0",
+    "auditLog": [],
+    "productionMigration": {
+      "version": "0.5.8.0",
+      "status": "LOCKED",
+      "athleteId": "ath_lgrd_001"
+    }
+  }
+}
