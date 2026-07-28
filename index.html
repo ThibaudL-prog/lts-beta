@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.6.15</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.7.5</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -224,6 +224,42 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .backgroundSyncBadge.done{background:#17633a}
 .backgroundSyncBadge.error{background:#a62d2d}
 @media(min-width:900px){.backgroundSyncBadge{bottom:18px}}
+
+.sessionModelCard{border:1px solid #c8d9f5;background:#f7faff;border-radius:14px;padding:12px;margin:12px 0}
+.sessionModelCard.valid{border-color:#bfe5cc;background:#f1fbf5}
+.sessionModelCard.invalid{border-color:#f0c5c5;background:#fff6f6}
+.sessionModelStats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.sessionModelStat{background:#fff;border:1px solid #dbe6f6;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700}
+.structureIssues{display:grid;gap:8px;margin-top:12px}
+.structureIssue{border:1px solid #ead4d4;background:#fff;border-radius:10px;padding:9px;font-size:13px}
+
+.coachActions.compact{display:flex;gap:6px;flex-wrap:wrap}
+.coachActions.compact .btn{padding:7px 9px;font-size:12px}
+.orderActions{display:flex;gap:5px;flex-wrap:wrap}
+.moveTarget{width:100%;text-align:left;margin-bottom:8px}
+
+.sessionProgress{height:8px;background:#e9eef7;border-radius:999px;overflow:hidden;margin:10px 0 6px}
+.sessionProgress>span{display:block;height:100%;background:var(--blue);border-radius:999px}
+.sessionProgress.complete>span{background:var(--green)}
+.athleteSessionCard{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fff;margin:12px 0}
+.athleteSessionCard.complete{background:#f5fbf8;border-color:#bfe8d5}
+.athletePrescriptionNumber{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#edf3ff;color:var(--blue);font-weight:900;flex:0 0 auto}
+.athletePrescriptionMain{display:flex;gap:10px;align-items:flex-start}
+.athletePrescriptionState{white-space:nowrap}
+@media(max-width:520px){.athletePrescriptionState{white-space:normal}.athletePrescriptionMain{align-items:center}}
+
+.releaseAuditCard{border:1px solid #cbd9ef;background:linear-gradient(180deg,#f8fbff,#fff);border-radius:18px;padding:15px;margin:14px 0}
+.releaseAuditCard.ready{border-color:#b9dfce;background:linear-gradient(180deg,#f4fbf7,#fff)}
+.releaseAuditCard.warning{border-color:#ecd89e;background:linear-gradient(180deg,#fffaf0,#fff)}
+.releaseAuditCard.invalid{border-color:#efc2c2;background:linear-gradient(180deg,#fff7f7,#fff)}
+.releaseAuditGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:11px}
+.releaseAuditStat{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px}
+.releaseAuditStat b{display:block;font-size:20px;margin-top:3px}
+.releaseAuditSection{margin-top:14px}
+.releaseAuditWeek{border:1px solid var(--line);border-radius:13px;padding:10px;margin-top:8px;background:#fff}
+.releaseAuditIssue{border-left:4px solid #d94b4b;background:#fff6f6;border-radius:8px;padding:8px 10px;margin-top:7px;font-size:13px}
+.releaseAuditWarning{border-left-color:#d59a21;background:#fff9ed}
+@media(max-width:650px){.releaseAuditGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><div id="app" class="app"></div>
 <script src="api-client.js"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
@@ -393,6 +429,381 @@ function addOrReplaceDailyRecord(bucket,record){const day=record.date.slice(0,10
 
 function newContainerId(){return 'ctr-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 function slotLabel(slot){return ({matin:'Matin',midi:'Midi',soir:'Soir'})[slot]||'Midi'}
+
+const SESSION_STRUCTURE_VERSION='1.0';
+const SESSION_STRUCTURE_DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const SESSION_STRUCTURE_SLOTS=['matin','midi','soir'];
+
+function nextSessionOrder(w){
+ return Math.max(0,...(w.containers||[]).map(c=>Number(c.sessionOrder)||0))+1
+}
+function nextPrescriptionOrder(w,containerId){
+ return Math.max(0,...(w.sessions||[]).filter(p=>String(p.containerId)===String(containerId)).map(p=>Number(p.prescriptionOrder)||0))+1
+}
+function ensureWeekSessionStructureV0570(w,report=null){
+ if(!w)return false;
+ let changed=false;
+ const note=(key)=>{if(report)report[key]=(report[key]||0)+1};
+
+ if(!Array.isArray(w.sessions)){w.sessions=[];changed=true;note('arraysRepaired')}
+ if(!Array.isArray(w.containers)){w.containers=[];changed=true;note('arraysRepaired')}
+
+ const containerIds=new Set();
+ w.containers.forEach((c,index)=>{
+  if(!c.containerId){c.containerId=stableId('ctr');changed=true;note('containerIdsCreated')}
+  containerIds.add(String(c.containerId));
+  if(!SESSION_STRUCTURE_DAYS.includes(c.day)){c.day='Lun';changed=true;note('fieldsNormalized')}
+  if(!SESSION_STRUCTURE_SLOTS.includes(c.slot)){c.slot='midi';changed=true;note('fieldsNormalized')}
+  if(!c.title){c.title=`${slotLabel(c.slot)} — ${c.day}`;changed=true;note('fieldsNormalized')}
+  if(!Number.isFinite(Number(c.sessionOrder))){c.sessionOrder=index+1;changed=true;note('ordersCreated')}
+  c.structureType='SESSION_CONTAINER'
+ });
+
+ w.sessions.forEach((p,index)=>{
+  if(!p.sessionId){p.sessionId=stableId('presc');changed=true;note('prescriptionIdsCreated')}
+
+  let container=w.containers.find(c=>String(c.containerId)===String(p.containerId));
+  if(!container){
+   const day=SESSION_STRUCTURE_DAYS.includes(p.day)?p.day:'Lun';
+   const slot=SESSION_STRUCTURE_SLOTS.includes(p.slot)?p.slot:((p.autoFlex||p.templateId==='flexibility')?'matin':(p.domain==='ESC'?'soir':'midi'));
+   container=w.containers.find(c=>c.day===day&&c.slot===slot);
+   if(!container){
+    container={
+     containerId:stableId('ctr'),
+     day,
+     slot,
+     title:`${slotLabel(slot)} — ${day}`,
+     comment:'',
+     status:'PLANNED',
+     sessionOrder:nextSessionOrder(w),
+     structureType:'SESSION_CONTAINER'
+    };
+    w.containers.push(container);
+    changed=true;
+    note('containersCreated')
+   }
+   p.containerId=container.containerId;
+   changed=true;
+   note('linksRepaired')
+  }
+
+  if(p.day!==container.day){p.day=container.day;changed=true;note('fieldsNormalized')}
+  if(p.slot!==container.slot){p.slot=container.slot;changed=true;note('fieldsNormalized')}
+  if(!Number.isFinite(Number(p.prescriptionOrder))){
+   p.prescriptionOrder=nextPrescriptionOrder(w,container.containerId);
+   changed=true;
+   note('ordersCreated')
+  }
+  p.structureType='PRESCRIPTION'
+ });
+
+ if(w.sessionStructureVersion!==SESSION_STRUCTURE_VERSION){
+  w.sessionStructureVersion=SESSION_STRUCTURE_VERSION;
+  changed=true
+ }
+ return changed
+}
+
+function validateWeekSessionStructureV0570(w){
+ const errors=[],warnings=[];
+ if(!w)return {valid:false,errors:['Semaine introuvable'],warnings,stats:{containers:0,prescriptions:0,executions:0}};
+
+ const containers=Array.isArray(w.containers)?w.containers:[];
+ const prescriptions=Array.isArray(w.sessions)?w.sessions:[];
+ const containerIds=new Set();
+ const prescriptionIds=new Set();
+
+ containers.forEach((c,index)=>{
+  const label=c.title||`Séance ${index+1}`;
+  if(!c.containerId)errors.push(`${label} : identifiant de séance manquant`);
+  else if(containerIds.has(String(c.containerId)))errors.push(`${label} : identifiant de séance dupliqué`);
+  else containerIds.add(String(c.containerId));
+  if(!SESSION_STRUCTURE_DAYS.includes(c.day))errors.push(`${label} : jour invalide`);
+  if(!SESSION_STRUCTURE_SLOTS.includes(c.slot))errors.push(`${label} : créneau invalide`);
+ });
+
+ const containerById=new Map(containers.filter(c=>c.containerId).map(c=>[String(c.containerId),c]));
+ const sessionOrderKeys=new Set();
+
+ containers.forEach((c,index)=>{
+  const label=c.title||`Séance ${index+1}`;
+  const order=Number(c.sessionOrder);
+  if(!Number.isFinite(order)||order<1)errors.push(`${label} : ordre de séance invalide`);
+  else{
+   const orderKey=`${c.day}|${c.slot}|${order}`;
+   if(sessionOrderKeys.has(orderKey))errors.push(`${label} : ordre de séance dupliqué sur ce créneau`);
+   else sessionOrderKeys.add(orderKey)
+  }
+ });
+
+ const prescriptionOrderKeys=new Set();
+ prescriptions.forEach((p,index)=>{
+  const label=p.title||`Prescription ${index+1}`;
+  if(!p.sessionId)errors.push(`${label} : identifiant de prescription manquant`);
+  else if(prescriptionIds.has(String(p.sessionId)))errors.push(`${label} : identifiant de prescription dupliqué`);
+  else prescriptionIds.add(String(p.sessionId));
+
+  const container=p.containerId?containerById.get(String(p.containerId)):null;
+  if(!container)errors.push(`${label} : séance de destination introuvable`);
+  else{
+   if(p.day!==container.day)errors.push(`${label} : jour différent de la séance parente`);
+   if(p.slot!==container.slot)errors.push(`${label} : créneau différent de la séance parente`);
+   const order=Number(p.prescriptionOrder);
+   if(!Number.isFinite(order)||order<1)errors.push(`${label} : ordre de prescription invalide`);
+   else{
+    const orderKey=`${p.containerId}|${order}`;
+    if(prescriptionOrderKeys.has(orderKey))errors.push(`${label} : ordre de prescription dupliqué dans la séance`);
+    else prescriptionOrderKeys.add(orderKey)
+   }
+  }
+ });
+
+ containers.forEach(c=>{
+  const count=prescriptions.filter(p=>String(p.containerId)===String(c.containerId)).length;
+  if(count===0)errors.push(`${c.title||'Séance'} : aucune prescription`);
+ });
+
+ const executions=prescriptions.filter(p=>p.execution).length;
+ return {
+  valid:errors.length===0,
+  errors,
+  warnings,
+  stats:{containers:containers.length,prescriptions:prescriptions.length,executions}
+ }
+}
+
+function renderSessionStructureStatus(w){
+ const check=validateWeekSessionStructureV0570(w);
+ const cls=check.valid?'valid':'invalid';
+ return `<div class="sessionModelCard ${cls}">
+  <div class="row"><div><b>Modèle Séance → prescriptions</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · identifiants stables · résultats conservés</div></div><span class="pill ${check.valid?'green':'orange'}">${check.valid?'Valide':'À corriger'}</span></div>
+  <div class="sessionModelStats">
+   <span class="sessionModelStat">${check.stats.containers} séance(s)</span>
+   <span class="sessionModelStat">${check.stats.prescriptions} prescription(s)</span>
+   <span class="sessionModelStat">${check.stats.executions} résultat(s) conservé(s)</span>
+  </div>
+  <div style="margin-top:9px"><button type="button" class="btn ghost" onclick="openWeekStructureAudit(${Number(w.number)})">Vérifier la structure</button></div>
+ </div>`
+}
+
+function openWeekStructureAudit(n){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const check=validateWeekSessionStructureV0570(w);
+ const rows=orderedSessionContainers(w).map(c=>{
+  const ps=orderedContainerPrescriptions(w,c);
+  return `<div class="guidecard"><div class="guidecardhead"><b>${c.day} · ${slotLabel(c.slot)} — ${c.title||'Séance'}</b><span class="sessionBadge">${ps.length} prescription(s)</span></div><div class="guidecardbody">${ps.length?ps.map((p,i)=>`<div class="prescriptionMini"><b>${i+1}. ${p.title||'Prescription'}</b><div class="muted small">${p.sessionId} · ${p.execution?'résultat conservé':'sans résultat'}</div></div>`).join(''):'<p class="muted">Aucune prescription.</p>'}</div></div>`
+ }).join('');
+
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="structureAuditSheet"><div class="sheet"><div class="sheethead"><div><h2>Structure de la semaine ${n}</h2><p class="muted">Une séance réelle correspond à un conteneur ; chaque prescription possède son identifiant propre.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('structureAuditSheet')">Fermer</button></div>
+ <div class="sessionModelCard ${check.valid?'valid':'invalid'}"><b>${check.valid?'Structure valide':'Structure à corriger avant publication'}</b><div class="sessionModelStats"><span class="sessionModelStat">${check.stats.containers} séance(s)</span><span class="sessionModelStat">${check.stats.prescriptions} prescription(s)</span><span class="sessionModelStat">${check.stats.executions} résultat(s)</span></div>${check.errors.length?`<div class="structureIssues">${check.errors.map(x=>`<div class="structureIssue">${x}</div>`).join('')}</div>`:''}</div>
+ ${rows||'<div class="card"><p class="muted">Aucune séance planifiée.</p></div>'}
+ </div></div>`)
+}
+
+
+function duplicateAuditValues(values){
+ const counts=new Map();
+ values.filter(Boolean).forEach(value=>{
+  const key=String(value);
+  counts.set(key,(counts.get(key)||0)+1)
+ });
+ return [...counts.entries()].filter(([,count])=>count>1).map(([value,count])=>({value,count}))
+}
+
+function latestRemoteWeeksForV057Audit(){
+ const latest=new Map();
+ (state.remoteWeeks||[])
+  .filter(w=>w.status==='PUBLISHED')
+  .forEach(w=>{
+   const number=Number(w.number);
+   const current=latest.get(number);
+   if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0)){
+    latest.set(number,w)
+   }
+  });
+ return [...latest.values()].sort((a,b)=>Number(a.number)-Number(b.number))
+}
+
+function collectV057ReleaseAudit(){
+ const localWeeks=state.weeks||[];
+ const remoteWeeks=latestRemoteWeeksForV057Audit();
+ const errors=[];
+ const warnings=[];
+ const localChecks=localWeeks.map(w=>({week:w,check:validateWeekSessionStructureV0570(w)}));
+ const remoteChecks=remoteWeeks.map(w=>({week:w,check:validateWeekSessionStructureV0570(w)}));
+
+ localChecks.forEach(({week,check})=>{
+  check.errors.forEach(issue=>errors.push(`Locale S${week.number} : ${issue}`))
+ });
+ remoteChecks.forEach(({week,check})=>{
+  check.errors.forEach(issue=>errors.push(`Google Sheets S${week.number} : ${issue}`))
+ });
+
+ const duplicateWeekNumbers=duplicateAuditValues(localWeeks.map(w=>w.number));
+ duplicateWeekNumbers.forEach(x=>errors.push(`Numéro de semaine locale dupliqué : S${x.value} (${x.count} occurrences)`));
+
+ const duplicateWeekIds=duplicateAuditValues(localWeeks.map(w=>w.weekId));
+ duplicateWeekIds.forEach(x=>errors.push(`Identifiant de semaine locale dupliqué : ${x.value}`));
+
+ const localContainers=localWeeks.flatMap(w=>w.containers||[]);
+ const localPrescriptions=localWeeks.flatMap(w=>w.sessions||[]);
+ const duplicateContainerIds=duplicateAuditValues(localContainers.map(c=>c.containerId));
+ duplicateContainerIds.forEach(x=>errors.push(`Identifiant de séance dupliqué entre plusieurs semaines : ${x.value}`));
+
+ const duplicatePrescriptionIds=duplicateAuditValues(localPrescriptions.map(p=>p.sessionId));
+ duplicatePrescriptionIds.forEach(x=>errors.push(`Identifiant de prescription dupliqué entre plusieurs semaines : ${x.value}`));
+
+ const invalidPublishedVersions=localWeeks.filter(w=>w.status==='PUBLISHED'&&Number(w.publicationVersion||0)<1);
+ invalidPublishedVersions.forEach(w=>errors.push(`S${w.number} publiée sans numéro de version valide`));
+
+ const missingFingerprints=localWeeks.filter(w=>w.status==='PUBLISHED'&&!w.lastPublishedFingerprint);
+ missingFingerprints.forEach(w=>warnings.push(`S${w.number} publiée sans empreinte locale enregistrée`));
+
+ const unsyncedPlans=localWeeks.filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced');
+ const executed=localPrescriptions.filter(p=>p.execution);
+ const unsyncedExecutions=executed.filter(p=>p.execution?.sync?.status!=='synced');
+
+ if(unsyncedPlans.length)warnings.push(`${unsyncedPlans.length} semaine(s) publiée(s) ne sont pas marquées synchronisées`);
+ if(unsyncedExecutions.length)warnings.push(`${unsyncedExecutions.length} résultat(s) ne sont pas marqués synchronisés`);
+ if(!remoteWeeks.length)warnings.push('Aucune semaine publiée distante n’est actuellement chargée dans cette prévisualisation');
+
+ const stats={
+  localWeeks:localWeeks.length,
+  remoteWeeks:remoteWeeks.length,
+  containers:localContainers.length,
+  prescriptions:localPrescriptions.length,
+  executions:executed.length,
+  unsyncedPlans:unsyncedPlans.length,
+  unsyncedExecutions:unsyncedExecutions.length
+ };
+ const fullyReady=errors.length===0&&unsyncedPlans.length===0&&unsyncedExecutions.length===0;
+ return {
+  valid:errors.length===0,
+  fullyReady,
+  errors,
+  warnings,
+  stats,
+  localChecks,
+  remoteChecks,
+  migration:state.sessionStructureMigration||null
+ }
+}
+
+function renderV057ReleaseReadiness(){
+ const audit=collectV057ReleaseAudit();
+ const cls=!audit.valid?'invalid':audit.fullyReady?'ready':'warning';
+ const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
+ return `<div class="releaseAuditCard ${cls}">
+  <div class="sectiontitle">
+   <div><h3 style="margin:0">Stabilisation v0.5.7</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
+  </div>
+  <div class="releaseAuditGrid">
+   <div class="releaseAuditStat"><span class="muted small">Semaines locales</span><b>${audit.stats.localWeeks}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Séances</span><b>${audit.stats.containers}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Prescriptions</span><b>${audit.stats.prescriptions}</b></div>
+   <div class="releaseAuditStat"><span class="muted small">Résultats</span><b>${audit.stats.executions}</b></div>
+  </div>
+  <div class="dataTools" style="margin-top:11px">
+   <button type="button" class="btn secondary" onclick="openV057ReleaseAudit()">Ouvrir le diagnostic</button>
+   <button type="button" class="btn ghost" onclick="exportLtsData()">Exporter une sauvegarde JSON</button>
+  </div>
+ </div>`
+}
+
+function renderAuditWeekRows(rows,label){
+ if(!rows.length)return `<div class="releaseAuditSection"><h3>${label}</h3><p class="muted">Aucune semaine.</p></div>`;
+ return `<div class="releaseAuditSection"><h3>${label}</h3>${rows.map(({week,check})=>`
+  <div class="releaseAuditWeek">
+   <div class="row"><div><b>Semaine ${week.number}</b><div class="muted small">Version ${week.publicationVersion||0} · ${check.stats.containers} séance(s) · ${check.stats.prescriptions} prescription(s) · ${check.stats.executions} résultat(s)</div></div><span class="pill ${check.valid?'green':'orange'}">${check.valid?'Valide':'À corriger'}</span></div>
+   ${check.errors.map(issue=>`<div class="releaseAuditIssue">${issue}</div>`).join('')}
+  </div>`).join('')}</div>`
+}
+
+function openV057ReleaseAudit(){
+ const audit=collectV057ReleaseAudit();
+ const migration=audit.migration;
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.7</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
+   <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
+   <div class="releaseAuditGrid">
+    <div class="releaseAuditStat"><span class="muted small">Semaines Google Sheets</span><b>${audit.stats.remoteWeeks}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Plans non synchronisés</span><b>${audit.stats.unsyncedPlans}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Résultats non synchronisés</span><b>${audit.stats.unsyncedExecutions}</b></div>
+    <div class="releaseAuditStat"><span class="muted small">Migration</span><b>${migration?'OK':'—'}</b></div>
+   </div>
+  </div>
+  ${audit.errors.length?`<div class="releaseAuditSection"><h3>Erreurs</h3>${audit.errors.map(issue=>`<div class="releaseAuditIssue">${issue}</div>`).join('')}</div>`:''}
+  ${audit.warnings.length?`<div class="releaseAuditSection"><h3>Points à vérifier</h3>${audit.warnings.map(issue=>`<div class="releaseAuditIssue releaseAuditWarning">${issue}</div>`).join('')}</div>`:''}
+  ${renderAuditWeekRows(audit.localChecks,'Semaines locales')}
+  ${renderAuditWeekRows(audit.remoteChecks,'Dernières versions Google Sheets')}
+  <div class="dataTools" style="margin-top:14px"><button type="button" class="btn" onclick="exportLtsData()">Exporter une sauvegarde JSON</button><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+ </div></div>`)
+}
+
+
+function executionTimestampV0575(execution){
+ if(!execution)return 0;
+ const candidates=[
+  execution.sync?.updatedAt,
+  execution.completedAt,
+  execution.startedAt
+ ];
+ for(const value of candidates){
+  const time=value?new Date(value).getTime():0;
+  if(Number.isFinite(time)&&time>0)return time
+ }
+ return 0
+}
+
+function migrateAthleteExecutionCanonicalV0575(){
+ const localSessions=new Map();
+ (state.weeks||[]).forEach(w=>(w.sessions||[]).forEach(p=>{
+  if(p.sessionId)localSessions.set(String(p.sessionId),p)
+ }));
+
+ let copied=0;
+ (state.remoteWeeks||[]).forEach(w=>(w.sessions||[]).forEach(remotePrescription=>{
+  if(!remotePrescription.sessionId||!remotePrescription.execution)return;
+  const localPrescription=localSessions.get(String(remotePrescription.sessionId));
+  if(!localPrescription)return;
+
+  const localExecution=localPrescription.execution;
+  const remoteExecution=remotePrescription.execution;
+  const remoteIsUnsynced=remoteExecution.sync?.status!=='synced';
+  const localIsUnsynced=localExecution&&localExecution.sync?.status!=='synced';
+  const shouldCopy=!localExecution||(
+   remoteIsUnsynced&&!localIsUnsynced
+  )||(
+   executionTimestampV0575(remoteExecution)>executionTimestampV0575(localExecution)
+  );
+
+  if(shouldCopy){
+   localPrescription.execution=JSON.parse(JSON.stringify(remoteExecution));
+   copied+=1
+  }
+ }));
+
+ state.executionCanonicalMigration={
+  version:'0.5.7.5',
+  copied,
+  migratedAt:new Date().toISOString()
+ };
+ return copied
+}
+
+function migrateSessionStructureV0570(){
+ const report={version:SESSION_STRUCTURE_VERSION,weeks:0,changedWeeks:0,containersCreated:0,containerIdsCreated:0,prescriptionIdsCreated:0,linksRepaired:0,ordersCreated:0,fieldsNormalized:0,arraysRepaired:0};
+ (state.weeks||[]).forEach(w=>{
+  report.weeks+=1;
+  if(ensureWeekSessionStructureV0570(w,report))report.changedWeeks+=1
+ });
+ state.schemaVersion=LTS_SCHEMA_VERSION;
+ state.sessionStructureMigration={...report,migratedAt:new Date().toISOString()};
+ return report
+}
+
 function ensureSessionContainers(){
  (state.weeks||[]).forEach(w=>{
    w.containers=w.containers||[];
@@ -411,6 +822,34 @@ function ensureSessionContainers(){
    w.containers.sort((a,b)=>{const d=(dayOrder[a.day]??99)-(dayOrder[b.day]??99);return d||((slotOrder[a.slot]??1)-(slotOrder[b.slot]??1))})
  })
 }
+const SESSION_DAY_ORDER={Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6};
+const SESSION_SLOT_ORDER={matin:0,midi:1,soir:2};
+
+function orderedSessionContainers(w){
+ return [...(w?.containers||[])].sort((a,b)=>{
+  const day=(SESSION_DAY_ORDER[a.day]??99)-(SESSION_DAY_ORDER[b.day]??99);
+  if(day)return day;
+
+  const slot=(SESSION_SLOT_ORDER[a.slot]??99)-(SESSION_SLOT_ORDER[b.slot]??99);
+  if(slot)return slot;
+
+  const order=(Number(a.sessionOrder)||0)-(Number(b.sessionOrder)||0);
+  if(order)return order;
+
+  return String(a.containerId||'').localeCompare(String(b.containerId||''))
+ })
+}
+
+function orderedContainerPrescriptions(w,c){
+ return (w?.sessions||[])
+  .filter(p=>String(p.containerId)===String(c.containerId))
+  .sort((a,b)=>{
+   const order=(Number(a.prescriptionOrder)||0)-(Number(b.prescriptionOrder)||0);
+   if(order)return order;
+   return String(a.sessionId||'').localeCompare(String(b.sessionId||''))
+  })
+}
+
 function containerPrescriptions(w,c){return (w.sessions||[]).filter(p=>p.containerId===c.containerId)}
 function containerDuration(w,c){return containerPrescriptions(w,c).reduce((sum,p)=>sum+(+p.duration||0),0)}
 function containerStatus(w,c){
@@ -422,7 +861,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.4.13';
+const LTS_SCHEMA_VERSION='0.5.7.5';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
@@ -453,7 +892,7 @@ function buildExportPayload(){
  return {
    schemaVersion:LTS_SCHEMA_VERSION,
    exportedAt:new Date().toISOString(),
-   appVersion:'0.4.13',
+   appVersion:LTS_SCHEMA_VERSION,
    data:state
  }
 }
@@ -480,7 +919,7 @@ function importLtsData(input){
      if(!Array.isArray(payload.data.weeks))throw new Error('Semaines manquantes');
      if(!confirm('Importer cette sauvegarde remplacera les données locales de cette bêta. Continuer ?'))return;
      state=payload.data;
-     ensureSessionContainers();ensureStableIds();
+     ensureSessionContainers();ensureStableIds();migrateSessionStructureV0570();migrateAthleteExecutionCanonicalV0575();
      logAudit('IMPORT','SYSTEM','local',`Import du schéma ${payload.schemaVersion}`);
      save();render();toast('Sauvegarde importée')
    }catch(error){console.error(error);toast('Fichier de sauvegarde invalide')}
@@ -501,9 +940,16 @@ migrateState();
 try{
   ensureSessionContainers();
   ensureStableIds();
+  const migrationReport=migrateSessionStructureV0570();
+  const executionCopies=migrateAthleteExecutionCanonicalV0575();
+  if(migrationReport.changedWeeks||executionCopies){
+    const previousSuppressState=window.__LTS_SUPPRESS_LOCAL_CHANGE__;
+    window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
+    try{save()}finally{window.__LTS_SUPPRESS_LOCAL_CHANGE__=previousSuppressState}
+  }
 }catch(error){
   console.error('Migration des séances impossible',error);
-  state.weeks=(state.weeks||[]).map(w=>({...w,containers:Array.isArray(w.containers)?w.containers:[]}));
+  state.weeks=(state.weeks||[]).map(w=>({...w,containers:Array.isArray(w.containers)?w.containers:[],sessions:Array.isArray(w.sessions)?w.sessions:[]}));
 }
 
 
@@ -631,7 +1077,7 @@ function coachShell(content,active='dashboard'){
  app.innerHTML=`<div class="coach"><aside class="side"><div class="logo">LTS Coach</div><div class="nav">${[['dashboard','Tableau de bord'],['cycle','Cycle'],['weeks','Semaines'],['analytics','Suivi']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</div><button class="btn full" style="position:absolute;bottom:18px;left:14px;width:202px" onclick="switchRole()">Espace Athlète</button></aside><main class="main"><div class="mobilebar"><b>LTS Coach</b><button class="btn secondary coachTopSwitch" onclick="switchRole()">Athlète</button></div>${content}</main><nav class="coachBottom">${bottom.map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`
 }
 function coach(view){if(view==='cycle')renderCycle();else if(view==='weeks')renderWeeks();else if(view==='tests')renderTests();else if(view==='analytics')renderCoachAnalytics();else renderDashboard()}
-function renderDashboard(){const c=state.cycle;coachShell(`<div class="pagehead"><div><h1>Tableau de bord</h1><p class="muted">${c?'Cycle actif : '+c.name:'Aucun cycle actif'}</p></div>${c?'<button class="btn" onclick="renderWeeks()">Préparer la semaine</button>':'<button class="btn" onclick="renderCycle()">Créer un cycle</button>'}</div>${renderApiPanel()}<div class="grid cols3"><div class="card"><h3>Facteur principal</h3><div style="font-size:25px;font-weight:900">${c?c.primary:'À définir'}</div></div><div class="card"><h3>Semaine courante</h3><div style="font-size:25px;font-weight:900">${c?'S'+(c.currentWeek||1)+' / 8':'—'}</div></div><div class="card"><h3>Action attendue</h3><span class="pill ${c?'orange':''}">${c?'Créer la semaine suivante':'Créer le cycle'}</span></div></div>${renderDailyPerformanceTracking()}<div class="grid cols2" style="margin-top:14px"><div class="card"><h3>Derniers niveaux</h3>${state.tests.map(t=>`<div class="row"><div><b>${t.quality}</b><div class="muted small">${t.source}</div></div><div class="level">N${t.level}</div></div>`).join('')}</div><div class="card"><h3>Règles du cycle</h3><div class="row"><span>Structure</span><b>3 + 1 + 3 + 1</b></div><div class="row"><span>Semaine 4</span><b>Deload</b></div><div class="row"><span>Semaine 8</span><b>Tests</b></div><div class="row"><span>Mensurations</span><b>Chaque dimanche</b></div><button class="btn full" style="margin-top:12px" onclick="coach(\'analytics\')">Ouvrir le suivi et les graphiques</button></div></div>`,'dashboard')}
+function renderDashboard(){const c=state.cycle;coachShell(`<div class="pagehead"><div><h1>Tableau de bord</h1><p class="muted">${c?'Cycle actif : '+c.name:'Aucun cycle actif'}</p></div>${c?'<button class="btn" onclick="renderWeeks()">Préparer la semaine</button>':'<button class="btn" onclick="renderCycle()">Créer un cycle</button>'}</div>${renderApiPanel()}${renderV057ReleaseReadiness()}<div class="grid cols3"><div class="card"><h3>Facteur principal</h3><div style="font-size:25px;font-weight:900">${c?c.primary:'À définir'}</div></div><div class="card"><h3>Semaine courante</h3><div style="font-size:25px;font-weight:900">${c?'S'+(c.currentWeek||1)+' / 8':'—'}</div></div><div class="card"><h3>Action attendue</h3><span class="pill ${c?'orange':''}">${c?'Créer la semaine suivante':'Créer le cycle'}</span></div></div>${renderDailyPerformanceTracking()}<div class="grid cols2" style="margin-top:14px"><div class="card"><h3>Derniers niveaux</h3>${state.tests.map(t=>`<div class="row"><div><b>${t.quality}</b><div class="muted small">${t.source}</div></div><div class="level">N${t.level}</div></div>`).join('')}</div><div class="card"><h3>Règles du cycle</h3><div class="row"><span>Structure</span><b>3 + 1 + 3 + 1</b></div><div class="row"><span>Semaine 4</span><b>Deload</b></div><div class="row"><span>Semaine 8</span><b>Tests</b></div><div class="row"><span>Mensurations</span><b>Chaque dimanche</b></div><button class="btn full" style="margin-top:12px" onclick="coach(\'analytics\')">Ouvrir le suivi et les graphiques</button></div></div>`,'dashboard')}
 
 
 function allExecutedSessions(){
@@ -943,16 +1389,173 @@ if(next===4)return showDeloadProposal();if(next===8)return showTestProposal();
 const newWeek={number:next,type:'WORK',status:'DRAFT',sessions:[]};ensureDailyFlexibility(newWeek);state.weeks.push(newWeek);state.cycle.currentWeek=next;save();openWeek(next);toast('Semaine '+next+' créée')
 }
 function openWeek(n){
-const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w.sessions)w.sessions=[];
+const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w)return toast('Semaine introuvable');ensureWeekSessionStructureV0570(w);if(!w.sessions)w.sessions=[];
 document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Semaine ${n}</h2><p class="muted">${w.type} · planification guidée</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
 <div class="weekTopAction"><button class="btn" onclick="openNewSessionContainer(${n})">+ Ajouter une séance</button><div class="navhint" style="margin-top:6px">Crée un créneau, puis ajoute une ou plusieurs prescriptions à l’intérieur.</div></div>
-${renderG21Status(w)}${renderWeekSummary(w)}${renderG21Alerts(w)}
+${renderSessionStructureStatus(w)}${renderG21Status(w)}${renderWeekSummary(w)}${renderG21Alerts(w)}
 <div class="card"><h3>À placer dans cette semaine</h3><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,n)).join('')}</div></div>
 <div class="card" style="margin-top:14px"><div class="sectiontitle"><h3>Planning</h3></div>
-${w.containers?.length?w.containers.map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div><div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>{const i=w.sessions.indexOf(p);return `<div class="prescriptionMini"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Réalisée</span>':''}${executionSyncBadge(p)}</div></div><div class="coachActions" style="margin-top:8px"><button class="btn ghost" onclick="previewSessionForAthlete(${n},${i})">Aperçu</button><button class="btn ghost" onclick="editWeekSessionById(${n},'${p.sessionId}')">Modifier</button><button class="btn ghost" onclick="removeWeekSession(${n},${i})">Retirer</button></div></div>`}).join('')}</div><div class="sessionActions"><button class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button><button class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button><button class="btn ghost" onclick="duplicateSessionContainer(${n},'${c.containerId}')">Dupliquer séance</button><button class="btn ghost" onclick="removeSessionContainer(${n},'${c.containerId}')">Retirer séance</button></div></div>`).join(''):'<p class="muted">Commence par créer une séance matin, midi ou soir.</p>'}</div>
+${w.containers?.length?orderedSessionContainers(w).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div><div class="prescriptionStack">${orderedContainerPrescriptions(w,c).map(p=>{const i=w.sessions.indexOf(p);return `<div class="prescriptionMini"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Réalisée</span>':''}${executionSyncBadge(p)}</div></div><div class="coachActions compact" style="margin-top:8px">
+<button type="button" class="btn ghost" onclick="previewSessionForAthlete(${n},${i})">Aperçu</button>
+<button type="button" class="btn ghost" onclick="movePrescriptionOrder(${n},'${p.sessionId}',-1)">↑</button>
+<button type="button" class="btn ghost" onclick="movePrescriptionOrder(${n},'${p.sessionId}',1)">↓</button>
+<button type="button" class="btn ghost" onclick="openMovePrescription(${n},'${p.sessionId}')">Déplacer</button>
+<button type="button" class="btn ghost" onclick="duplicatePrescription(${n},'${p.sessionId}')">Dupliquer</button>
+<button type="button" class="btn ghost" onclick="editWeekSessionById(${n},'${p.sessionId}')">Modifier</button>
+<button type="button" class="btn ghost" onclick="removeWeekSessionById(${n},'${p.sessionId}')">Retirer</button>
+</div></div>`}).join('')}</div><div class="sessionActions">
+<button type="button" class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button>
+<button type="button" class="btn ghost" onclick="moveSessionOrder(${n},'${c.containerId}',-1)">Séance ↑</button>
+<button type="button" class="btn ghost" onclick="moveSessionOrder(${n},'${c.containerId}',1)">Séance ↓</button>
+<button type="button" class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button>
+<button type="button" class="btn ghost" onclick="duplicateSessionContainer(${n},'${c.containerId}')">Dupliquer séance</button>
+<button type="button" class="btn ghost" onclick="removeSessionContainer(${n},'${c.containerId}')">Retirer séance</button>
+</div></div>`).join(''):'<p class="muted">Commence par créer une séance matin, midi ou soir.</p>'}</div>
 <div class="field"><label>Commentaire coach</label><textarea id="weekComment">${w.comment||w.proposal||''}</textarea></div>
 <div class="card"><label class="row"><span><b>Adaptation volontaire</b><div class="muted small">Maintenir la semaine malgré une alerte justifiée.</div></span><input id="adaptedVoluntary" type="checkbox" ${w.adaptedVoluntarily?'checked':''}></label><div class="field"><label>Justification</label><textarea id="adaptationReason">${w.adaptationReason||''}</textarea></div><button class="btn secondary full" onclick="saveAdaptationChoice(${n})">Enregistrer l’adaptation</button></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn secondary" onclick="saveWeek(${n},'DRAFT')">Enregistrer</button><button class="btn" onclick="attemptPublish(${n})">Publier</button></div></div></div>`)
+}
+
+
+function normalizePrescriptionOrders(w,containerId){
+ const rows=orderedContainerPrescriptions(w,{containerId});
+ rows.forEach((p,index)=>p.prescriptionOrder=index+1)
+}
+
+function normalizeSessionOrdersForSlot(w,day,slot){
+ const rows=(w.containers||[])
+  .filter(c=>c.day===day&&c.slot===slot)
+  .sort((a,b)=>(Number(a.sessionOrder)||0)-(Number(b.sessionOrder)||0));
+ rows.forEach((c,index)=>c.sessionOrder=index+1)
+}
+
+function movePrescriptionOrder(n,sessionId,delta){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const p=w?.sessions?.find(x=>String(x.sessionId)===String(sessionId));
+ if(!w||!p)return toast('Prescription introuvable');
+
+ const rows=orderedContainerPrescriptions(w,{containerId:p.containerId});
+ const index=rows.findIndex(x=>String(x.sessionId)===String(sessionId));
+ const target=index+Number(delta);
+ if(index<0||target<0||target>=rows.length)return toast('La prescription est déjà en limite');
+
+ [rows[index].prescriptionOrder,rows[target].prescriptionOrder]=[
+  Number(rows[target].prescriptionOrder)||target+1,
+  Number(rows[index].prescriptionOrder)||index+1
+ ];
+ normalizePrescriptionOrders(w,p.containerId);
+ markWeekDraftAfterChange(w);
+ save();
+ closeAllSheets();
+ openWeek(n);
+ logAudit('REORDER','PRESCRIPTION',p.sessionId,`Ordre ${p.prescriptionOrder}`);
+ toast('Ordre de la prescription modifié')
+}
+
+function openMovePrescription(n,sessionId){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const p=w?.sessions?.find(x=>String(x.sessionId)===String(sessionId));
+ if(!w||!p)return toast('Prescription introuvable');
+
+ const targets=orderedSessionContainers(w).filter(c=>String(c.containerId)!==String(p.containerId));
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="movePrescriptionSheet"><div class="sheet">
+  <div class="sheethead"><div><h2>Déplacer la prescription</h2><p class="muted">${p.title}</p></div>
+  <button type="button" class="btn ghost" onclick="closeSheetById('movePrescriptionSheet')">Fermer</button></div>
+  ${targets.length?targets.map(c=>`<button type="button" class="btn ghost moveTarget" onclick="movePrescriptionToContainer(${n},'${p.sessionId}','${c.containerId}')"><b>${c.day} · ${slotLabel(c.slot)}</b><br><span class="muted small">${c.title} · ${containerDuration(w,c)} min</span></button>`).join(''):'<p class="muted">Aucune autre séance disponible.</p>'}
+ </div></div>`)
+}
+
+function movePrescriptionToContainer(n,sessionId,targetContainerId){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const p=w?.sessions?.find(x=>String(x.sessionId)===String(sessionId));
+ const target=w?.containers?.find(c=>String(c.containerId)===String(targetContainerId));
+ if(!w||!p||!target)return toast('Destination introuvable');
+
+ const previousContainerId=p.containerId;
+ if(p.execution&&!confirm('Cette prescription possède déjà un résultat. La déplacer en conservant ce résultat ?'))return;
+
+ p.containerId=target.containerId;
+ p.day=target.day;
+ p.slot=target.slot;
+ p.prescriptionOrder=nextPrescriptionOrder(w,target.containerId);
+
+ normalizePrescriptionOrders(w,previousContainerId);
+ normalizePrescriptionOrders(w,target.containerId);
+ markWeekDraftAfterChange(w);
+ save();
+ closeAllSheets();
+ openWeek(n);
+ logAudit('MOVE','PRESCRIPTION',p.sessionId,`${target.day} ${target.slot}`);
+ toast('Prescription déplacée')
+}
+
+function duplicatePrescription(n,sessionId){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const source=w?.sessions?.find(x=>String(x.sessionId)===String(sessionId));
+ if(!w||!source)return toast('Prescription introuvable');
+
+ const copy=safeClone(source);
+ copy.sessionId=stableId('presc');
+ copy.title=`${source.title} — copie`;
+ copy.prescriptionOrder=nextPrescriptionOrder(w,source.containerId);
+ copy.execution=null;
+ copy.revision=0;
+ copy.structureType='PRESCRIPTION';
+ w.sessions.push(copy);
+
+ markWeekDraftAfterChange(w);
+ save();
+ closeAllSheets();
+ openWeek(n);
+ logAudit('DUPLICATE','PRESCRIPTION',copy.sessionId,copy.title);
+ toast('Prescription dupliquée sans résultat')
+}
+
+function removeWeekSessionById(n,sessionId){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const p=w?.sessions?.find(x=>String(x.sessionId)===String(sessionId));
+ if(!w||!p)return toast('Prescription introuvable');
+ if(!confirm(`Retirer « ${p.title} » de la semaine ?`))return;
+
+ const containerId=p.containerId;
+ w.sessions=w.sessions.filter(x=>String(x.sessionId)!==String(sessionId));
+ normalizePrescriptionOrders(w,containerId);
+
+ if(containerId&&!w.sessions.some(x=>String(x.containerId)===String(containerId))){
+  w.containers=w.containers.filter(c=>String(c.containerId)!==String(containerId))
+ }
+
+ markWeekDraftAfterChange(w);
+ save();
+ closeAllSheets();
+ openWeek(n);
+ logAudit('DELETE','PRESCRIPTION',p.sessionId,p.title);
+ toast('Prescription retirée')
+}
+
+function moveSessionOrder(n,containerId,delta){
+ const w=state.weeks.find(x=>Number(x.number)===Number(n));
+ const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ if(!w||!c)return toast('Séance introuvable');
+
+ const rows=(w.containers||[])
+  .filter(x=>x.day===c.day&&x.slot===c.slot)
+  .sort((a,b)=>(Number(a.sessionOrder)||0)-(Number(b.sessionOrder)||0));
+ const index=rows.findIndex(x=>String(x.containerId)===String(containerId));
+ const target=index+Number(delta);
+ if(index<0||target<0||target>=rows.length)return toast('La séance est déjà en limite sur ce créneau');
+
+ [rows[index].sessionOrder,rows[target].sessionOrder]=[
+  Number(rows[target].sessionOrder)||target+1,
+  Number(rows[index].sessionOrder)||index+1
+ ];
+ normalizeSessionOrdersForSlot(w,c.day,c.slot);
+ markWeekDraftAfterChange(w);
+ save();
+ closeAllSheets();
+ openWeek(n);
+ logAudit('REORDER','SESSION_CONTAINER',c.containerId,`Ordre ${c.sessionOrder}`);
+ toast('Ordre de la séance modifié')
 }
 
 function openNewSessionContainer(n){
@@ -963,7 +1566,7 @@ function openNewSessionContainer(n){
 }
 function saveNewSessionContainer(n){
  const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w)return;
- const c={containerId:newContainerId(),day:ctrDay.value,slot:ctrSlot.value,title:ctrTitle.value||'Séance',comment:ctrComment.value||'',status:'PLANNED'};
+ const c={containerId:newContainerId(),day:ctrDay.value,slot:ctrSlot.value,title:ctrTitle.value||'Séance',comment:ctrComment.value||'',status:'PLANNED',sessionOrder:nextSessionOrder(w),structureType:'SESSION_CONTAINER'};
  w.containers=w.containers||[];w.containers.push(c);state.pendingContainerId=c.containerId;save();closeSheet();chooseRequirement(n)
 }
 function addPrescriptionToContainer(n,id){state.pendingContainerId=id;chooseRequirement(n,id)}
@@ -982,9 +1585,18 @@ function saveSessionContainer(n,id){
 }
 function duplicateSessionContainer(n,id){
  const {week:w,container:c}=findContainer(n,id);if(!c)return;
- const nc={...safeClone(c),containerId:newContainerId(),title:(c.title||'Séance')+' — copie'};
+ const nc={...safeClone(c),containerId:newContainerId(),title:(c.title||'Séance')+' — copie',sessionOrder:nextSessionOrder(w),structureType:'SESSION_CONTAINER'};
  w.containers.push(nc);
- containerPrescriptions(w,c).forEach(p=>{const cp=safeClone(p);cp.sessionId='sess-'+Date.now()+'-'+Math.random().toString(16).slice(2);cp.containerId=nc.containerId;cp.execution=null;w.sessions.push(cp)});
+ orderedContainerPrescriptions(w,c).forEach(p=>{
+  const cp=safeClone(p);
+  cp.sessionId=stableId('presc');
+  cp.containerId=nc.containerId;
+  cp.prescriptionOrder=nextPrescriptionOrder(w,nc.containerId);
+  cp.execution=null;
+  cp.revision=0;
+  cp.structureType='PRESCRIPTION';
+  w.sessions.push(cp)
+ });
  markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('DUPLICATE','SESSION_CONTAINER',nc.containerId,nc.title);toast('Séance dupliquée')
 }
 function removeSessionContainer(n,id){
@@ -1091,7 +1703,7 @@ function savePrescription(n,id,containerId=state.pendingContainerId){
  }:null;
  if(climbing?.fingerStimulus&&!extra.includes('B'))extra.push('B');
  if(climbing&&!climbing.fingerStimulus)extra=extra.filter(x=>x!=='B');
- const newSession={sessionId:'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2),templateId:p.id,title:p.name,day:ctr.day,slot:ctr.slot,containerId:ctr.containerId,domain:p.domain,extraDomains:extra,guide:p.guide,duration:+document.getElementById('prTotalDuration')?.value||45,structuredSets:structured,exercises:exercises,climbing:climbing,sets:+get('prSets')||null,reps:+get('prReps')||null,workSeconds:+get('prWork')||null,restSeconds:+get('prRest')||null,rir:get('prRir')!==null?+get('prRir'):null,rpe:get('prRpe')!==null?+get('prRpe'):null,load:get('prLoad'),notes:document.getElementById('prNotes')?.value||'',execution:null};
+ const newSession={sessionId:'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2),prescriptionOrder:nextPrescriptionOrder(w,ctr.containerId),structureType:'PRESCRIPTION',templateId:p.id,title:p.name,day:ctr.day,slot:ctr.slot,containerId:ctr.containerId,domain:p.domain,extraDomains:extra,guide:p.guide,duration:+document.getElementById('prTotalDuration')?.value||45,structuredSets:structured,exercises:exercises,climbing:climbing,sets:+get('prSets')||null,reps:+get('prReps')||null,workSeconds:+get('prWork')||null,restSeconds:+get('prRest')||null,rir:get('prRir')!==null?+get('prRir'):null,rpe:get('prRpe')!==null?+get('prRpe'):null,load:get('prLoad'),notes:document.getElementById('prNotes')?.value||'',execution:null};
  w.sessions.push(newSession);
  state.pendingContainerId=null;
  save();
@@ -1131,7 +1743,7 @@ function editWeekSessionById(n,sessionId){
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="prescriptionEditSheet"><div class="sheet"><div class="sheethead"><div><h2>Modifier la séance</h2><p class="muted">${s.guide||''}</p></div><button type="button" class="btn ghost" onclick="closeSheetById('prescriptionEditSheet')">Fermer</button></div>
  <div class="guidecard"><div class="guidecardhead"><b>Carte prescription Coach · ${p.guide}</b><div class="muted small">${p.objective||''}</div></div><div class="guidecardbody"><div class="protocolnote">${p.summary||''}</div>
  <div class="field"><label>Titre affiché</label><input id="edTitle" value="${s.title||''}"></div>
- <div class="measuregrid"><div class="field"><label>Jour</label><select id="edDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option ${d===s.day?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Durée</label><input id="edDuration" type="number" value="${s.duration||45}"></div></div>
+ <div class="measuregrid"><div class="field"><label>Séance actuelle</label><div class="protocolnote">${(()=>{const c=w.containers?.find(x=>String(x.containerId)===String(s.containerId));return c?`${c.day} · ${slotLabel(c.slot)} · ${c.title}`:'Séance introuvable'})()}</div></div><div class="field"><label>Durée</label><input id="edDuration" type="number" value="${s.duration||45}"></div></div>
  ${s.structuredSets?setRowsHtml(s.structuredSets):''}
  ${exerciseFields}${climbingFields}
  <div class="field"><label>Consigne</label><textarea id="edNotes">${s.notes||''}</textarea></div>
@@ -1145,7 +1757,11 @@ function saveEditedSessionById(n,sessionId){
   if(!w||!s)return toast('Prescription introuvable après synchronisation');
 
   s.title=document.getElementById('edTitle')?.value||s.title;
-  s.day=document.getElementById('edDay')?.value||s.day;
+  const parentContainer=w.containers?.find(c=>String(c.containerId)===String(s.containerId));
+  if(parentContainer){
+    s.day=parentContainer.day;
+    s.slot=parentContainer.slot
+  }
   s.duration=+document.getElementById('edDuration')?.value||s.duration;
   s.notes=document.getElementById('edNotes')?.value||'';
 
@@ -1253,6 +1869,12 @@ function saveWeek(n,status){
 }
 function attemptPublish(n){
  const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w)return;
+ ensureWeekSessionStructureV0570(w);
+ const structureCheck=validateWeekSessionStructureV0570(w);
+ if(!structureCheck.valid){
+  toast(`Structure invalide : ${structureCheck.errors[0]||'vérification requise'}`);
+  return
+ }
  w.comment=document.getElementById('weekComment')?.value||'';
  w.adaptedVoluntarily=document.getElementById('adaptedVoluntary')?.checked||false;
  w.adaptationReason=document.getElementById('adaptationReason')?.value||'';
@@ -1266,16 +1888,20 @@ function attemptPublish(n){
 function athleteShell(content,active='daily'){app.innerHTML=`<div class="athlete"><header class="athhead"><b style="font-size:23px">LTS Athlete</b><button class="btn secondary" onclick="switchRole()">Coach</button></header><main class="athcontent">${content}</main><nav class="bottom" style="grid-template-columns:repeat(5,1fr)">${[['daily','Quotidien'],['today','Aujourd’hui'],['week','Semaine'],['checkup','Dimanche'],['profile','Profil']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="athlete('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`}
 function slider(name,key,val,min=0,max=10,step=1){return `<div class="sliderline"><label>${name}</label><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="this.nextElementSibling.value=this.value;draftSlider('${key}',this.value)"><output>${val}</output></div>`}
 function publishedWeeks(){
+ const local=(state.weeks||[])
+  .filter(w=>w.status==='PUBLISHED')
+  .sort((a,b)=>Number(a.number)-Number(b.number));
+ if(local.length)return local;
+
  const remote=(state.remoteWeeks||[]).filter(w=>w.status==='PUBLISHED');
- if(remote.length){
-  const latestByNumber=new Map();
-  remote.forEach(w=>{
-   const current=latestByNumber.get(Number(w.number));
-   if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0))latestByNumber.set(Number(w.number),w)
-  });
-  return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
- }
- return state.weeks.filter(w=>w.status==='PUBLISHED')
+ const latestByNumber=new Map();
+ remote.forEach(w=>{
+  const current=latestByNumber.get(Number(w.number));
+  if(!current||Number(w.publicationVersion||0)>Number(current.publicationVersion||0)){
+   latestByNumber.set(Number(w.number),w)
+  }
+ });
+ return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
 }
 function sessionDetails(s){
  const sets=s.structuredSets?'<div class="small">'+s.structuredSets.map((x,i)=>
@@ -1294,16 +1920,13 @@ function sessionDetails(s){
  return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'
 }
 function findSession(sessionId){
- const remoteWeeks=publishedWeeks();
- for(const w of remoteWeeks){
-  const s=(w.sessions||[]).find(x=>x.sessionId===sessionId);
-  if(s)return {week:w,session:s}
- }
- const remoteNumbers=new Set(remoteWeeks.map(w=>Number(w.number)));
  for(const w of (state.weeks||[])){
-  if(remoteNumbers.has(Number(w.number)))continue;
-  const s=(w.sessions||[]).find(x=>x.sessionId===sessionId);
-  if(s)return {week:w,session:s}
+  const s=(w.sessions||[]).find(x=>String(x.sessionId)===String(sessionId));
+  if(s)return {week:w,session:s,origin:'local'}
+ }
+ for(const w of (state.remoteWeeks||[])){
+  const s=(w.sessions||[]).find(x=>String(x.sessionId)===String(sessionId));
+  if(s)return {week:w,session:s,origin:'remote'}
  }
  return null
 }
@@ -1575,31 +2198,102 @@ function saveClimbingExecution(sessionId,count){
  s.execution={type:'CLIMBING',problems:problems,quality:+climbQuality.value||null,enjoyment:+document.getElementById('climbEnjoyment')?.value||null,rpe:+climbRpe.value||null,note:climbNote.value,completed:true,completedAt:new Date().toISOString()};
  save();closeSheet();renderAthleteWeek();syncSessionExecution(sessionId);toast('Séance enregistrée localement')
 }
+
+function prescriptionAthleteStatus(p){
+ if(p?.execution?.completed)return {label:'Terminée',className:'green'};
+ if(p?.execution)return {label:'En cours',className:'orange'};
+ return {label:'À faire',className:''}
+}
+
+function containerProgress(w,c){
+ const ps=orderedContainerPrescriptions(w,c);
+ const done=ps.filter(p=>p.execution?.completed).length;
+ const started=ps.filter(p=>p.execution&&!p.execution?.completed).length;
+ const total=ps.length;
+ const percent=total?Math.round(done/total*100):0;
+ return {ps,done,started,total,percent,complete:total>0&&done===total}
+}
+
+function openNextContainerPrescription(weekNumber,containerId){
+ const w=publishedWeeks().find(x=>Number(x.number)===Number(weekNumber));
+ const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ if(!w||!c)return toast('Séance introuvable');
+ const ps=orderedContainerPrescriptions(w,c);
+ const next=ps.find(p=>!p.execution?.completed)||ps[0];
+ if(!next)return toast('Aucune prescription dans cette séance');
+ openAthleteSession(next.sessionId)
+}
+
+function renderAthleteSessionCard(w,c,compact=false){
+ const progress=containerProgress(w,c);
+ const status=progress.complete?'Terminée':progress.done||progress.started?'En cours':'À faire';
+ const actionLabel=progress.complete?'Revoir la séance':progress.done||progress.started?'Continuer la séance':'Commencer la séance';
+ return `<div class="athleteSessionCard ${progress.complete?'complete':''}">
+  <div class="sessionContainerHeader">
+   <div>
+    <div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div>
+    <h3 style="margin:4px 0">${c.title||'Séance'}</h3>
+    <div class="muted small">${containerDuration(w,c)} min prévues · ${status}</div>
+   </div>
+   <span class="sessionBadge">${progress.done}/${progress.total}</span>
+  </div>
+  <div class="sessionProgress ${progress.complete?'complete':''}"><span style="width:${progress.percent}%"></span></div>
+  <div class="muted small">${progress.percent}% terminé · ${progress.total} prescription(s)</div>
+  ${c.comment?`<p class="muted">${c.comment}</p>`:''}
+  <div class="prescriptionStack">${progress.ps.map((p,index)=>{
+    const pStatus=prescriptionAthleteStatus(p);
+    return `<button type="button" class="prescriptionMini" style="width:100%;text-align:left;border:1px solid var(--line)" onclick="openAthleteSession('${p.sessionId}')">
+      <div class="row" style="padding:0;border:0">
+       <div class="athletePrescriptionMain">
+        <span class="athletePrescriptionNumber">${index+1}</span>
+        <div><b>${p.title}</b><div class="muted small">${p.guide||'Sans guide'} · ${p.duration||0} min</div></div>
+       </div>
+       <div class="athletePrescriptionState" style="display:flex;gap:5px;align-items:center">
+        <span class="pill ${pStatus.className}">${pStatus.label}</span>${executionSyncBadge(p)}
+       </div>
+      </div>
+     </button>`
+  }).join('')}</div>
+  ${progress.total?`<button type="button" class="btn full" style="margin-top:10px" onclick="openNextContainerPrescription(${Number(w.number)},'${c.containerId}')">${actionLabel}</button>`:''}
+ </div>`
+}
+
 function renderAthleteWeek(){
  const weeks=publishedWeeks();
  if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
- const body=weeks.map(w=>`<div class="card"><div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':''}</div>${(w.containers||[]).map(c=>`<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>${c.comment?`<p class="muted">${c.comment}</p>`:''}<div class="prescriptionStack">${containerPrescriptions(w,c).map(p=>`<div class="prescriptionMini" onclick="openAthleteSession('${p.sessionId}')"><div class="row"><div><b>${p.title}</b><div class="muted small">${p.guide||''} · ${p.duration||0} min</div></div><div style="display:flex;gap:5px;align-items:center">${p.execution?.completed?'<span class="pill green">Terminée</span>':'<span class="pill">Ouvrir</span>'}${executionSyncBadge(p)}</div></div></div>`).join('')}</div></div>`).join('')}</div>`).join('');
- athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div><div class="demoBanner"><b>Semaine fictive de démonstration</b><div class="muted small">Elle sert uniquement à tester les cartes Athlète.</div></div>'+body,'week')
+ const body=weeks.map(w=>{
+  const sessions=orderedSessionContainers(w);
+  const total=sessions.reduce((sum,c)=>sum+containerProgress(w,c).total,0);
+  const done=sessions.reduce((sum,c)=>sum+containerProgress(w,c).done,0);
+  return `<div class="card">
+   <div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':`<span class="pill">${done}/${total}</span>`}</div>
+   ${sessions.length?sessions.map(c=>renderAthleteSessionCard(w,c)).join(''):'<p class="muted">Aucune séance publiée.</p>'}
+  </div>`
+ }).join('');
+ athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div>'+body,'week')
 }
 function renderToday(){
  const dayMap=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
  const today=dayMap[new Date().getDay()];
  const weeks=publishedWeeks();
- const sessions=weeks.flatMap(w=>(w.sessions||[]).filter(s=>s.day===today));
- let body='';
- if(!sessions.length){
-   body='<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
- }else{
-   body=sessions.map(s=>{
-     return '<div class="athsession published sessionopen '+(s.execution?.completed?'complete':'')+'">'+
-       '<b>'+s.title+'</b>'+(s.execution?.completed?'<span class="pill green" style="margin-left:6px">✓ Terminée</span>':'')+
-       '<div class="sessionmeta"><span class="pill">'+(s.guide||'')+'</span><span class="pill">'+(s.duration||0)+' min</span></div>'+
-       sessionDetails(s)+
-       '<button class="btn full" onclick="openAthleteSession(\''+s.sessionId+'\')">'+(s.execution?.completed?'Modifier la saisie':'Commencer')+'</button>'+
-       '</div>';
-   }).join('');
- }
- athleteShell('<div class="muted">'+today+'</div><h1>Séances du jour</h1>'+body,'today')
+ const rows=[];
+ weeks.forEach(w=>{
+  orderedSessionContainers(w)
+   .filter(c=>c.day===today)
+   .forEach(c=>rows.push({week:w,container:c}))
+ });
+ rows.sort((a,b)=>{
+  const slot=(SESSION_SLOT_ORDER[a.container.slot]??99)-(SESSION_SLOT_ORDER[b.container.slot]??99);
+  if(slot)return slot;
+  const order=(Number(a.container.sessionOrder)||0)-(Number(b.container.sessionOrder)||0);
+  if(order)return order;
+  return Number(a.week.number)-Number(b.week.number)
+ });
+ const body=rows.length
+  ? rows.map(x=>renderAthleteSessionCard(x.week,x.container,true)).join('')
+  : '<div class="card"><p class="muted">Aucune séance publiée pour aujourd’hui.</p></div>';
+ const prescriptionCount=rows.reduce((sum,x)=>sum+containerProgress(x.week,x.container).total,0);
+ athleteShell(`<div class="sectiontitle"><div><div class="muted">${today}</div><h1>Séances du jour</h1></div><span class="pill">${rows.length} séance(s) · ${prescriptionCount} prescription(s)</span></div>${body}`,'today')
 }
 function athlete(view){if(view==='checkup')return renderSunday();if(view==='today')return renderToday();if(view==='week')return renderAthleteWeek();if(view==='profile')return athleteShell(`<div class="sectiontitle"><div><h1>Mon évolution</h1><p class="muted">Performances, tests et mensurations.</p></div><button class="btn" onclick="openAthleteMeasurements()">Saisir mes mensurations</button></div>${trackingRangeBar()}${renderLatestAthleteMeasurements()}<h3>Haut du corps</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Doigts et gainage</h3><div class="chartgrid">${['fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Mesures physiques</h3><div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`,'profile');renderDaily()}
 function draftSlider(key,val){const [part,k]=key.split('.');state.checkins[part][k]=+val;if(state.checkStatus[part]==='VALIDATED')state.checkStatus[part]='DRAFT';else if(state.checkStatus[part]==='NOT_STARTED')state.checkStatus[part]='DRAFT';save()}

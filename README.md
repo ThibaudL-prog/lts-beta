@@ -1,15 +1,12 @@
-# LTS Beta v0.5.6.15 — récupération multi-appareils corrigée
+# LTS v0.5.7.5 — RC2, persistance des résultats Athlète
 
-Cause :
-- un téléphone pouvait conserver sa copie locale d’une semaine publiée ;
-- un ancien statut de synchronisation ou une protection locale empêchait le remplacement ;
-- la version publiée depuis le PC était bien dans Google Sheets mais n’apparaissait pas sur le téléphone.
+Correctif critique :
+- l’espace Athlète écrit désormais dans la semaine locale canonique ;
+- une synchronisation Coach ne peut plus remplacer un résultat local non sécurisé ;
+- les performances locales sont envoyées avant la première lecture distante lors d’une synchronisation manuelle ;
+- les synchronisations concurrentes d’une même prescription sont dédupliquées ;
+- les exécutions, séries, résultats de course et tentatives d’escalade sont reconstruits depuis Google Sheets ;
+- les anciennes exécutions éventuellement stockées dans `remoteWeeks` sont migrées vers `weeks` ;
+- un overlay local protège les résultats pendant le remplacement des plans par le snapshot distant.
 
-Corrections :
-- « Synchroniser maintenant » force la récupération distante lorsqu’aucune modification locale non publiée n’existe ;
-- les anciens statuts `error` ou `pending` ne sont plus assimilés à une modification métier ;
-- une vraie semaine en brouillon reste protégée ;
-- les exécutions Athlète locales sont conservées par `sessionId` ;
-- les marqueurs de publication de l’ancien appareil sont retirés lors de l’adoption de la version distante.
-
-Aucun changement Apps Script n’est nécessaire.
+`Code.gs` et le schéma Google Sheets restent inchangés.
