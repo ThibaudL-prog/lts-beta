@@ -1,5 +1,5 @@
 
-const SCHEMA_VERSION = '0.5.0';
+const SCHEMA_VERSION = '0.5.8.1';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -20,10 +20,11 @@ function handleRequest_(method, p) {
   const requestId = Utilities.getUuid();
   const action = String(p.action || 'health');
   try {
-    assertApiEnabled_();
+    if (action !== 'health' && action !== 'schema.audit') assertApiEnabled_();
     let result;
     if (action === 'health') result = health_();
-    else if (action === 'snapshot') result = snapshot_(String(p.athlete_id || getConfig_('default_athlete_id') || 'ath_demo_001'));
+    else if (action === 'schema.audit') result = schemaAudit_();
+    else if (action === 'snapshot') result = snapshot_(String(p.athlete_id || getConfig_('default_athlete_id') || 'ath_lgrd_001'));
     else if (action === 'checkins.upsert') { assertWriteEnabled_(); result = upsertCheckin_(p.record || {}, String(p.athlete_id || '')); }
     else if (action === 'measurements.append') { assertWriteEnabled_(); result = appendMeasurements_(p.records || [], String(p.athlete_id || '')); }
     else if (action === 'execution.upsert') { assertWriteEnabled_(); result = upsertById_('SESSION_EXECUTIONS','session_execution_id',p.record || {}); }
@@ -62,7 +63,12 @@ function snapshot_(athleteId) {
   const blocks = rows_('SESSION_BLOCKS').filter(r => sessionIds.has(String(r.planned_session_id)));
   const blockIds = new Set(blocks.map(r => String(r.session_block_id)));
   const prescriptions = rows_('EXERCISE_PRESCRIPTIONS').filter(r => blockIds.has(String(r.session_block_id)));
-  const executions = rows_('SESSION_EXECUTIONS').filter(r => String(r.athlete_id) === athleteId || sessionIds.has(String(r.planned_session_id)));
+  const targets = rows_('SESSION_TARGETS').filter(r => sessionIds.has(String(r.planned_session_id)) || blockIds.has(String(r.session_block_id)));
+  const executions = rows_('SESSION_EXECUTIONS').filter(r =>
+    String(r.athlete_id) === athleteId ||
+    sessionIds.has(String(r.planned_session_id)) ||
+    blockIds.has(String(r.session_block_id))
+  );
   const executionIds = new Set(executions.map(r => String(r.session_execution_id)));
   const setResults = rows_('SET_RESULTS').filter(r => executionIds.has(String(r.session_execution_id)));
   const climbing = rows_('CLIMBING_ATTEMPTS').filter(r => executionIds.has(String(r.session_execution_id)));
@@ -71,8 +77,8 @@ function snapshot_(athleteId) {
   const measurements = rows_('BODY_MEASUREMENTS').filter(r => String(r.athlete_id) === athleteId);
 
   return {
-    snapshot:{athlete,profile,cycles,weeks,sessions,blocks,prescriptions,executions,set_results:setResults,climbing_attempts:climbing,running_results:running,checkins,measurements},
-    counts:{cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,prescriptions:prescriptions.length,executions:executions.length}
+    snapshot:{athlete,profile,cycles,weeks,sessions,blocks,prescriptions,targets,executions,set_results:setResults,climbing_attempts:climbing,running_results:running,checkins,measurements},
+    counts:{cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,blocks:blocks.length,prescriptions:prescriptions.length,targets:targets.length,executions:executions.length}
   };
 }
 
@@ -95,7 +101,8 @@ function syncMeta_(payload) {
     const blocks=rows_('SESSION_BLOCKS').filter(r=>sessionIds.has(String(r.planned_session_id)));
     const blockIds=new Set(blocks.map(r=>String(r.session_block_id)));
     const prescriptions=rows_('EXERCISE_PRESCRIPTIONS').filter(r=>blockIds.has(String(r.session_block_id)));
-    return {found:true,entity_type:type,athlete_id:athleteId,week_no:weekNo,training_week_id:week.training_week_id,version_no:Number(week.version_no||0),updated_at:week.published_at||'',fingerprint:fingerprintObject_({week,sessions,blocks,prescriptions})};
+    const targets=rows_('SESSION_TARGETS').filter(r=>sessionIds.has(String(r.planned_session_id))||blockIds.has(String(r.session_block_id)));
+    return {found:true,entity_type:type,athlete_id:athleteId,week_no:weekNo,training_week_id:week.training_week_id,version_no:Number(week.version_no||0),updated_at:week.published_at||'',fingerprint:fingerprintObject_({week,sessions,blocks,prescriptions,targets})};
   }
   throw new Error('Type sync.meta inconnu : '+type);
 }
@@ -111,12 +118,69 @@ function sortObject_(value) {
   return value;
 }
 
+
+function schemaAudit_() {
+  const requiredHeaders = {
+    SESSION_TARGETS: ['session_target_id','planned_session_id','session_block_id','target_scope','quality_id','stimulus_code'],
+    SESSION_EXECUTIONS: ['session_execution_id','athlete_id','planned_session_id','session_block_id','execution_scope'],
+    REF_INTERFERENCE_RULES: ['interference_rule_version_id','source_stimulus_code','target_stimulus_code','same_day_allowed']
+  };
+  const checks = [];
+
+  Object.keys(requiredHeaders).forEach(name => {
+    const sheet = sheet_(name);
+    const headers = sheet.getDataRange().getValues()[0].map(String);
+    const missing = requiredHeaders[name].filter(header => headers.indexOf(header) < 0);
+    checks.push({
+      code: 'HEADERS_' + name,
+      ok: missing.length === 0,
+      details: missing.length ? ('Colonnes absentes : ' + missing.join(', ')) : 'Colonnes présentes'
+    });
+  });
+
+  const requiredStimuli = [
+    'FINGER_MAX','FINGER_END','FINGER_POWER','UPPER_MAX','UPPER_END','UPPER_POWER',
+    'LOWER_MAX','LOWER_END','LOWER_POWER','BLOC_MAX','CLIMB_VOLUME','CLIMB_TECHNIQUE',
+    'CLIMB_COORDINATION','CLIMB_ANAEROBIC','CORE','MOBILITY','FLEXIBILITY','PREVENTION',
+    'RUN_EASY','RUN_LONG','RUN_THRESHOLD','RUN_INTERVAL','RUN_TEST'
+  ];
+  const stimulusCodes = new Set(rows_('REF_STIMULI').map(r => String(r.stimulus_code)));
+  const missingStimuli = requiredStimuli.filter(code => !stimulusCodes.has(code));
+  checks.push({
+    code: 'REF_STIMULI_V02',
+    ok: missingStimuli.length === 0,
+    details: missingStimuli.length ? ('Stimuli absents : ' + missingStimuli.join(', ')) : (requiredStimuli.length + ' stimuli présents')
+  });
+
+  const athlete = rows_('ATHLETES').find(r => String(r.athlete_id) === 'ath_lgrd_001');
+  checks.push({
+    code: 'ATHLETE_REAL',
+    ok: !!athlete,
+    details: athlete ? 'ath_lgrd_001 présent' : 'ath_lgrd_001 absent'
+  });
+
+  const configVersion = String(getConfig_('schema_version') || SCHEMA_VERSION);
+  checks.push({
+    code: 'SCHEMA_VERSION',
+    ok: configVersion === '0.5.8.1',
+    details: 'Version déclarée : ' + configVersion
+  });
+
+  return {
+    schema_version: SCHEMA_VERSION,
+    valid: checks.every(check => check.ok),
+    checks: checks,
+    checked_at: new Date().toISOString()
+  };
+}
+
 function publishPlan_(payload) {
   const cycle = payload.cycle || {};
   const week = payload.week || {};
   const sessions = payload.sessions || [];
   const blocks = payload.blocks || [];
   const prescriptions = payload.prescriptions || [];
+  const targets = payload.targets || [];
 
   if (!cycle.cycle_id) throw new Error('cycle_id obligatoire');
   if (!week.training_week_id) throw new Error('training_week_id obligatoire');
@@ -135,6 +199,7 @@ function publishPlan_(payload) {
 
     const blockIds = blocks.map(r => String(r.session_block_id));
     replaceRowsByValues_('EXERCISE_PRESCRIPTIONS', 'session_block_id', blockIds, prescriptions);
+    replaceRowsByValues_('SESSION_TARGETS', 'planned_session_id', sessionIds, targets);
 
     return {
       training_week_id: week.training_week_id,
@@ -142,7 +207,8 @@ function publishPlan_(payload) {
       counts: {
         sessions: sessions.length,
         blocks: blocks.length,
-        prescriptions: prescriptions.length
+        prescriptions: prescriptions.length,
+        targets: targets.length
       }
     };
   } finally {

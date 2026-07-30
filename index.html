@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.0</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.1</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -355,7 +355,7 @@ const PRESCRIPTIONS=[
 {id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle réglable · volume contrôlé · stimulus doigts optionnel',durationMin:105,editor:'climbing',climbingMode:'KILTER_VOLUME'}
 ];
 
-const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.0","auditLog":[],"productionMigration":{"version":"0.5.8.0","status":"LOCKED","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
+const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.1","status":"SCHEMA_MIGRATION","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
 
 function legacyLtsStateKeys(){
  const keys=[];
@@ -410,8 +410,8 @@ function productionSeedV0580(previousState){
  const next=JSON.parse(JSON.stringify(SEED));
  next.role=previousState?.role==='athlete'?'athlete':'coach';
  next.productionMigration={
-  version:'0.5.8.0',
-  status:'LOCKED',
+  version:'0.5.8.1',
+  status:'SCHEMA_MIGRATION',
   athleteId:'ath_lgrd_001',
   resetAt:new Date().toISOString()
  };
@@ -421,7 +421,7 @@ function productionSeedV0580(previousState){
   action:'PRODUCTION_RESET',
   entityType:'SYSTEM',
   entityId:'ath_lgrd_001',
-  details:'État DEMO local remplacé par le socle de migration production'
+  details:'Socle local conservé pendant la migration du schéma stimuli et exécutions'
  }];
  return next
 }
@@ -920,7 +920,7 @@ function containerStatus(w,c){
 function findContainer(n,id){const w=state.weeks.find(x=>Number(x.number)===Number(n));return {week:w,container:w?.containers?.find(c=>c.containerId===id)}}
 
 
-const LTS_SCHEMA_VERSION='0.5.8.0';
+const LTS_SCHEMA_VERSION='0.5.8.1';
 function stableId(prefix){return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`}
 function logAudit(action,entityType,entityId,details=''){
  state.auditLog=state.auditLog||[];
