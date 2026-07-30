@@ -1,18 +1,20 @@
-# LTS v0.5.8.0 — Migration production verrouillée
+# LTS v0.5.8.1 — Schéma stimuli & exécutions, verrouillé
 
-Cette version n’est pas une version d’usage quotidien. Elle prépare le passage
-de la base de recette à la base réelle.
+Cette version corrige le modèle avant l’import des réalisations réelles.
 
-## Effets au premier chargement sur chaque appareil
-- suppression de l’état local DEMO ;
-- suppression des files d’attente, conflits et forçages de recette ;
-- remplacement de `ath_demo_001` par `ath_lgrd_001` ;
-- conservation de l’URL Apps Script ;
-- initialisation d’un socle réel sans semaine ni résultat fictif ;
-- verrouillage total des lectures et écritures Google Sheets.
+## Corrections principales
+- `SESSION_EXECUTIONS` rattache chaque réalisé au parent `planned_session_id` et à la prescription `session_block_id`.
+- `execution_scope = PRESCRIPTION`.
+- `SESSION_TARGETS` est publié et relu avec le plan.
+- les cibles peuvent être rattachées à une prescription (`session_block_id`, `target_scope`).
+- le plan publie des identifiants valides de `REF_SESSION_TYPES` et `REF_EXERCISES`.
+- les résultats de séries utilisent le véritable `exercise_prescription_id`.
+- le snapshot récupère les cibles, prescriptions et exécutions par leurs relations.
+- un diagnostic `schema.audit` vérifie le Google Sheets sans autoriser les écritures.
+- la synchronisation reste verrouillée.
 
 ## Important
-- `Code.gs` reste inchangé ;
-- aucune purge Google Sheets n’est automatique ;
-- ne pas créer de tag Stable pour cette version ;
-- la synchronisation sera réactivée dans une version ultérieure après import.
+- cette version exige une mise à jour de `Code.gs` et un nouveau déploiement Apps Script ;
+- `api_enabled` et `write_enabled` restent `FALSE` pendant la migration ;
+- aucune réalisation réelle ne doit encore être ajoutée ;
+- ne pas créer de release Stable.

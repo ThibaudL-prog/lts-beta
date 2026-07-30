@@ -2,7 +2,7 @@
 (function(){
   const CONFIG_KEY='lts-api-config-v050';
   const MIGRATION_LOCK_KEY='lts-production-sync-lock-v0580';
-  const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Migration production verrouillée',schemaVersion:null};
+  const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Migration du schéma verrouillée',schemaVersion:null};
 
   // Cette release est une étape de maintenance. La synchronisation est
   // volontairement verrouillée jusqu’à la purge et à l’import des données réelles.
@@ -22,7 +22,7 @@
         athleteId:'ath_lgrd_001',
         connected:false,
         lastSync:null,
-        lastMessage:'Migration production verrouillée'
+        lastMessage:'Migration du schéma verrouillée'
       }))
     }
   }catch(error){
@@ -34,8 +34,8 @@
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
   async function request(action,options={}){
-    if(migrationLocked()){
-      throw new Error('Migration production en cours · synchronisation verrouillée')
+    if(migrationLocked()&&!['health','schema.audit'].includes(String(action))){
+      throw new Error('Migration du schéma en cours · synchronisation verrouillée')
     }
     const c=cfg();
     if(!c.url)throw new Error('URL Apps Script manquante');
@@ -286,7 +286,7 @@
       return {
         status:'locked',
         label:'Verrouillée',
-        message:'Purge et import des données réelles en cours. Aucune donnée ne peut être envoyée.'
+        message:'Migration du schéma stimuli/exécutions en cours. Aucune donnée ne peut être envoyée.'
       }
     }
     const queue=loadQueue();
@@ -311,6 +311,24 @@
     return {status:'pending',label:'À vérifier',message:c.lastMessage||'Teste la connexion.'}
   }
 
+
+  window.auditMigrationSchema=async function(){
+    const button=document.getElementById('schemaAuditButton');
+    if(button){button.disabled=true;button.textContent='Vérification…'}
+    try{
+      const result=await request('schema.audit');
+      state.productionMigration=state.productionMigration||{};
+      state.productionMigration.schemaAudit=result;
+      state.productionMigration.schemaAuditAt=new Date().toISOString();
+      if(typeof save==='function')save();
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast(result.valid?'Schéma Google Sheets valide':'Schéma incomplet')
+    }catch(error){
+      if(typeof toast==='function')toast(`Audit impossible : ${error.message||error}`);
+      if(button){button.disabled=false;button.textContent='Vérifier le schéma'}
+    }
+  };
+
   window.renderGlobalSyncCenter=function(){
     pruneStaleQueueItems();
     const c=cfg();
@@ -331,8 +349,10 @@
       </div>
 
       ${locked?`<div class="productionMigrationBanner">
-        <b>Migration production en cours</b>
-        <span class="muted small">L’état DEMO local a été retiré. La synchronisation reste volontairement bloquée jusqu’à la fin de la purge et de l’import.</span>
+        <b>Migration du schéma en cours</b>
+        <span class="muted small">Les données réelles déjà saisies sont conservées. La synchronisation reste bloquée pendant la correction du schéma relationnel et des références.</span>
+        ${state.productionMigration?.schemaAudit?`<div class="small" style="margin-top:8px"><b>${state.productionMigration.schemaAudit.valid?'Schéma valide':'Schéma incomplet'}</b> · ${(state.productionMigration.schemaAudit.checks||[]).filter(c=>c.ok).length}/${(state.productionMigration.schemaAudit.checks||[]).length} contrôles réussis</div>`:''}
+        <button id="schemaAuditButton" class="btn secondary" style="margin-top:10px" onclick="auditMigrationSchema()">Vérifier le schéma Google Sheets</button>
       </div>`:''}
 
       <div class="syncStats">
@@ -824,7 +844,7 @@
     const payloads=[
       {action:'execution.upsert',payload:{record:buildExecutionRecord(session,found.week)}}
     ];
-    const sets=buildSetRows(session);
+    const sets=buildSetRows(session,found.week);
     if(sets.length||e.type==='SETS'||e.type==='EXERCISES'){
       payloads.push({action:'sets.replace',payload:{session_execution_id:executionId(session.sessionId),records:sets}})
     }
@@ -1036,7 +1056,7 @@
 
   window.synchronizeEverything=async function(){
     if(migrationLocked()){
-      if(typeof toast==='function')toast('Migration production verrouillée');
+      if(typeof toast==='function')toast('Migration du schéma verrouillée');
       return
     }
     if(globalSyncRunning||backgroundSyncRunning)return;
@@ -1161,13 +1181,126 @@
     }catch(error){console.error('Actualisation sync',error)}
   }
 
+
+  const STIMULUS_CATALOG_V02={
+    FINGER_MAX:{qualityId:'q_finger_max',magnitude:5,local:5,systemic:3,tmr:5,recoveryH:48},
+    FINGER_END:{qualityId:'q_finger_end',magnitude:4,local:5,systemic:3,tmr:4,recoveryH:36},
+    FINGER_POWER:{qualityId:'q_finger_power',magnitude:5,local:5,systemic:3,tmr:5,recoveryH:48},
+    UPPER_MAX:{qualityId:'q_upper_max',magnitude:5,local:4,systemic:4,tmr:5,recoveryH:48},
+    UPPER_END:{qualityId:'q_upper_end',magnitude:4,local:4,systemic:4,tmr:4,recoveryH:36},
+    UPPER_POWER:{qualityId:'q_upper_power',magnitude:5,local:4,systemic:4,tmr:5,recoveryH:48},
+    LOWER_MAX:{qualityId:'q_lower_max',magnitude:5,local:4,systemic:4,tmr:5,recoveryH:48},
+    LOWER_END:{qualityId:'q_lower_end',magnitude:4,local:4,systemic:4,tmr:4,recoveryH:36},
+    LOWER_POWER:{qualityId:'q_lower_power',magnitude:5,local:4,systemic:4,tmr:5,recoveryH:48},
+    BLOC_MAX:{qualityId:'q_upper_power',magnitude:5,local:4,systemic:4,tmr:5,recoveryH:48},
+    CLIMB_VOLUME:{qualityId:'q_technique',magnitude:3,local:3,systemic:3,tmr:3,recoveryH:24},
+    CLIMB_TECHNIQUE:{qualityId:'q_technique',magnitude:2,local:2,systemic:2,tmr:2,recoveryH:12},
+    CLIMB_COORDINATION:{qualityId:'q_full_coord',magnitude:3,local:3,systemic:3,tmr:3,recoveryH:24},
+    CLIMB_ANAEROBIC:{qualityId:'q_anaerobic',magnitude:5,local:4,systemic:5,tmr:5,recoveryH:48},
+    CORE:{qualityId:'q_core',magnitude:3,local:3,systemic:2,tmr:3,recoveryH:24},
+    MOBILITY:{qualityId:'q_mobility',magnitude:1,local:1,systemic:1,tmr:1,recoveryH:6},
+    FLEXIBILITY:{qualityId:'q_mobility',magnitude:2,local:2,systemic:1,tmr:2,recoveryH:12},
+    PREVENTION:{qualityId:'q_prevention',magnitude:2,local:2,systemic:1,tmr:2,recoveryH:12},
+    RUN_EASY:{qualityId:'q_aerobic_end',magnitude:2,local:2,systemic:2,tmr:2,recoveryH:12},
+    RUN_LONG:{qualityId:'q_aerobic_end',magnitude:3,local:3,systemic:4,tmr:4,recoveryH:36},
+    RUN_THRESHOLD:{qualityId:'q_aerobic_threshold',magnitude:4,local:3,systemic:4,tmr:4,recoveryH:36},
+    RUN_INTERVAL:{qualityId:'q_aerobic_power',magnitude:5,local:4,systemic:5,tmr:5,recoveryH:48},
+    RUN_TEST:{qualityId:'q_aerobic_power',magnitude:5,local:4,systemic:5,tmr:5,recoveryH:48}
+  };
+
+  function stimulusCodeFor(session){
+    if(session?.stimulusTarget?.stimulus_code)return String(session.stimulusTarget.stimulus_code);
+    const id=String(session?.templateId||'').toLowerCase();
+    const map={
+      maxhang:'FINGER_MAX',repeaters:'FINGER_END',fingerpower:'FINGER_POWER',
+      pullstrength:'UPPER_MAX',dipstrength:'UPPER_MAX',
+      pullend:'UPPER_END',dipend:'UPPER_END',
+      pullpower:'UPPER_POWER',pushpower:'UPPER_POWER',
+      climbmax:'BLOC_MAX',kilterintense:'BLOC_MAX',
+      climbfun:'CLIMB_VOLUME',kiltervolume:'CLIMB_VOLUME',
+      climbtech:'CLIMB_TECHNIQUE',kiltertech:'CLIMB_TECHNIQUE',precision:'CLIMB_TECHNIQUE',
+      coordination:'CLIMB_COORDINATION',
+      core:'CORE',corearc:'CORE',
+      mobility:'MOBILITY',mob:'MOBILITY',
+      flexibility:'FLEXIBILITY',flex:'FLEXIBILITY',
+      prevshoulder:'PREVENTION',prevfinger:'PREVENTION',prevwrist:'PREVENTION',
+      prevelbow:'PREVENTION',prevlower:'PREVENTION',prevtrunk:'PREVENTION',prev:'PREVENTION',
+      runef:'RUN_EASY',run:'RUN_EASY',
+      runtempo:'RUN_THRESHOLD',
+      run4x4:'RUN_INTERVAL',runshort:'RUN_INTERVAL',runhills:'RUN_INTERVAL',
+      runsprint:'RUN_TEST',speedtech:'RUN_TEST'
+    };
+    return map[id]||'PREVENTION'
+  }
+
+  function sessionTemplateIdFor(session){
+    const code=stimulusCodeFor(session);
+    const map={
+      FINGER_MAX:'st_fmax',FINGER_END:'st_fend',FINGER_POWER:'st_upper_power',
+      UPPER_MAX:'st_strength',UPPER_END:'st_end',UPPER_POWER:'st_upper_power',
+      LOWER_MAX:'st_lower_max',LOWER_END:'st_lower_max',LOWER_POWER:'st_lower_power',
+      BLOC_MAX:'st_bloc',CLIMB_VOLUME:'st_climb_volume',CLIMB_TECHNIQUE:'st_climb_tech',
+      CLIMB_COORDINATION:'st_climb_coord',CLIMB_ANAEROBIC:'st_climb_ana',
+      CORE:'st_core',MOBILITY:'st_mobility',FLEXIBILITY:'st_flex',PREVENTION:'st_prevention',
+      RUN_EASY:'st_run',RUN_LONG:'st_run_long',RUN_THRESHOLD:'st_run_threshold',
+      RUN_INTERVAL:'st_run_interval',RUN_TEST:'st_run_interval'
+    };
+    return map[code]||'st_multi'
+  }
+
+  function exerciseCatalogIdFor(session,index=0){
+    const id=String(session?.templateId||'').toLowerCase();
+    const templateMap={
+      maxhang:'ex_hang5',repeaters:'ex_hang73',fingerpower:'ex_finger_power',
+      pullstrength:'ex_pull_w',dipstrength:'ex_dip_w',
+      pullend:'ex_pull_bw',dipend:'ex_dip_bw',
+      pullpower:'ex_pull_power',pushpower:'ex_dip_power',
+      climbmax:'ex_climb_general',kilterintense:'ex_kilter',
+      climbfun:'ex_climb_general',kiltervolume:'ex_kilter',
+      climbtech:'ex_climb_general',kiltertech:'ex_kilter',precision:'ex_climb_general',
+      coordination:'ex_climb_coord',
+      core:'ex_core_circuit',corearc:'ex_core_circuit',
+      mobility:'ex_mobility',mob:'ex_mobility',
+      flexibility:'ex_flexibility',flex:'ex_flexibility',
+      runef:'ex_run',run:'ex_run',runtempo:'ex_run_threshold',
+      run4x4:'ex_run_interval',runshort:'ex_run_interval',runhills:'ex_run_interval',
+      runsprint:'ex_run_interval',speedtech:'ex_run_interval'
+    };
+    const exerciseName=String(session?.exercises?.[index]?.name||'').toLowerCase();
+    if(exerciseName.includes('rotation externe'))return 'ex_external_rotation';
+    if(exerciseName.includes('face pull'))return 'ex_face_pull';
+    if(exerciseName.includes('scapular'))return 'ex_scap_pull';
+    return templateMap[id]||'ex_generic'
+  }
+
+  function remoteVersionForWeek(week){
+    return Number(week?.publicationVersion||week?.remoteVersion||1)||1
+  }
+  function resolvedPlannedSessionId(session,week){
+    return session.remotePlannedSessionId||
+      (session.containerId?planVersionId(session.containerId,remoteVersionForWeek(week)):'')
+  }
+  function resolvedBlockId(session,week){
+    return session.remoteBlockId||
+      (session.sessionId?planVersionId(session.sessionId,remoteVersionForWeek(week)):'')
+  }
+  function resolvedExercisePrescriptionId(session,week,index=0){
+    const ids=session.remoteExercisePrescriptionIds||[];
+    if(ids[index])return ids[index];
+    const blockId=resolvedBlockId(session,week);
+    const exerciseCount=Array.isArray(session.exercises)&&session.exercises.length?session.exercises.length:1;
+    return exerciseCount>1?`${blockId}-ex${index+1}`:blockId
+  }
+
   function buildExecutionRecord(session,week){
     const e=session.execution||{};
     const completedAt=e.completedAt||isoNow();
     return {
       session_execution_id:executionId(session.sessionId),
       athlete_id:cfg().athleteId,
-      planned_session_id:session.sessionId,
+      planned_session_id:resolvedPlannedSessionId(session,week),
+      session_block_id:resolvedBlockId(session,week),
+      execution_scope:'PRESCRIPTION',
       started_at:e.startedAt||completedAt,
       ended_at:completedAt,
       status:e.completed?'completed':'in_progress',
@@ -1184,14 +1317,14 @@
     }
   }
 
-  function buildSetRows(session){
+  function buildSetRows(session,week){
     const e=session.execution||{}, bodyweight=num(state.athlete?.weight)||null;
     if(e.type==='SETS'){
       return (e.sets||[]).map((x,i)=>({
         set_result_id:`set-${session.sessionId}-${i+1}`,
         session_execution_id:executionId(session.sessionId),
-        exercise_prescription_id:`presc-${session.sessionId}-${i+1}`,
-        exercise_catalog_id:session.templateId||'',
+        exercise_prescription_id:resolvedExercisePrescriptionId(session,week,0),
+        exercise_catalog_id:session.remoteExerciseCatalogIds?.[0]||exerciseCatalogIdFor(session,0),
         set_no:i+1,
         side:'both',
         reps_completed:num(x.reps),
@@ -1213,8 +1346,8 @@
         for(let n=1;n<=sets;n++)rows.push({
           set_result_id:`set-${session.sessionId}-${i+1}-${n}`,
           session_execution_id:executionId(session.sessionId),
-          exercise_prescription_id:`presc-${session.sessionId}-${i+1}`,
-          exercise_catalog_id:session.exercises?.[i]?.name||session.templateId||'',
+          exercise_prescription_id:resolvedExercisePrescriptionId(session,week,i),
+          exercise_catalog_id:session.remoteExerciseCatalogIds?.[i]||exerciseCatalogIdFor(session,i),
           set_no:n,
           side:'both',
           reps_completed:num(x.reps),
@@ -1468,6 +1601,7 @@
     const sessions=[];
     const blocks=[];
     const prescriptions=[];
+    const targets=[];
 
     const orderedContainers=typeof orderedSessionContainers==='function'
       ?orderedSessionContainers(week)
@@ -1483,7 +1617,7 @@
         planned_session_id:remoteSessionId,
         training_week_id:remoteWeekId,
         athlete_id:cfg().athleteId,
-        session_template_id:'MULTI_PRESCRIPTION',
+        session_template_id:'st_multi',
         session_date:sessionDate,
         planned_start_time:slotTime(container.slot),
         planned_duration_min:containerPrescs.reduce((sum,p)=>sum+(Number(p.duration)||0),0),
@@ -1506,45 +1640,69 @@
 
       containerPrescs.forEach((p,pIndex)=>{
         const blockId=planVersionId(p.sessionId,version);
+        const stimulusCode=stimulusCodeFor(p);
+        const stimulus=STIMULUS_CATALOG_V02[stimulusCode]||STIMULUS_CATALOG_V02.PREVENTION;
         blocks.push({
           session_block_id:blockId,
           planned_session_id:remoteSessionId,
-          session_template_id:p.templateId||'',
+          session_template_id:sessionTemplateIdFor(p),
           block_order:pIndex+1,
           block_type:'prescription',
           name:p.title||'Prescription',
           duration_target_min:Number(p.duration)||0,
-          objective_text:[p.guide,p.domain].filter(Boolean).join(' · '),
+          objective_text:[p.guide,stimulus.qualityId].filter(Boolean).join(' · '),
           completion_rule:'Athlète valide la prescription',
-          notes:safeJson({...p,execution:null,remoteVersion:version,remoteWeekId})
+          notes:safeJson({...p,execution:null,stimulusCode,remoteVersion:version,remoteWeekId})
         });
 
         const structured=Array.isArray(p.structuredSets)?p.structuredSets:[];
-        const first=structured[0]||{};
-        prescriptions.push({
-          exercise_prescription_id:blockId,
+        const exerciseItems=Array.isArray(p.exercises)&&p.exercises.length?p.exercises:[null];
+        exerciseItems.forEach((exercise,exerciseIndex)=>{
+          const first=structured[exerciseIndex]||structured[0]||{};
+          const exercisePrescriptionId=exerciseItems.length>1?`${blockId}-ex${exerciseIndex+1}`:blockId;
+          prescriptions.push({
+            exercise_prescription_id:exercisePrescriptionId,
+            session_block_id:blockId,
+            exercise_catalog_id:exerciseCatalogIdFor(p,exerciseIndex),
+            exercise_order:exerciseIndex+1,
+            sets_target:Number(exercise?.sets)||structured.length||Number(p.sets)||1,
+            reps_target_min:Number(exercise?.reps)||Number(first.reps)||Number(p.reps)||'',
+            reps_target_max:Number(exercise?.reps)||Number(first.reps)||Number(p.reps)||'',
+            duration_target_s:Number(exercise?.hold)||Number(first.work)||Number(p.workSeconds)||'',
+            distance_target_m:'',
+            load_target_value:Number(first.load)||Number(p.load)||'',
+            load_target_unit:first.loadMode||'',
+            rir_target:first.rir!==''&&first.rir!==undefined?Number(first.rir):(p.rir??''),
+            rpe_target:p.rpe??'',
+            rest_seconds:Number(exercise?.rest)||Number(first.rest)||Number(p.restSeconds)||'',
+            tempo_code:'',
+            progression_rule_text:'',
+            optional:false,
+            coach_notes:safeJson({notes:p.notes||'',exercise:exercise||null,structuredSets:p.structuredSets||[],climbing:p.climbing||null})
+          })
+        });
+
+        targets.push({
+          session_target_id:`target-${blockId}`,
+          planned_session_id:remoteSessionId,
+          quality_id:stimulus.qualityId,
+          stimulus_code:stimulusCode,
+          target_role:pIndex===0?'primary':'secondary',
+          magnitude_target:stimulus.magnitude,
+          local_load_target:stimulus.local,
+          systemic_load_target:stimulus.systemic,
+          tmr_target:stimulus.tmr,
+          recovery_target_h:stimulus.recoveryH,
+          source_rule_version:'STIM-0.2',
+          coach_override:false,
+          override_reason:'',
           session_block_id:blockId,
-          exercise_catalog_id:p.templateId||p.title||'',
-          exercise_order:1,
-          sets_target:structured.length||Number(p.sets)||Number(p.exercises?.[0]?.sets)||1,
-          reps_target_min:Number(first.reps)||Number(p.reps)||Number(p.exercises?.[0]?.reps)||'',
-          reps_target_max:Number(first.reps)||Number(p.reps)||Number(p.exercises?.[0]?.reps)||'',
-          duration_target_s:Number(first.work)||Number(p.workSeconds)||Number(p.exercises?.[0]?.hold)||'',
-          distance_target_m:'',
-          load_target_value:Number(first.load)||Number(p.load)||'',
-          load_target_unit:first.loadMode||'',
-          rir_target:first.rir!==''&&first.rir!==undefined?Number(first.rir):(p.rir??''),
-          rpe_target:p.rpe??'',
-          rest_seconds:Number(first.rest)||Number(p.restSeconds)||'',
-          tempo_code:'',
-          progression_rule_text:'',
-          optional:false,
-          coach_notes:safeJson({notes:p.notes||'',structuredSets:p.structuredSets||[],exercises:p.exercises||[],climbing:p.climbing||null})
+          target_scope:'PRESCRIPTION'
         });
       });
     });
 
-    return {cycle,week:remoteWeek,sessions,blocks,prescriptions};
+    return {cycle,week:remoteWeek,sessions,blocks,prescriptions,targets};
   }
 
   window.syncWeekPlan=async function(weekNo){
@@ -1589,6 +1747,7 @@
       if(!payload.week?.training_week_id)throw new Error('Identifiant de semaine manquant');
       if(!payload.sessions?.length)throw new Error('Aucun conteneur de séance à publier');
       if(!payload.blocks?.length)throw new Error('Aucune prescription à publier');
+      if(!payload.targets?.length)throw new Error('Aucune cible de stimulus à publier');
       const result=await request('plan.publish',{method:'POST',payload});
       removeQueueItem(queueId('plan',week.weekId||week.number));
       const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
@@ -1631,9 +1790,11 @@
 
   function executionFromSnapshot(snapshot,sessionId,prescription){
     const executionIdValue=`exec-${sessionId}`;
+    const remoteBlockId=prescription?.remoteBlockId||'';
     const rows=(snapshot?.executions||[])
       .filter(row=>
         String(row.session_execution_id)===executionIdValue||
+        (remoteBlockId&&String(row.session_block_id)===String(remoteBlockId))||
         String(row.planned_session_id)===String(sessionId)
       )
       .sort((a,b)=>new Date(b.ended_at||b.started_at||0)-new Date(a.ended_at||a.started_at||0));
@@ -1740,6 +1901,8 @@
     const remoteWeeks=snapshot?.weeks||[];
     const remoteSessions=snapshot?.sessions||[];
     const remoteBlocks=snapshot?.blocks||[];
+    const remotePrescriptions=snapshot?.prescriptions||[];
+    const remoteTargets=snapshot?.targets||[];
     if(!remoteWeeks.length)return [];
 
     const latestByNo=new Map();
@@ -1773,6 +1936,12 @@
           .forEach(b=>{
             const p=parseJson(b.notes,{})||{};
             const sessionId=p.sessionId||String(b.session_block_id).replace(/-v\d+$/,'');
+            const exerciseRows=remotePrescriptions
+              .filter(row=>String(row.session_block_id)===String(b.session_block_id))
+              .sort((a,b)=>Number(a.exercise_order||0)-Number(b.exercise_order||0));
+            const targetRow=remoteTargets.find(row=>
+              String(row.session_block_id)===String(b.session_block_id)
+            )||null;
             const prescription={
               ...p,
               sessionId,
@@ -1784,7 +1953,11 @@
               prescriptionOrder:Number(b.block_order)||1,
               structureType:'PRESCRIPTION',
               execution:null,
+              remotePlannedSessionId:s.planned_session_id,
               remoteBlockId:b.session_block_id,
+              remoteExercisePrescriptionIds:exerciseRows.map(row=>row.exercise_prescription_id),
+              remoteExerciseCatalogIds:exerciseRows.map(row=>row.exercise_catalog_id),
+              stimulusTarget:targetRow,
               remoteWeekId:w.training_week_id
             };
             prescription.execution=executionFromSnapshot(snapshot,sessionId,prescription);
