@@ -1,5 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
+const API_RELEASE = '0.5.8.3';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -77,6 +78,7 @@ function snapshot_(athleteId) {
   const running = rows_('RUNNING_RESULTS').filter(r => executionIds.has(String(r.session_execution_id)));
   const checkins = rows_('CHECKINS').filter(r => String(r.athlete_id) === athleteId);
   const measurements = rows_('BODY_MEASUREMENTS').filter(r => String(r.athlete_id) === athleteId);
+  const testResults = optionalRows_('TEST_RESULTS').filter(r => String(r.athlete_id) === athleteId);
   const referenceExercises = optionalRows_('REF_EXERCISES');
   const referenceTemplates = optionalRows_('REF_SESSION_TEMPLATES');
   const referenceQualities = optionalRows_('REF_QUALITIES');
@@ -86,7 +88,7 @@ function snapshot_(athleteId) {
     snapshot:{
       athlete,profile,cycles,weeks,sessions,blocks,prescriptions,targets,executions,
       set_results:setResults,climbing_attempts:climbing,running_results:running,
-      checkins,measurements,
+      checkins,measurements,test_results:testResults,
       reference_exercises:referenceExercises,
       reference_session_templates:referenceTemplates,
       reference_qualities:referenceQualities,
@@ -95,7 +97,7 @@ function snapshot_(athleteId) {
     counts:{
       cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,blocks:blocks.length,
       prescriptions:prescriptions.length,targets:targets.length,executions:executions.length,
-      reference_exercises:referenceExercises.length
+      tests:testResults.length,reference_exercises:referenceExercises.length
     }
   };
 }
@@ -148,6 +150,7 @@ function schemaAudit_() {
     SET_RESULTS: ['set_result_id','session_execution_id','exercise_prescription_id','exercise_catalog_id','set_no','valid'],
     CLIMBING_ATTEMPTS: ['climbing_attempt_id','session_execution_id','grading_system','grade_code','result_status','validation_status'],
     RUNNING_RESULTS: ['running_result_id','session_execution_id','distance_m','time_seconds','valid'],
+    TEST_RESULTS: ['test_result_id','athlete_id','test_code','performed_at','valid'],
     REF_INTERFERENCE_RULES: ['interference_rule_version_id','source_stimulus_code','target_stimulus_code','same_day_allowed']
   };
   const checks = [];

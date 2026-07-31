@@ -5,7 +5,7 @@
   const RELEASE_UNLOCK_KEY='lts-production-sync-unlock-v0582';
   const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Prête à synchroniser',schemaVersion:null,writeEnabled:false};
 
-  // v0.5.8.2 clôt la migration de production. Le verrou hérité de v0.5.8.0/1
+  // v0.5.8.3 clôt la migration de production. Le verrou hérité de v0.5.8.0/1
   // est retiré une seule fois sur chaque appareil, sans effacer les données locales.
   if(localStorage.getItem(RELEASE_UNLOCK_KEY)!=='done'){
     localStorage.setItem(MIGRATION_LOCK_KEY,'0');
@@ -437,7 +437,7 @@
         const failed=(audit.checks||[]).filter(check=>!check.ok).map(check=>check.code).join(', ');
         throw new Error(`Schéma Google Sheets incomplet${failed?' · '+failed:''}`)
       }
-      if(String(health.schema_version||'')!=='0.5.8.1'&&String(health.schema_version||'')!=='0.5.8.2'){
+      if(String(health.schema_version||'')!=='0.5.8.1'&&String(health.schema_version||'')!=='0.5.8.2'&&String(health.schema_version||'')!=='0.5.8.3'){
         throw new Error(`Version de schéma incompatible : ${health.schema_version||'inconnue'}`)
       }
       unlockMigration();
@@ -529,7 +529,8 @@
         pain:painValue,
         rpe:sheetNumber(row.day_rpe_0_10)??sheetNumber(row.rpe_day_0_10),
         bike:sheetNumber(row.cycling_distance_km)??sheetNumber(row.bike_distance_km),
-        hrStanding:sheetNumber(row.standing_hr_bpm),
+        hrSupine:sheetNumber(row.lying_hr_bpm)??sheetNumber(row.supine_hr_bpm)??sheetNumber(row.hr_supine_bpm)??sheetNumber(row.resting_hr_bpm),
+        hrStanding:sheetNumber(row.standing_hr_bpm)??sheetNumber(row.upright_hr_bpm)??sheetNumber(row.hr_standing_bpm),
         _remote:true,
         _remoteId:row.checkin_id||''
       }
@@ -540,7 +541,8 @@
     const typeMap={
       weight_kg:'weight',waist_cm:'waist',chest_cm:'chest',hips_cm:'hips',
       arm_relaxed_cm:'armRelaxed',arm_contract_cm:'armContracted',arm_contracted_cm:'armContracted',
-      thigh_cm:'thigh',calf_cm:'calf',hr_supine_bpm:'hrSupine',hr_standing_bpm:'hrStanding'
+      thigh_cm:'thigh',calf_cm:'calf',hr_supine_bpm:'hrSupine',lying_hr_bpm:'hrSupine',supine_hr_bpm:'hrSupine',
+      hr_standing_bpm:'hrStanding',standing_hr_bpm:'hrStanding',upright_hr_bpm:'hrStanding'
     };
     const groups=new Map();
     (snapshot?.measurements||[]).forEach(row=>{
@@ -550,6 +552,39 @@
       if(!groups.has(day))groups.set(day,{date,source:'Google Sheets',_remote:true});
       const key=typeMap[String(row.measurement_type||'').toLowerCase()];
       if(key)groups.get(day)[key]=sheetNumber(row.value)
+    });
+    return [...groups.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date)))
+  }
+
+
+  function snapshotTestRecords(snapshot){
+    const groups=new Map();
+    const metricForCode={
+      PULLUP_1RM:['pull1rm',['added_load_kg','raw_value']],
+      DIP_1RM:['dip1rm',['added_load_kg','raw_value']],
+      PULLUP_MAX_REPS:['pullReps',['repetitions_valid','raw_value']],
+      DIP_MAX_REPS:['dipReps',['repetitions_valid','raw_value']],
+      FINGER_MAX_20_5:['fingerMax',['added_load_kg','raw_value']],
+      FINGER_END_20_7_3:['fingerRepeaters',['completed_tours','raw_value']],
+      MCGILL_FLEX:['coreFlexor',['duration_seconds','flexion_seconds','raw_value']],
+      MCGILL_SORENSEN:['coreExtensor',['duration_seconds','sorensen_seconds','raw_value']]
+    };
+    (snapshot?.test_results||[]).forEach(row=>{
+      const valid=row.valid===true||String(row.valid).toLowerCase()==='true'||String(row.validation_status||'').toUpperCase()==='VALIDATED';
+      if(!valid)return;
+      const mapping=metricForCode[String(row.test_code||'').toUpperCase()];
+      if(!mapping)return;
+      const date=row.performed_at||row.created_at||row.updated_at;
+      if(!date)return;
+      const day=String(date).slice(0,10);
+      if(!groups.has(day))groups.set(day,{date,source:'Tests Google Sheets',_remote:true});
+      const [metric,candidates]=mapping;
+      let value=null;
+      for(const field of candidates){
+        value=sheetNumber(row[field]);
+        if(value!==null)break
+      }
+      if(value!==null)groups.get(day)[metric]=value
     });
     return [...groups.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date)))
   }
@@ -589,9 +624,10 @@
     state.records=state.records||{measurements:[],checkins:[],tests:[]};
     const localCheckinOverlay=(state.records.checkins||[]).filter(record=>!record._remote);
     const localMeasurementOverlay=(state.records.measurements||[]).filter(record=>!record._remote);
+    const localTestOverlay=(state.records.tests||[]).filter(record=>!record._remote);
     state.records.checkins=mergeSnapshotRecords(snapshotCheckinRecords(snapshot),localCheckinOverlay);
     state.records.measurements=mergeSnapshotRecords(snapshotMeasurementRecords(snapshot),localMeasurementOverlay);
-    state.records.tests=state.records.tests||[];
+    state.records.tests=mergeSnapshotRecords(snapshotTestRecords(snapshot),localTestOverlay);
     const latestMeasurement=state.records.measurements[state.records.measurements.length-1];
     if(latestMeasurement){
       state.weekly={...(state.weekly||{}),...latestMeasurement};
@@ -2075,12 +2111,23 @@
   }
 
   function remoteSlotFromTime(value){
-    const match=String(value||'').match(/(\d{1,2}):(\d{2})/);
+    const raw=String(value||'').trim();
+    const matches=[...raw.matchAll(/(?:^|T|\s)(\d{1,2}):(\d{2})(?::\d{2})?/g)];
+    const match=matches.length?matches[matches.length-1]:raw.match(/(\d{1,2}):(\d{2})/);
     if(!match)return 'midi';
     const hour=Number(match[1]);
     if(hour<11)return 'matin';
     if(hour<18)return 'midi';
     return 'soir'
+  }
+
+  function remoteSlotForSession(session,meta={}){
+    const explicit=String(meta.slot||'').trim().toLowerCase();
+    if(['matin','midi','soir'].includes(explicit))return explicit;
+    const id=String(session?.planned_session_id||'').trim().toLowerCase();
+    const idMatch=id.match(/(?:^|[-_])(matin|midi|soir)(?:-v\d+)?$/);
+    if(idMatch)return idMatch[1];
+    return remoteSlotFromTime(session?.planned_start_time)
   }
 
   function remoteExerciseReferenceMap(snapshot){
@@ -2274,7 +2321,7 @@
           .sort((a,b)=>Number(a.block_order)-Number(b.block_order));
         const containerId=meta.localContainerId||String(s.planned_session_id);
         const day=meta.day||remoteDayFromDate(s.session_date);
-        const slot=meta.slot||remoteSlotFromTime(s.planned_start_time);
+        const slot=remoteSlotForSession(s,meta);
         const fallbackTitle=blockRows.length===1?(blockRows[0].name||`Séance ${sessionIndex+1}`):`Séance du ${slot}`;
         containers.push({
           containerId,
