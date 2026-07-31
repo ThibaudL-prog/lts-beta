@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.1</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.2</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -275,6 +275,10 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 }
 .productionMigrationBanner b{display:block;margin-bottom:4px}
 .syncGlobalStatus.locked{background:#eef4ff;color:#16315c;border-color:#c7d7f5}
+
+.coachComment{border-left:4px solid var(--blue);background:#f3f7ff;border-radius:12px;padding:11px 12px;margin:10px 0;white-space:pre-line}
+.coachComment b{display:block;margin-bottom:4px}
+.exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
 <script src="api-client.js"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
@@ -355,7 +359,7 @@ const PRESCRIPTIONS=[
 {id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle réglable · volume contrôlé · stimulus doigts optionnel',durationMin:105,editor:'climbing',climbingMode:'KILTER_VOLUME'}
 ];
 
-const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.1","status":"SCHEMA_MIGRATION","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
+const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.2","status":"READY","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
 
 function legacyLtsStateKeys(){
  const keys=[];
@@ -410,8 +414,8 @@ function productionSeedV0580(previousState){
  const next=JSON.parse(JSON.stringify(SEED));
  next.role=previousState?.role==='athlete'?'athlete':'coach';
  next.productionMigration={
-  version:'0.5.8.1',
-  status:'SCHEMA_MIGRATION',
+  version:'0.5.8.2',
+  status:'READY',
   athleteId:'ath_lgrd_001',
   resetAt:new Date().toISOString()
  };
@@ -434,8 +438,8 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La synchronisation reste bloquée jusqu’à la fin de la purge et de l’import.
- localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'1');
+ // La migration est terminée en v0.5.8.2 : la lecture distante est autorisée.
+ localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
  try{
@@ -446,7 +450,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
    athleteId:'ath_lgrd_001',
    connected:false,
    lastSync:null,
-   lastMessage:'Migration production verrouillée'
+   lastMessage:'Prête à synchroniser'
   }))
  }catch(error){
   console.error('Migration de la configuration API',error)
@@ -483,7 +487,7 @@ function nowIso(){return new Date().toISOString()}
 function recordDateLabel(iso){const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeCutoff(range){const d=new Date();if(range==='7d')d.setDate(d.getDate()-7);else if(range==='30d')d.setDate(d.getDate()-30);else if(range==='cycle'&&state.cycle?.start)return new Date(state.cycle.start);else return new Date(0);return d}
 function metricSeries(key){const cutoff=rangeCutoff(state.trackingRange),rows=[];['measurements','checkins','tests'].forEach(bucket=>(state.records[bucket]||[]).forEach(r=>{if(r[key]!==null&&r[key]!==undefined&&r[key]!==''&&new Date(r.date)>=cutoff)rows.push({date:r.date,value:+r[key],source:r.source||bucket})}));return rows.sort((a,b)=>new Date(a.date)-new Date(b.date))}
-function addOrReplaceDailyRecord(bucket,record){const day=record.date.slice(0,10),arr=state.records[bucket]||(state.records[bucket]=[]),i=arr.findIndex(x=>x.date?.slice(0,10)===day&&x.source===record.source);if(i>=0)arr[i]={...arr[i],...record};else arr.push(record)}
+function addOrReplaceDailyRecord(bucket,record){record={...record,_remote:false};const day=record.date.slice(0,10),arr=state.records[bucket]||(state.records[bucket]=[]),i=arr.findIndex(x=>x.date?.slice(0,10)===day&&x.source===record.source);if(i>=0)arr[i]={...arr[i],...record};else arr.push(record)}
 
 
 function newContainerId(){return 'ctr-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
@@ -754,7 +758,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.7</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Stabilisation v0.5.8.2</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -783,7 +787,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.7</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.2</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1963,6 +1967,41 @@ function publishedWeeks(){
  });
  return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
 }
+function coachCommentBlock(s){
+ const text=(s?.progressionRule||s?.coachComment||'').trim();
+ if(!text)return '';
+ return `<div class="coachComment"><b>Commentaire du Coach</b>${text}</div>`
+}
+function localIsoDate(date=new Date()){
+ const year=date.getFullYear(),month=String(date.getMonth()+1).padStart(2,'0'),day=String(date.getDate()).padStart(2,'0');
+ return `${year}-${month}-${day}`
+}
+function containerCalendarDate(w,c){
+ if(c?.sessionDate)return String(c.sessionDate).slice(0,10);
+ const start=w?.startDate||w?.start_date;
+ if(start){
+  const base=new Date(`${String(start).slice(0,10)}T12:00:00`);
+  const offset=({Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6})[c?.day];
+  if(Number.isFinite(offset)){base.setDate(base.getDate()+offset);return localIsoDate(base)}
+ }
+ return ''
+}
+function athleteVisibleWeeks(){
+ const weeks=publishedWeeks();
+ if(!weeks.length)return [];
+ const today=localIsoDate();
+ const current=weeks.filter(w=>{
+  const start=String(w.startDate||w.start_date||'').slice(0,10);
+  const end=String(w.endDate||w.end_date||'').slice(0,10);
+  return start&&end&&today>=start&&today<=end
+ });
+ if(current.length)return [current.sort((a,b)=>Number(b.publicationVersion||0)-Number(a.publicationVersion||0))[0]];
+ const future=weeks.filter(w=>String(w.startDate||w.start_date||'').slice(0,10)>today)
+  .sort((a,b)=>String(a.startDate||a.start_date).localeCompare(String(b.startDate||b.start_date)));
+ if(future.length)return [future[0]];
+ return [weeks[weeks.length-1]]
+}
+
 function sessionDetails(s){
  const sets=s.structuredSets?'<div class="small">'+s.structuredSets.map((x,i)=>
    'S'+(i+1)+' '+x.role+': '+(x.load||'—')+' '+(x.loadMode||'')+' × '+(x.reps||'—')+
@@ -1977,7 +2016,7 @@ function sessionDetails(s){
    (s.climbing.targetGrade?' · cible '+s.climbing.targetGrade:'')+
    (s.climbing.technicalFocus?' · '+s.climbing.technicalFocus:'')+
    '</div>':'';
- return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'
+ return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'+coachCommentBlock(s)
 }
 function findSession(sessionId){
  for(const w of (state.weeks||[])){
@@ -2004,6 +2043,7 @@ function openGuideSetExecution(s,schema){
  const rows=(s.structuredSets||[]).map((p,i)=>{
    const a=existing[i]||{}, plannedWork=p.work??p.workSeconds??null;
    const plannedSecond=schema.type==='TIMED_SETS'?(plannedWork||5)+' s':schema.type==='REPEATERS'?(plannedWork||'7/3'):p.reps;
+   const prefilledActual=schema.type==='TIMED_SETS'?(plannedWork||5):(Number.isFinite(Number(p.reps))?p.reps:'');
    return `<div class="guidecard">
    <div class="guidecardhead"><b>${p.role||'Série '+(i+1)}</b></div>
    <div class="guidecardbody"><div class="dualgrid">
@@ -2014,15 +2054,15 @@ function openGuideSetExecution(s,schema){
      <div class="row"><span>${labels[3]}</span>${plannedSetCell(p.rest,'s')}</div>
     </div>
     <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
-     <div class="field"><label>Charge réelle</label><input data-actload="${i}" value="${a.load??''}" placeholder="${p.load||'PDC'}"></div>
-     <div class="field"><label>${schema.type==='TIMED_SETS'?'Durée réelle (s)':schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??''}"></div>
-     <div class="field"><label>RIR réel</label><input data-actrir="${i}" value="${a.rir??''}"></div>
+     <div class="field"><label>Charge réelle</label><input data-actload="${i}" value="${a.load??p.load??''}" placeholder="${p.load||'PDC'}"></div>
+     <div class="field"><label>${schema.type==='TIMED_SETS'?'Durée réelle (s)':schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??prefilledActual??''}"></div>
+     <div class="field"><label>RIR réel</label><input data-actrir="${i}" value="${a.rir??p.rir??''}"></div>
      <label><input class="check" data-actdone="${i}" type="checkbox" ${a.completed?'checked':''}> Série validée</label>
     </div>
    </div></div></div>`
  }).join('');
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="protocolnote">${s.notes||''}</div>${rows}
+ <div class="protocolnote">${s.notes||''}</div>${coachCommentBlock(s)}${rows}
  <div class="measuregrid"><div class="field"><label>RPE séance</label><input id="execRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="execPain" type="number" min="0" max="10" value="${s.execution?.pain??0}"></div></div>
  <div class="field"><label>Commentaire</label><textarea id="execNote">${s.execution?.note||''}</textarea></div>
  <button class="btn full" onclick="saveSetExecution('${s.sessionId}')">Enregistrer les performances</button></div></div>`)
@@ -2060,7 +2100,7 @@ function saveSetExecution(sessionId){
 function openGenericExecution(s){
  const e=s.execution||{};
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide||''} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>Consigne</span><b>${s.notes||'—'}</b></div></div>
+ ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>Consigne</span><b>${s.notes||'—'}</b></div></div>
  <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée réalisée (min)</label><input id="genDuration" type="number" value="${e.duration??s.duration??''}"></div><div class="field"><label>RPE réel</label><input id="genRpe" type="number" min="0" max="10" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="genPain" type="number" min="0" max="10" value="${e.pain??0}"></div></div></div>
  <div class="field"><label>Commentaire</label><textarea id="genNote">${e.note||''}</textarea></div>
  <button class="btn full" onclick="saveGenericExecution('${s.sessionId}')">Valider la séance</button></div></div>`)
@@ -2089,18 +2129,20 @@ function openExerciseExecution(s,schema){
     <div class="row"><span>Séries</span>${plannedSetCell(x.sets)}</div>
     <div class="row"><span>Répétitions</span>${plannedSetCell(x.reps)}</div>
     <div class="row"><span>Maintien</span>${plannedSetCell(x.hold,'s')}</div>
+    <div class="row"><span>Charge</span>${plannedSetCell(x.load,x.loadUnit||'')}</div>
     <div class="row"><span>Repos</span>${plannedSetCell(x.rest,'s')}</div>
    </div>
    <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
-    <div class="field"><label>Séries réalisées</label><input data-exactsets="${i}" value="${a.sets??''}"></div>
-    <div class="field"><label>Répétitions réalisées</label><input data-exactreps="${i}" value="${a.reps??''}"></div>
-    <div class="field"><label>Meilleur maintien (s)</label><input data-exacthold="${i}" value="${a.hold??''}"></div>
+    <div class="field"><label>Séries réalisées</label><input data-exactsets="${i}" value="${a.sets??x.sets??''}"></div>
+    <div class="field"><label>Répétitions réalisées</label><input data-exactreps="${i}" value="${a.reps??x.reps??''}"></div>
+    <div class="field"><label>Meilleur maintien (s)</label><input data-exacthold="${i}" value="${a.hold??x.hold??''}"></div>
+    <div class="field"><label>Charge réelle (${x.loadUnit||'kg'})</label><input data-exactload="${i}" value="${a.load??x.load??''}"></div>
     <div class="field"><label>Qualité /10</label><input data-exquality="${i}" value="${a.quality??''}"></div>
    </div>
   </div></div></div>`
  }).join('');
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${schema.guide} · prescription et performance</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- ${rows||'<div class="card"><p>Aucun exercice détaillé n’a été défini. La séance peut néanmoins être validée avec un commentaire global.</p></div>'}
+ ${coachCommentBlock(s)}${rows||'<div class="card"><p>Aucun exercice détaillé n’a été défini. La séance peut néanmoins être validée avec un commentaire global.</p></div>'}
  <div class="measuregrid"><div class="field"><label>RPE séance</label><input id="exRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="exPain" type="number" min="0" max="10" value="${s.execution?.pain??0}"></div></div>
  <div class="field"><label>Commentaire</label><textarea id="exNote">${s.execution?.note||''}</textarea></div>
  <button class="btn full" onclick="saveExerciseExecution('${s.sessionId}',${planned.length})">Enregistrer les performances</button></div></div>`)
@@ -2113,6 +2155,7 @@ function saveExerciseExecution(sessionId,count){
   sets:document.querySelector(`[data-exactsets="${i}"]`)?.value||'',
   reps:document.querySelector(`[data-exactreps="${i}"]`)?.value||'',
   hold:document.querySelector(`[data-exacthold="${i}"]`)?.value||'',
+  load:document.querySelector(`[data-exactload="${i}"]`)?.value||'',
   quality:document.querySelector(`[data-exquality="${i}"]`)?.value||''
  });
  s.execution={type:'EXERCISES',exercises,rpe:+document.getElementById('exRpe')?.value||null,pain:+document.getElementById('exPain')?.value||0,note:document.getElementById('exNote')?.value||'',completed:true,completedAt:new Date().toISOString()};
@@ -2141,7 +2184,7 @@ function openRunningExecution(s,schema){
  const e=s.execution||{}, plannedIntervals=s.structuredSets||[];
  const intervals=plannedIntervals.length?plannedIntervals.map((p,i)=>`<div class="pa-row"><b>${i+1}</b>${plannedSetCell(p.work||p.workSeconds||p.reps)}<input data-runint="${i}" value="${e.intervals?.[i]?.actual??''}" placeholder="Réalisé"><span>${p.rest||''} s</span><input data-runqual="${i}" value="${e.intervals?.[i]?.quality??''}" placeholder="Qualité /10"></div>`).join(''):'';
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">G17 · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>RPE cible</span><b>${s.rpe??'—'}</b></div><div class="row"><span>Allure / charge</span><b>${s.load||'Selon protocole'}</b></div></div>
+ ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>RPE cible</span><b>${s.rpe??'—'}</b></div><div class="row"><span>Allure / charge</span><b>${s.load||'Selon protocole'}</b></div></div>
  <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée (min)</label><input id="runDuration" type="number" step="0.1" value="${e.duration??''}" oninput="updateRunningCalculations()"></div><div class="field"><label>Distance (km)</label><input id="runDistance" type="number" step="0.01" value="${e.distance??''}" oninput="updateRunningCalculations()"></div><div class="measuregrid"><div class="field"><label>Vitesse calculée</label><div id="runSpeedCalculated" class="speedResult">${e.speed?Number(e.speed).toFixed(2)+' km/h':'—'}</div></div><div class="field"><label>Allure calculée</label><div id="runPaceCalculated" class="speedResult">${e.paceMinutes?formatPace(+e.paceMinutes):'—'}</div></div></div><div class="field"><label>FC moyenne</label><input id="runHr" value="${e.hr??''}"></div></div></div>
  ${intervals?`<h3>Intervalles</h3><div class="pa-scroll"><div class="pa-head"><span>#</span><span>Prévu</span><span>Réalisé</span><span>Repos</span><span>Qualité</span></div>${intervals}</div>`:''}
  <div class="measuregrid"><div class="field"><label>RPE réel</label><input id="runRpe" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="runPain" value="${e.pain??0}"></div></div>
@@ -2186,17 +2229,21 @@ function openClimbingExecution(s){
    fingerStimulus:false
  };
  s.climbing=cfg;
- const count=Number.isFinite(+cfg.problemCount)?+cfg.problemCount:4,existing=s.execution?.problems||[];
+ const existing=s.execution?.problems||[];
+ const plannedCount=Number.isFinite(+cfg.problemCount)?+cfg.problemCount:0;
+ const count=Math.max(plannedCount,existing.length);
  const rows=Array.from({length:count},(_,i)=>{
    const a=existing[i]||{};
    return `<div class="problem"><b>Bloc ${i+1}</b><div class="measuregrid">
+   <div class="field"><label>Nom / identifiant</label><input data-cname="${i}" value="${a.name||''}"></div>
    <div class="field"><label>Cotation</label><input data-cgrade="${i}" value="${a.grade||cfg.targetGrade||''}"></div>
    <div class="field"><label>Flash</label><select data-cflash="${i}" onchange="toggleAttempts(${i},this.value)"><option value="">—</option><option value="yes" ${a.flash===true?'selected':''}>Oui</option><option value="no" ${a.flash===false?'selected':''}>Non</option></select></div>
    <div class="field" id="successWrap${i}" style="${a.flash===true?'display:none':''}"><label>Réussi</label><select data-csuccess="${i}"><option value="yes" ${a.success===true?'selected':''}>Oui</option><option value="no" ${a.success===false?'selected':''}>Non</option></select></div>
    <div class="field" id="attemptWrap${i}" style="${a.flash===true?'display:none':''}"><label>Nombre d’essais</label><input data-cattempts="${i}" type="number" value="${a.attempts||''}"></div>
+   <div class="field"><label>Commentaire bloc</label><input data-ccomment="${i}" value="${a.comment||''}"></div>
    </div></div>`
  }).join('');
- document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${cfg.mode==='FREE_FUN'?'Escalade libre / fun':(cfg.angle?'Kilterboard '+cfg.angle:(cfg.mode==='CLIMB_TECH'?'Escalade technique':'Bloc maximal'))}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div><div id="climbingProblems">${rows||'<div class="card" id="noPlannedBlocks"><p class="muted">Aucun bloc imposé. Ajoute les blocs réellement grimpés.</p></div>'}</div>
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${cfg.mode==='FREE_FUN'?'Escalade libre / fun':(cfg.angle?'Kilterboard '+cfg.angle:(cfg.mode==='CLIMB_TECH'?'Escalade technique':'Bloc maximal'))}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>${coachCommentBlock(s)}<div id="climbingProblems">${rows||'<div class="card" id="noPlannedBlocks"><p class="muted">Aucun bloc imposé. Ajoute les blocs réellement grimpés.</p></div>'}</div>
  <div class="field"><label>Plaisir /10</label><input id="climbEnjoyment" type="number" min="0" max="10" value="${s.execution?.enjoyment??''}"></div>
  <div class="field"><label>Qualité perçue /10</label><input id="climbQuality" type="number" min="0" max="10" value="${s.execution?.quality??''}"></div>
  <div class="field"><label>RPE séance</label><input id="climbRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div>
@@ -2319,7 +2366,7 @@ function renderAthleteSessionCard(w,c,compact=false){
 }
 
 function renderAthleteWeek(){
- const weeks=publishedWeeks();
+ const weeks=athleteVisibleWeeks();
  if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
  const body=weeks.map(w=>{
   const sessions=orderedSessionContainers(w);
@@ -2335,11 +2382,12 @@ function renderAthleteWeek(){
 function renderToday(){
  const dayMap=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
  const today=dayMap[new Date().getDay()];
+ const todayIso=localIsoDate();
  const weeks=publishedWeeks();
  const rows=[];
  weeks.forEach(w=>{
   orderedSessionContainers(w)
-   .filter(c=>c.day===today)
+   .filter(c=>containerCalendarDate(w,c)===todayIso)
    .forEach(c=>rows.push({week:w,container:c}))
  });
  rows.sort((a,b)=>{
@@ -2487,4 +2535,16 @@ const EXERCISE_LIBRARY=[
 function render(){state.role==='coach'?renderDashboard():renderDaily()}
 window.addEventListener('lts-api-status',()=>{if(state.role==='coach')renderDashboard()});
 render();
+
+// Charge automatiquement le planning réel une seule fois par ouverture lorsque
+// l’URL Apps Script est déjà configurée. Aucune écriture n’est déclenchée ici.
+setTimeout(()=>{
+ try{
+  const config=JSON.parse(localStorage.getItem('lts-api-config-v050')||'{}');
+  if(config.url&&navigator.onLine&&sessionStorage.getItem('lts-auto-pull-v0582')!=='done'){
+   sessionStorage.setItem('lts-auto-pull-v0582','done');
+   window.testSheetsApi?.({silent:true})
+  }
+ }catch(error){console.error('Chargement automatique Google Sheets',error)}
+},700);
 </script><div id="backgroundSyncBadge" class="backgroundSyncBadge"><span class="syncSpinner"></span><span id="backgroundSyncBadgeText">Synchronisation en arrière-plan…</span></div></body></html>

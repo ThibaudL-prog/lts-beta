@@ -47,7 +47,9 @@ function health_() {
     schema_version: getConfig_('schema_version') || SCHEMA_VERSION,
     spreadsheet_id: SpreadsheetApp.getActive().getId(),
     server_time: new Date().toISOString(),
-    write_enabled: configBoolean_('write_enabled', false)
+    api_enabled: configBoolean_('api_enabled', false),
+    write_enabled: configBoolean_('write_enabled', false),
+    default_athlete_id: String(getConfig_('default_athlete_id') || 'ath_lgrd_001')
   };
 }
 
@@ -75,10 +77,26 @@ function snapshot_(athleteId) {
   const running = rows_('RUNNING_RESULTS').filter(r => executionIds.has(String(r.session_execution_id)));
   const checkins = rows_('CHECKINS').filter(r => String(r.athlete_id) === athleteId);
   const measurements = rows_('BODY_MEASUREMENTS').filter(r => String(r.athlete_id) === athleteId);
+  const referenceExercises = optionalRows_('REF_EXERCISES');
+  const referenceTemplates = optionalRows_('REF_SESSION_TEMPLATES');
+  const referenceQualities = optionalRows_('REF_QUALITIES');
+  const referenceStimuli = optionalRows_('REF_STIMULI');
 
   return {
-    snapshot:{athlete,profile,cycles,weeks,sessions,blocks,prescriptions,targets,executions,set_results:setResults,climbing_attempts:climbing,running_results:running,checkins,measurements},
-    counts:{cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,blocks:blocks.length,prescriptions:prescriptions.length,targets:targets.length,executions:executions.length}
+    snapshot:{
+      athlete,profile,cycles,weeks,sessions,blocks,prescriptions,targets,executions,
+      set_results:setResults,climbing_attempts:climbing,running_results:running,
+      checkins,measurements,
+      reference_exercises:referenceExercises,
+      reference_session_templates:referenceTemplates,
+      reference_qualities:referenceQualities,
+      reference_stimuli:referenceStimuli
+    },
+    counts:{
+      cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,blocks:blocks.length,
+      prescriptions:prescriptions.length,targets:targets.length,executions:executions.length,
+      reference_exercises:referenceExercises.length
+    }
   };
 }
 
@@ -121,8 +139,15 @@ function sortObject_(value) {
 
 function schemaAudit_() {
   const requiredHeaders = {
+    WEEKS: ['training_week_id','cycle_id','athlete_id','week_no','start_date','end_date','status','version_no'],
+    SESSIONS: ['planned_session_id','training_week_id','athlete_id','session_date','planned_start_time','status'],
+    SESSION_BLOCKS: ['session_block_id','planned_session_id','session_template_id','block_order','name','duration_target_min'],
+    EXERCISE_PRESCRIPTIONS: ['exercise_prescription_id','session_block_id','exercise_catalog_id','progression_rule_text','coach_notes'],
     SESSION_TARGETS: ['session_target_id','planned_session_id','session_block_id','target_scope','quality_id','stimulus_code'],
     SESSION_EXECUTIONS: ['session_execution_id','athlete_id','planned_session_id','session_block_id','execution_scope'],
+    SET_RESULTS: ['set_result_id','session_execution_id','exercise_prescription_id','exercise_catalog_id','set_no','valid'],
+    CLIMBING_ATTEMPTS: ['climbing_attempt_id','session_execution_id','grading_system','grade_code','result_status','validation_status'],
+    RUNNING_RESULTS: ['running_result_id','session_execution_id','distance_m','time_seconds','valid'],
     REF_INTERFERENCE_RULES: ['interference_rule_version_id','source_stimulus_code','target_stimulus_code','same_day_allowed']
   };
   const checks = [];
@@ -157,6 +182,25 @@ function schemaAudit_() {
     code: 'ATHLETE_REAL',
     ok: !!athlete,
     details: athlete ? 'ath_lgrd_001 présent' : 'ath_lgrd_001 absent'
+  });
+
+  const realWeeks = rows_('WEEKS').filter(r =>
+    String(r.athlete_id) === 'ath_lgrd_001' && String(r.status).toLowerCase() === 'published'
+  );
+  checks.push({
+    code: 'PUBLISHED_WEEKS_REAL',
+    ok: realWeeks.length > 0,
+    details: realWeeks.length ? (realWeeks.length + ' semaine(s) publiée(s) trouvée(s)') : 'Aucune semaine publiée pour ath_lgrd_001'
+  });
+
+  const realWeekIds = new Set(realWeeks.map(r => String(r.training_week_id)));
+  const realSessions = rows_('SESSIONS').filter(r =>
+    realWeekIds.has(String(r.training_week_id)) && String(r.status).toLowerCase() === 'published'
+  );
+  checks.push({
+    code: 'PUBLISHED_SESSIONS_REAL',
+    ok: realSessions.length > 0,
+    details: realSessions.length ? (realSessions.length + ' séance(s) publiée(s) trouvée(s)') : 'Aucune séance publiée pour les semaines réelles'
   });
 
   const configVersion = String(getConfig_('schema_version') || SCHEMA_VERSION);
@@ -277,6 +321,7 @@ function replaceChildren_(sheetName, parentColumn, parentId, records) {
   if (!parentId) throw new Error(parentColumn + ' obligatoire');
   const sheet = sheet_(sheetName), data = sheet.getDataRange().getValues(), headers = data[0].map(String);
   const parentIndex = headers.indexOf(parentColumn);
+  if (parentIndex < 0) throw new Error('Colonne absente : ' + parentColumn);
   for (let i = data.length - 1; i >= 1; i--) if (String(data[i][parentIndex]) === parentId) sheet.deleteRow(i + 1);
   appendObjects_(sheetName, records.map(r => Object.assign({}, r, {[parentColumn]:parentId})));
   return {written:records.length,replaced_parent_id:parentId};
@@ -287,6 +332,17 @@ function appendObjects_(sheetName, records) {
   const sheet = sheet_(sheetName), headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(String);
   const rows = records.map(r => headers.map(h => normalizeForSheet_(r[h])));
   sheet.getRange(sheet.getLastRow()+1,1,rows.length,headers.length).setValues(rows);
+}
+
+function optionalRows_(sheetName) {
+  const sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  if (!sheet) return [];
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const headers = data[0].map(String);
+  return data.slice(1).filter(r => r.some(v => v !== '' && v !== null)).map(r => {
+    const o = {};headers.forEach((h,i) => o[h] = serialize_(r[i]));return o;
+  });
 }
 
 function rows_(sheetName) {
