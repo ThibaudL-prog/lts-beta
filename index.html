@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=05810">
+<link rel="manifest" href="manifest.webmanifest?v=05811">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=05810">
+<link rel="shortcut icon" href="favicon.ico?v=05811">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.8.10</title>
+<title>LTS v0.5.8.11</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -50,10 +50,20 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .chartgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .chartbox{border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff}
 .chartbox h4{margin:0 0 6px}.chartsvg{width:100%;height:170px}
+.flashboards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.flashboard{min-width:0}
+.flashboardhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}
+.flashlist{display:grid;gap:8px}
+.flashrecord{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:10px;background:#fbfcff}
+.flashrank{width:30px;height:30px;border-radius:10px;background:#edf3ff;color:var(--blue);display:grid;place-items:center;font-weight:950}
+.flashgrade{font-size:20px;font-weight:950;line-height:1.05}
+.flashname{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flashmeta{text-align:right;font-size:12px;color:var(--muted);white-space:nowrap}
+.flashfooter{margin-top:9px;font-size:11px;color:var(--muted)}
 .statusline{display:flex;gap:7px;align-items:center;font-size:12px;font-weight:850}
 .editbtn{margin-left:6px}.addblock{border:1px dashed #8fa9d3;background:#f5f8fd;border-radius:14px;padding:13px;width:100%;color:var(--blue);font-weight:850}
 .plannedactual{display:grid;grid-template-columns:1fr 1fr;gap:8px}.plannedactual>div{border-radius:10px;padding:8px;background:#f7f9fc}
-@media(max-width:760px){.chartgrid{grid-template-columns:1fr}.plannedactual{grid-template-columns:1fr}}
+@media(max-width:760px){.chartgrid,.flashboards{grid-template-columns:1fr}.plannedactual{grid-template-columns:1fr}}
 
 .guidecard{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin:12px 0}
 .guidecardhead{padding:13px 14px;background:#f5f8fd;border-bottom:1px solid var(--line)}
@@ -293,7 +303,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=05810"></script><script>
+<script src="api-client.js?v=05811"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -451,7 +461,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.8.10 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.8.11 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -791,7 +801,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.8.10</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Stabilisation v0.5.8.11</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -820,7 +830,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.10</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.11</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1119,6 +1129,102 @@ function calcStrengthPlan(kind){
 
 function svgLine(values,labels){if(!values.length)return '';const w=320,h=140,p=22,min=Math.min(...values),max=Math.max(...values),span=max-min||1;const pts=values.map((v,i)=>{const x=values.length===1?w/2:p+i*(w-2*p)/(values.length-1),y=h-p-(v-min)*(h-2*p)/span;return[x,y]});const poly=pts.map(x=>x.join(',')).join(' ');return `<svg class="chartsvg" viewBox="0 0 ${w} ${h}"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#dce3ee"/>${values.length>1?`<polyline points="${poly}" fill="none" stroke="#1764e8" stroke-width="3"/>`:''}${pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="#1764e8"><title>${labels[i]} : ${values[i]}</title></circle>`).join('')}<text x="${p}" y="14" font-size="11">${max}</text><text x="${p}" y="${h-5}" font-size="11">${min}</text></svg>`}
 function chartCard(key){const meta=REAL_METRICS[key],rows=metricSeries(key);if(!rows.length)return `<div class="chartbox"><h4>${meta.label}</h4><div class="emptyChart">Aucune donnée réelle enregistrée pour cette période.</div></div>`;const vals=rows.map(r=>r.value),labels=rows.map(r=>recordDateLabel(r.date)),last=rows.at(-1);return `<div class="chartbox"><h4>${meta.label}</h4><div class="kpi">${last.value} ${meta.unit}</div>${svgLine(vals,labels)}<div class="metricSource">Dernière source : ${last.source}</div></div>`}
+
+const FLASH_FONT_GRADES=['4a','4a+','4b','4b+','4c','4c+','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a'];
+const FLASH_COLOR_GRADES=['blanc','jaune','orange','vert','bleu','rouge','noir','rose','violet'];
+function flashEscape(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))}
+function flashDateLabel(value){
+ const raw=String(value||'').slice(0,10);
+ const match=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ return match?`${match[3]}/${match[2]}/${match[1]}`:(raw||'Date inconnue')
+}
+function flashGradeInfo(value){
+ const compact=String(value||'').trim().toLowerCase().replace(/\s+/g,'');
+ if(!compact)return null;
+ const fontMatches=compact.match(/[4-9][abc]\+?/g)||[];
+ const font=fontMatches.length?fontMatches[fontMatches.length-1]:'';
+ const fontIndex=FLASH_FONT_GRADES.indexOf(font);
+ if(fontIndex>=0)return {system:'FONT',score:fontIndex,label:font.replace(/[abc]/,letter=>letter.toUpperCase())};
+ const normalized=compact.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const colorMatch=normalized.match(/^(blanc|jaune|orange|vert|bleu|rouge|noir|rose|violet)([+-])?$/);
+ if(!colorMatch)return null;
+ const base=colorMatch[1],modifier=colorMatch[2]||'',baseIndex=FLASH_COLOR_GRADES.indexOf(base);
+ return {
+  system:'COLOR',
+  score:baseIndex*3+(modifier==='+'?1:modifier==='-'?-1:0),
+  label:base.charAt(0).toUpperCase()+base.slice(1)+modifier
+ }
+}
+function isKilterFlashSession(session){
+ const template=String(session?.templateId||'').toLowerCase();
+ const mode=String(session?.climbing?.mode||session?.climbingMode||'').toUpperCase();
+ const context=[session?.title,session?.notes,session?.coachComment,session?.climbing?.technicalFocus].filter(Boolean).join(' ').toLowerCase();
+ return template.startsWith('kilter')||mode.startsWith('KILTER')||context.includes('kilter')
+}
+function climbingFlashSessionEntries(){
+ const bySession=new Map();
+ const sources=[...(state.remoteWeeks||[]),...(state.weeks||[])];
+ sources.forEach(week=>{
+  (week.sessions||[]).forEach(session=>{
+   if(session?.execution?.type!=='CLIMBING')return;
+   const key=String(session.sessionId||`${week.number}-${session.title}`);
+   const previous=bySession.get(key);
+   if(!previous||(!previous.session.execution?.completed&&session.execution?.completed)){
+    bySession.set(key,{week,session})
+   }else if(previous&&session.execution){
+    bySession.set(key,{week,session})
+   }
+  })
+ });
+ return [...bySession.values()]
+}
+function topFlashData(kind,limit=5){
+ const records=[];
+ climbingFlashSessionEntries().forEach(({week,session})=>{
+  const kilter=isKilterFlashSession(session);
+  if((kind==='kilter')!==kilter)return;
+  const container=(week.containers||[]).find(item=>String(item.containerId)===String(session.containerId));
+  const plannedDate=container?containerCalendarDate(week,container):'';
+  const date=String(session.execution?.completedAt||plannedDate||'').slice(0,10);
+  const angle=session.climbing?.angle||'';
+  (session.execution?.problems||[]).forEach((problem,index)=>{
+   if(problem?.flash!==true)return;
+   const grade=flashGradeInfo(problem.grade);
+   if(!grade)return;
+   records.push({
+    grade,
+    name:problem.name||`Bloc ${index+1}`,
+    sessionTitle:session.title||'Escalade',
+    date,
+    angle,
+    completedAt:session.execution?.completedAt||date||''
+   })
+  })
+ });
+ const counts=records.reduce((acc,item)=>{acc[item.grade.system]=(acc[item.grade.system]||0)+1;return acc},{});
+ const preferred=kind==='kilter'?'FONT':((counts.COLOR||0)>=(counts.FONT||0)?'COLOR':'FONT');
+ const ranked=records.filter(item=>item.grade.system===preferred)
+  .sort((a,b)=>b.grade.score-a.grade.score||String(b.completedAt).localeCompare(String(a.completedAt))||a.name.localeCompare(b.name,'fr'))
+  .slice(0,limit);
+ return {records:ranked,system:preferred,total:records.length,excluded:records.length-records.filter(item=>item.grade.system===preferred).length}
+}
+function topFlashCard(kind){
+ const data=topFlashData(kind,5);
+ const isKilter=kind==='kilter';
+ const title=isKilter?'Top 5 flash — Kilterboard':'Top 5 flash — Salle';
+ const systemLabel=data.system==='FONT'?'Cotation Fontainebleau':'Cotation par couleurs';
+ if(!data.records.length){
+  return `<div class="card flashboard"><div class="flashboardhead"><div><h3>${title}</h3><div class="muted small">Historique complet</div></div><span class="pill">0</span></div><p class="muted">Aucun bloc flashé avec une cotation classable.</p></div>`
+ }
+ const rows=data.records.map((item,index)=>{
+  const metadata=[isKilter&&item.angle?item.angle:'',flashDateLabel(item.date)].filter(Boolean).join(' · ');
+  const detail=item.name===item.sessionTitle?item.name:`${item.name} · ${item.sessionTitle}`;
+  return `<div class="flashrecord"><div class="flashrank">${index+1}</div><div><div class="flashgrade">${flashEscape(item.grade.label)}</div><div class="flashname" title="${flashEscape(detail)}">${flashEscape(detail)}</div></div><div class="flashmeta">${flashEscape(metadata)}</div></div>`
+ }).join('');
+ const excluded=data.excluded?` · ${data.excluded} cotation(s) d’un autre système non mélangée(s) au classement`:'';
+ return `<div class="card flashboard"><div class="flashboardhead"><div><h3>${title}</h3><div class="muted small">Historique complet · ${systemLabel}</div></div><span class="pill green">${data.records.length}</span></div><div class="flashlist">${rows}</div><div class="flashfooter">Les égalités sont départagées par la performance la plus récente${excluded}.</div></div>`
+}
+function renderTopFlashBoards(){return `<div class="flashboards">${topFlashCard('room')}${topFlashCard('kilter')}</div>`}
 function trackingRangeBar(){return `<div class="rangebar">${[['7d','7 jours'],['30d','30 jours'],['cycle','Cycle'],['all','Tout']].map(x=>`<button class="btn ghost ${state.trackingRange===x[0]?'active':''}" onclick="setTrackingRange('${x[0]}')">${x[1]}</button>`).join('')}</div>`}
 function setTrackingRange(range){state.trackingRange=range;save();if(state.role==='coach')trackingTab(window.currentTrackingTab||'daily');else athlete('profile')}
 
@@ -1207,7 +1313,7 @@ function renderDailyPerformanceTracking(){
 
 function trackingTab(tab){window.currentTrackingTab=tab;const tabs=`<div class="trackingtabs">${[['daily','Quotidien'],['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="trackingTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;let content='';
 if(tab==='daily')content=renderDailyPerformanceTracking();
-else if(tab==='perf')content=`<div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
+else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
 else if(tab==='life')content=`<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','bike','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
 else content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`;
 coachShell(`<div class="pagehead"><div><h1>Suivi et analyses</h1><p class="muted">Données réellement saisies par l’Athlète et résultats validés par le Coach.</p></div></div><div class="realDataBanner"><b>Données réelles uniquement</b><div class="muted small">La semaine fictive et ses éventuelles saisies ne sont pas utilisées dans les graphiques.</div></div>${trackingRangeBar()}${tabs}${content}`,'analytics')}
@@ -2588,7 +2694,7 @@ function renderToday(){
  const prescriptionCount=rows.reduce((sum,x)=>sum+containerProgress(x.week,x.container).total,0);
  athleteShell(`<div class="sectiontitle"><div><div class="muted">${today}</div><h1>Séances du jour</h1></div><span class="pill">${rows.length} séance(s) · ${prescriptionCount} prescription(s)</span></div>${body}`,'today')
 }
-function athlete(view){if(view==='checkup')return renderSunday();if(view==='today')return renderToday();if(view==='week')return renderAthleteWeek();if(view==='profile')return athleteShell(`<div class="sectiontitle"><div><h1>Mon évolution</h1><p class="muted">Performances, tests et mensurations.</p></div><button class="btn" onclick="openAthleteMeasurements()">Saisir mes mensurations</button></div>${trackingRangeBar()}${renderLatestAthleteMeasurements()}<h3>Haut du corps</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Doigts et gainage</h3><div class="chartgrid">${['fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Activité quotidienne</h3><div class="chartgrid">${['bike'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Mesures physiques</h3><div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`,'profile');renderDaily()}
+function athlete(view){if(view==='checkup')return renderSunday();if(view==='today')return renderToday();if(view==='week')return renderAthleteWeek();if(view==='profile')return athleteShell(`<div class="sectiontitle"><div><h1>Mon évolution</h1><p class="muted">Performances, tests et mensurations.</p></div><button class="btn" onclick="openAthleteMeasurements()">Saisir mes mensurations</button></div>${trackingRangeBar()}${renderLatestAthleteMeasurements()}<h3>Haut du corps</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Doigts et gainage</h3><div class="chartgrid">${['fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Activité quotidienne</h3><div class="chartgrid">${['bike'].map(chartCard).join('')}</div><h3 style="margin-top:18px">Mesures physiques</h3><div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`,'profile');renderDaily()}
 function draftSlider(key,val){const [part,k]=key.split('.');state.checkins[part][k]=+val;if(state.checkStatus[part]==='VALIDATED')state.checkStatus[part]='DRAFT';else if(state.checkStatus[part]==='NOT_STARTED')state.checkStatus[part]='DRAFT';save()}
 function draftNumber(key,val){
  const [part,k]=key.split('.');
