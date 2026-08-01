@@ -1,11 +1,11 @@
 const CACHE_PREFIX = 'lts-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.11`;
+const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.12`;
 const APP_SHELL = [
   './',
   './index.html',
-  './api-client.js?v=05811',
-  './manifest.webmanifest?v=05811',
-  './favicon.ico?v=05811',
+  './api-client.js?v=05812',
+  './manifest.webmanifest?v=05812',
+  './favicon.ico?v=05812',
   './icons/lts-favicon-32-v05810.png',
   './icons/lts-favicon-96-v05810.png',
   './icons/lts-icon-192-v05810.png',

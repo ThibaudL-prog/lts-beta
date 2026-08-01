@@ -4,7 +4,7 @@
   "short_name": "LTS",
   "description": "Application personnelle de planification, suivi et saisie des entraînements LTS.",
   "lang": "fr-FR",
-  "start_url": "/?source=pwa-v05811",
+  "start_url": "/?source=pwa-v05812",
   "scope": "/",
   "display": "standalone",
   "display_override": [
