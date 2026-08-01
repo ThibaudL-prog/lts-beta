@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Diagnostic PWA LTS</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#10233f;background:#f4f7fb}
+    *{box-sizing:border-box} body{margin:0;padding:18px;line-height:1.4}.wrap{max-width:820px;margin:auto}
+    h1{font-size:1.65rem;margin:0 0 6px}.sub{color:#5c6b7e;margin:0 0 18px}
+    .card{background:#fff;border:1px solid #dce4ee;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 4px 18px rgba(16,35,63,.06)}
+    .row{display:grid;grid-template-columns:minmax(150px,230px) 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #edf1f5}.row:last-child{border-bottom:0}
+    .label{font-weight:700}.value{overflow-wrap:anywhere}.ok{color:#087a4b;font-weight:700}.warn{color:#a65b00;font-weight:700}.bad{color:#b3261e;font-weight:700}
+    button{border:0;border-radius:12px;padding:12px 16px;background:#1264d8;color:white;font-weight:800;font-size:1rem;margin-right:8px;margin-top:6px}
+    button.secondary{background:#e9f0fb;color:#174b91} code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0f1724;color:#e7eef8;border-radius:12px;padding:12px;max-height:300px;overflow:auto}
+    .summary{font-size:1.08rem;font-weight:800}.small{font-size:.9rem;color:#657487}
+    @media(max-width:560px){.row{grid-template-columns:1fr}.label{margin-bottom:-4px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Diagnostic PWA LTS</h1>
+  <p class="sub">Contrôle effectué directement dans le navigateur qui ouvre cette page.</p>
+  <div id="summary" class="card"><div class="summary">Analyse en cours…</div></div>
+  <div id="env" class="card"><h2>Environnement</h2></div>
+  <div id="manifest" class="card"><h2>Manifeste</h2></div>
+  <div id="sw" class="card"><h2>Service worker</h2></div>
+  <div id="icons" class="card"><h2>Icônes</h2></div>
+  <div class="card">
+    <button id="rerun">Relancer le diagnostic</button>
+    <button id="reload" class="secondary">Recharger la page</button>
+    <p class="small">Cette page ne modifie ni Google Sheets ni les données LTS.</p>
+  </div>
+  <div class="card"><h2>Détails techniques</h2><pre id="raw">—</pre></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function row(label,value,status=''){return `<div class="row"><div class="label">${esc(label)}</div><div class="value ${status}">${esc(value)}</div></div>`}
+function status(ok, warning=false){return ok?'ok':(warning?'warn':'bad')}
+async function fetchInfo(url){
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    return {ok:r.ok,status:r.status,type:r.headers.get('content-type')||'',text:await r.text()};
+  }catch(e){return {ok:false,status:'ERREUR',type:'',error:String(e),text:''}}
+}
+async function imageInfo(url){
+  const fetched=await fetch(url,{cache:'no-store'}).then(r=>({ok:r.ok,status:r.status,type:r.headers.get('content-type')||''})).catch(e=>({ok:false,status:'ERREUR',type:'',error:String(e)}));
+  const loaded=await new Promise(resolve=>{const i=new Image();i.onload=()=>resolve({ok:true,w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>resolve({ok:false});i.src=url+(url.includes('?')?'&':'?')+'diag='+Date.now()});
+  return {...fetched,...loaded};
+}
+async function run(){
+  const raw={time:new Date().toISOString(),location:location.href,userAgent:navigator.userAgent};
+  $('#summary').innerHTML='<div class="summary">Analyse en cours…</div>';
+  $('#env').innerHTML='<h2>Environnement</h2>';
+  $('#manifest').innerHTML='<h2>Manifeste</h2>';
+  $('#sw').innerHTML='<h2>Service worker</h2>';
+  $('#icons').innerHTML='<h2>Icônes</h2>';
+
+  const isSamsung=/SamsungBrowser\//i.test(navigator.userAgent);
+  $('#env').innerHTML += row('Navigateur',isSamsung?'Samsung Internet':'Autre navigateur',isSamsung?'ok':'warn');
+  $('#env').innerHTML += row('Contexte sécurisé',String(window.isSecureContext),status(window.isSecureContext));
+  $('#env').innerHTML += row('Origine',location.origin,'ok');
+  $('#env').innerHTML += row('Mode autonome',matchMedia('(display-mode: standalone)').matches?'Oui':'Non',matchMedia('(display-mode: standalone)').matches?'ok':'warn');
+
+  const link=document.querySelector('link[rel="manifest"]');
+  raw.manifestLink=link?.href||null;
+  $('#manifest').innerHTML += row('Balise manifest',link?link.href:'Absente',status(!!link));
+  let manifest=null, manifestFetch=null, manifestChecks=[];
+  if(link){
+    manifestFetch=await fetchInfo(link.href); raw.manifestFetch=manifestFetch;
+    $('#manifest').innerHTML += row('Réponse HTTP',String(manifestFetch.status),status(manifestFetch.ok));
+    $('#manifest').innerHTML += row('Content-Type',manifestFetch.type||'Absent',status(/manifest\+json|application\/json/i.test(manifestFetch.type),manifestFetch.ok));
+    if(manifestFetch.ok){
+      try{manifest=JSON.parse(manifestFetch.text);raw.manifest=manifest;
+        const checks={
+          'name / short_name':!!(manifest.name||manifest.short_name),
+          'start_url':!!manifest.start_url,
+          'display standalone/fullscreen':['standalone','fullscreen'].includes(manifest.display),
+          'icône ≥ 144 px':Array.isArray(manifest.icons)&&manifest.icons.some(x=>/\b(1[4-9]\d|[2-9]\d\d|\d{4,})x\1\b/.test(x.sizes||'')||parseInt((x.sizes||'').split('x')[0],10)>=144)
+        };
+        for(const [k,v] of Object.entries(checks)){manifestChecks.push(v);$('#manifest').innerHTML += row(k,v?'Présent':'Manquant',status(v));}
+      }catch(e){raw.manifestParseError=String(e);$('#manifest').innerHTML += row('JSON','Invalide : '+e,'bad')}
+    }
+  }
+
+  const swSupported='serviceWorker' in navigator;
+  $('#sw').innerHTML += row('API Service Worker',swSupported?'Disponible':'Indisponible',status(swSupported));
+  let regs=[],controller=null;
+  if(swSupported){
+    try{
+      regs=await navigator.serviceWorker.getRegistrations(); raw.registrations=regs.map(r=>({scope:r.scope,active:r.active&&{state:r.active.state,scriptURL:r.active.scriptURL},waiting:r.waiting&&{state:r.waiting.state,scriptURL:r.waiting.scriptURL},installing:r.installing&&{state:r.installing.state,scriptURL:r.installing.scriptURL}}));
+      controller=navigator.serviceWorker.controller; raw.controller=controller&&{state:controller.state,scriptURL:controller.scriptURL};
+      $('#sw').innerHTML += row('Enregistrements sur cette origine',String(regs.length),status(regs.length>0));
+      $('#sw').innerHTML += row('Page contrôlée',controller?`Oui — ${controller.state}`:'Non',status(!!controller,true));
+      regs.forEach((r,i)=>{
+        $('#sw').innerHTML += row(`Scope ${i+1}`,r.scope,'ok');
+        $('#sw').innerHTML += row(`Worker actif ${i+1}`,r.active?`${r.active.state} — ${r.active.scriptURL}`:'Aucun',status(!!r.active));
+      });
+    }catch(e){raw.swError=String(e);$('#sw').innerHTML += row('Lecture des enregistrements','Erreur : '+e,'bad')}
+  }
+
+  const iconResults=[];
+  if(manifest&&Array.isArray(manifest.icons)){
+    for(const icon of manifest.icons){
+      const url=new URL(icon.src,link.href).href;
+      const info=await imageInfo(url); iconResults.push({declared:icon,url,info});
+      const ok=info.ok&&/^image\//i.test(info.type||'')&&info.w>0&&info.h>0;
+      $('#icons').innerHTML += row(icon.sizes||icon.src,ok?`${info.status} — ${info.type} — ${info.w}×${info.h}`:`Échec — ${info.status} — ${info.type||'type absent'}`,status(ok));
+    }
+  }else{$('#icons').innerHTML += row('Icônes du manifeste','Impossible à contrôler','bad')}
+  raw.iconResults=iconResults;
+
+  let cacheNames=[];
+  if('caches' in window){try{cacheNames=await caches.keys();raw.caches=cacheNames;$('#sw').innerHTML += row('Caches présents',cacheNames.length?cacheNames.join(', '):'Aucun',status(cacheNames.length>0,true));}catch(e){raw.cacheError=String(e)}}
+
+  const manifestOk=!!manifest&&manifestChecks.length===4&&manifestChecks.every(Boolean);
+  const iconsOk=iconResults.length>0&&iconResults.every(x=>x.info.ok&&/^image\//i.test(x.info.type||'')&&x.info.w>0);
+  const swOk=swSupported&&regs.some(r=>r.active&&r.active.state==='activated');
+  let title='',cls='';
+  if(!manifestOk){title='Le manifeste n’est pas accepté ou reste incomplet.';cls='bad'}
+  else if(!iconsOk){title='Au moins une icône du manifeste ne se charge pas correctement.';cls='bad'}
+  else if(!swOk){title='Le service worker n’est pas actif dans ce navigateur.';cls='bad'}
+  else if(!controller){title='Le service worker est actif, mais cette page n’est pas encore contrôlée. Recharge-la une fois.';cls='warn'}
+  else{title='Les critères principaux sont présents dans ce navigateur.';cls='ok'}
+  $('#summary').innerHTML=`<div class="summary ${cls}">${esc(title)}</div><p class="small">Copie ou capture cette carte ainsi que les sections Manifeste et Service worker.</p>`;
+  $('#raw').textContent=JSON.stringify(raw,null,2);
+}
+$('#rerun').addEventListener('click',run);$('#reload').addEventListener('click',()=>location.reload());
+run();
+</script>
+</body>
+</html>
