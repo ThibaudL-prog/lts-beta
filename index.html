@@ -6,10 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0589">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<title>LTS v0.5.8.9</title>
+<link rel="manifest" href="manifest.webmanifest?v=05810">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
+<link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
+<link rel="shortcut icon" href="favicon.ico?v=05810">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
+<title>LTS v0.5.8.10</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -289,7 +293,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0589"></script><script>
+<script src="api-client.js?v=05810"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -447,7 +451,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.8.9 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.8.10 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -501,14 +505,18 @@ function metricSeries(key){
   if(r[key]!==null&&r[key]!==undefined&&r[key]!==''&&new Date(r.date)>=cutoff)rows.push({date:r.date,value:+r[key],source:r.source||bucket})
  }));
  rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
- if(!['fatigue','bike'].includes(key))return rows;
- // Une seule valeur quotidienne : le check-in du soir est prioritaire,
- // sinon la valeur du matin est conservée.
+ if(key==='fatigue'){
+  // Le graphique de fatigue repose exclusivement sur le check-in du soir.
+  // Une valeur matinale n'est jamais affichée, même si le check-in du soir
+  // du jour n'a pas encore été renseigné.
+  return rows.filter(row=>String(row.source||'').toLowerCase().includes('soir'))
+ }
+ if(key!=='bike')return rows;
+ // Le vélo est saisi au check-in du soir : une seule valeur quotidienne.
  const byDay=new Map();
- const priority=row=>String(row.source||'').toLowerCase().includes('soir')?3:String(row.source||'').toLowerCase().includes('matin')?2:1;
  rows.forEach(row=>{
-  const day=String(row.date||'').slice(0,10),current=byDay.get(day);
-  if(!current||priority(row)>=priority(current))byDay.set(day,row)
+  const day=String(row.date||'').slice(0,10);
+  byDay.set(day,row)
  });
  return [...byDay.values()].sort((a,b)=>new Date(a.date)-new Date(b.date))
 }
@@ -783,7 +791,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.8.9</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Stabilisation v0.5.8.10</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -812,7 +820,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.9</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.10</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">

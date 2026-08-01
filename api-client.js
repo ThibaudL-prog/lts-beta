@@ -5,7 +5,7 @@
   const RELEASE_UNLOCK_KEY='lts-production-sync-unlock-v0582';
   const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Prête à synchroniser',schemaVersion:null,writeEnabled:false};
 
-  // v0.5.8.9 conserve la migration clôturée, normalise les stimuli distants et restaure les check-ins du jour. Le verrou hérité de v0.5.8.0/1
+  // v0.5.8.10 conserve la migration clôturée, normalise les stimuli distants et restaure les check-ins du jour. Le verrou hérité de v0.5.8.0/1
   // est retiré une seule fois sur chaque appareil, sans effacer les données locales.
   if(localStorage.getItem(RELEASE_UNLOCK_KEY)!=='done'){
     localStorage.setItem(MIGRATION_LOCK_KEY,'0');

@@ -1,14 +1,17 @@
 const CACHE_PREFIX = 'lts-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.9`;
+const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.10`;
 const APP_SHELL = [
   './',
   './index.html',
-  './api-client.js?v=0589',
-  './manifest.webmanifest?v=0589',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './api-client.js?v=05810',
+  './manifest.webmanifest?v=05810',
+  './favicon.ico?v=05810',
+  './icons/lts-favicon-32-v05810.png',
+  './icons/lts-favicon-96-v05810.png',
+  './icons/lts-icon-192-v05810.png',
+  './icons/lts-icon-512-v05810.png',
+  './icons/lts-maskable-512-v05810.png',
+  './icons/lts-touch-180-v05810.png'
 ];
 
 self.addEventListener('install', event => {
@@ -35,9 +38,7 @@ async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
     const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(request, response.clone());
-    }
+    if (response && response.ok) cache.put(request, response.clone());
     return response;
   } catch (error) {
     const cached = await cache.match(request, { ignoreSearch: true });
@@ -52,19 +53,16 @@ async function networkFirst(request) {
 
 async function cacheFirst(request) {
   const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request, { ignoreSearch: true });
+  const cached = await cache.match(request, { ignoreSearch: false });
   if (cached) return cached;
   const response = await fetch(request);
-  if (response && response.ok) {
-    cache.put(request, response.clone());
-  }
+  if (response && response.ok) cache.put(request, response.clone());
   return response;
 }
 
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
@@ -76,7 +74,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (url.pathname.startsWith('/icons/')) {
+  if (url.pathname === '/favicon.ico' || url.pathname.startsWith('/icons/')) {
     event.respondWith(cacheFirst(request));
   }
 });
