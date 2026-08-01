@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.8.3';
+const API_RELEASE = '0.5.8.7';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -294,11 +294,19 @@ function upsertCheckin_(record, athleteId) {
   record.energy_0_10 = value_(record.energy);
   record.motivation_0_10 = value_(record.motivation);
   record.stress_0_10 = value_(record.stress);
-  record.soreness_0_10 = value_(record.fatigue);
+  record.mood_0_10 = value_(record.mood);
+  record.fatigue_0_10 = value_(record.fatigue);
+  record.soreness_0_10 = value_(record.soreness);
+  record.pain_intensity_0_10 = value_(record.pain);
+  record.day_rpe_0_10 = value_(record.rpe);
+  record.cycling_distance_km = value_(record.bike);
   record.pain_present = value_(record.pain) > 0;
   record.notes = record.notes || record.source || 'PWA';
   record.status = 'valid';
   record.created_at = record.created_at || new Date().toISOString();
+  record.updated_at = new Date().toISOString();
+  record.sync_status = 'SYNCED';
+  record.client_created_at = record.client_created_at || record.checked_at;
   return upsertById_('CHECKINS','checkin_id',record);
 }
 
