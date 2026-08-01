@@ -5,7 +5,7 @@
   const RELEASE_UNLOCK_KEY='lts-production-sync-unlock-v0582';
   const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Prête à synchroniser',schemaVersion:null,writeEnabled:false};
 
-  // v0.5.8.3 clôt la migration de production. Le verrou hérité de v0.5.8.0/1
+  // v0.5.8.4 conserve la migration clôturée et normalise les stimuli distants. Le verrou hérité de v0.5.8.0/1
   // est retiré une seule fois sur chaque appareil, sans effacer les données locales.
   if(localStorage.getItem(RELEASE_UNLOCK_KEY)!=='done'){
     localStorage.setItem(MIGRATION_LOCK_KEY,'0');
@@ -2161,6 +2161,36 @@
     return remoteText(row?.coach_notes)
   }
 
+  const REMOTE_STIMULUS_DOMAIN_MAP={
+    FINGER_MAX:['B'],FINGER_END:['B'],FINGER_POWER:['B'],
+    BLOC_MAX:['ESC','BM'],
+    CLIMB_VOLUME:['ESC'],CLIMB_TECHNIQUE:['ESC','C'],CLIMB_COORDINATION:['ESC','C'],CLIMB_ANAEROBIC:['ESC'],
+    CORE:['E'],MOBILITY:['MOB'],FLEXIBILITY:['SOUP'],PREVENTION:['PREV'],
+    RUN_EASY:['D'],RUN_LONG:['D'],RUN_THRESHOLD:['D'],RUN_INTERVAL:['D'],RUN_TEST:['D'],
+    LOWER_MAX:['LOWER'],LOWER_END:['LOWER'],LOWER_POWER:['LOWER']
+  };
+
+  function remoteDomainsForPrescription(targetRow,templateId,title,exerciseRows){
+    const code=String(targetRow?.stimulus_code||'').trim().toUpperCase();
+    const quality=String(targetRow?.quality_id||'').trim().toLowerCase();
+    const qualityMap={
+      q_finger_max:['B'],q_finger_end:['B'],q_finger_power:['B'],
+      q_core:['E'],q_mobility:['MOB'],q_prevention:['PREV'],
+      q_aerobic_end:['D'],q_aerobic_threshold:['D'],q_aerobic_power:['D'],
+      q_technique:['ESC'],q_full_coord:['ESC','C'],q_anaerobic:['ESC'],
+      q_calisthenics:['CALI'],q_lower_max:['LOWER'],q_lower_end:['LOWER'],q_lower_power:['LOWER']
+    };
+    const domains=[...(REMOTE_STIMULUS_DOMAIN_MAP[code]||qualityMap[quality]||[])];
+    if(/^UPPER_(MAX|END|POWER)$/.test(code)||quality.startsWith('q_upper_')){
+      const text=[templateId,title,...(exerciseRows||[]).map(row=>row.exercise_catalog_id)].join(' ').toLowerCase();
+      if(/pull|traction|tirage|ex_pull/.test(text))domains.push('A_PULL');
+      if(/dip|push|poussée|poussee|ex_dip/.test(text))domains.push('A_PUSH')
+    }
+    if(String(templateId||'').toLowerCase()==='kilterintense')domains.push('B');
+    const unique=[...new Set(domains.filter(Boolean))];
+    return {domain:unique[0]||'',extraDomains:unique.slice(1)}
+  }
+
   function remoteGuideForTemplate(templateId){
     const map={
       maxhang:'G01',pullstrength:'G02',dipstrength:'G03',pullend:'G08',dipend:'G09',
@@ -2353,8 +2383,11 @@
             ?p.structuredSets
             :remoteStructuredSets(templateId,exerciseRows,notes);
           const climbing=p.climbing||remoteClimbingConfig(templateId,b,exerciseRows);
+          const remoteDomains=remoteDomainsForPrescription(targetRow,templateId,p.title||b.name,exerciseRows);
           const prescription={
             ...p,
+            domain:p.domain||remoteDomains.domain,
+            extraDomains:[...new Set([...(p.extraDomains||[]),...remoteDomains.extraDomains])],
             sessionId,
             containerId,
             day,
