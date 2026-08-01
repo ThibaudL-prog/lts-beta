@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.5</title>
+<meta name="theme-color" content="#0a2d59"><title>LTS v0.5.8.6</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -359,7 +359,7 @@ const PRESCRIPTIONS=[
 {id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle réglable · volume contrôlé · stimulus doigts optionnel',durationMin:105,editor:'climbing',climbingMode:'KILTER_VOLUME'}
 ];
 
-const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.5","status":"READY","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
+const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.6","status":"READY","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
 
 function legacyLtsStateKeys(){
  const keys=[];
@@ -414,7 +414,7 @@ function productionSeedV0580(previousState){
  const next=JSON.parse(JSON.stringify(SEED));
  next.role=previousState?.role==='athlete'?'athlete':'coach';
  next.productionMigration={
-  version:'0.5.8.5',
+  version:'0.5.8.6',
   status:'READY',
   athleteId:'ath_lgrd_001',
   resetAt:new Date().toISOString()
@@ -438,7 +438,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.8.5 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.8.6 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -774,7 +774,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.8.5</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Stabilisation v0.5.8.6</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -803,7 +803,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.5</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.6</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1394,27 +1394,85 @@ function weekExecutionSummary(w){
 
 const DAY_INDEX={Lun:0,Mar:1,Mer:2,Jeu:3,Ven:4,Sam:5,Dim:6};
 
+const RECOVERY_STIMULUS_SET=new Set(['ESC','BM','B','A_PULL','A_PUSH','D','LOWER','CALI']);
+const SESSION_SLOT_HOUR={matin:7,midi:13,soir:19.5};
+
+function sessionDurationMinutes(s){
+ if(Array.isArray(s?.prescriptions))return s.prescriptions.reduce((sum,p)=>sum+(Number(p?.duration)||0),0);
+ return Number(s?.duration)||0
+}
 function sessionIntensityClass(s){
  if(Array.isArray(s?.prescriptions)){
    const levels=s.prescriptions.map(sessionIntensityClass);
-   if(levels.includes('HIGH'))return 'HIGH';
-   if(levels.includes('MODERATE'))return 'MODERATE';
-   return 'LOW'
+   let level=levels.includes('HIGH')?'HIGH':levels.includes('MODERATE')?'MODERATE':'LOW';
+   const stimuli=sessionStimuli(s),duration=sessionDurationMinutes(s);
+   // Une longue séance libre reste une charge modérée, même si son objectif est ludique.
+   if(level==='LOW'&&stimuli.includes('ESC')&&duration>=120)level='MODERATE';
+   return level
  }
- const id=s.templateId||'',title=(s.title||'').toLowerCase();
+ const id=String(s?.templateId||'').toLowerCase();
+ const title=String(s?.title||'').toLowerCase();
+ const code=String(s?.stimulusTarget?.stimulus_code||'').toUpperCase();
+ const duration=sessionDurationMinutes(s);
+ if(['FINGER_MAX','BLOC_MAX','UPPER_MAX','RUN_THRESHOLD','RUN_INTERVAL','RUN_TEST','LOWER_POWER'].includes(code))return 'HIGH';
+ if(['CLIMB_TECHNIQUE','CLIMB_COORDINATION','RUN_EASY','FLEXIBILITY','MOBILITY','PREVENTION'].includes(code))return 'LOW';
+ if(['CLIMB_VOLUME','CORE','UPPER_END','LOWER_MAX','LOWER_END'].includes(code))return 'MODERATE';
  if(['maxhang','climbmax','kilterintense','pullstrength','dipstrength','repeaters'].includes(id))return 'HIGH';
  if(title.includes('maximal')||title.includes('force')||title.includes('fractionné')||title.includes('seuil'))return 'HIGH';
- if(id==='climbfun'||id==='flexibility'||s.autoFlex)return 'LOW';
+ if(id==='climbfun')return duration>=120?'MODERATE':'LOW';
+ if(id==='flexibility'||s?.autoFlex)return 'LOW';
  return 'MODERATE'
 }
+function recoveryStimuli(s){
+ return sessionStimuli(s).filter(stim=>RECOVERY_STIMULUS_SET.has(stim))
+}
+function sharedRecoveryStimuli(a,b){
+ const B=new Set(recoveryStimuli(b));
+ return recoveryStimuli(a).filter(stim=>B.has(stim))
+}
 function minRecoveryHours(a,b){
- const A=sessionStimuli(a),B=sessionStimuli(b);
- const complementaryUpper=(A.includes('A_PULL')&&B.includes('A_PUSH'))||(A.includes('A_PUSH')&&B.includes('A_PULL'));
- if(complementaryUpper)return 0;
- if(!A.some(x=>B.includes(x)))return 0;
- if(A.includes('B')||A.includes('BM')||A.includes('ESC')||A.includes('A_PULL')||A.includes('A_PUSH'))return 48;
- if(A.includes('D'))return sessionIntensityClass(a)==='HIGH'||sessionIntensityClass(b)==='HIGH'?48:24;
- return 24
+ const shared=sharedRecoveryStimuli(a,b);
+ if(!shared.length)return 0;
+ const ia=sessionIntensityClass(a),ib=sessionIntensityClass(b);
+ const levels=[ia,ib];
+ if(shared.includes('B')||shared.includes('BM')){
+   if(levels.includes('HIGH')&&(levels.includes('HIGH')||levels.includes('MODERATE')))return 48;
+   return 24
+ }
+ if(shared.includes('ESC')){
+   if(ia==='LOW'&&ib==='LOW')return 0;
+   if(levels.includes('HIGH')&&levels.includes('MODERATE'))return 48;
+   if(ia==='HIGH'&&ib==='HIGH')return 48;
+   if(levels.includes('HIGH'))return 24;
+   if(ia==='MODERATE'&&ib==='MODERATE')return 24;
+   return 12
+ }
+ if(shared.includes('A_PULL')||shared.includes('A_PUSH')||shared.includes('LOWER')){
+   return levels.includes('HIGH')?48:24
+ }
+ if(shared.includes('D'))return levels.includes('HIGH')?48:24;
+ if(shared.includes('CALI'))return levels.includes('HIGH')?48:24;
+ return 0
+}
+function sessionAbsoluteHour(s){
+ return (DAY_INDEX[s?.day]??99)*24+(SESSION_SLOT_HOUR[s?.slot]??12)
+}
+function formatGapHours(value){
+ const rounded=Math.round(value*2)/2;
+ if(Number.isInteger(rounded))return `${rounded} h`;
+ const hours=Math.floor(rounded),minutes=Math.round((rounded-hours)*60);
+ return `${hours} h ${String(minutes).padStart(2,'0')}`
+}
+function recoverySessionLabel(s){
+ const title=String(s?.title||'Séance');
+ if(!/^Séance du (matin|midi|soir)$/i.test(title))return title;
+ const ps=s?.prescriptions||[];
+ const priority=ps.find(p=>sessionStimuli(p).includes('BM'))
+   ||ps.find(p=>sessionStimuli(p).includes('ESC'))
+   ||ps.find(p=>sessionStimuli(p).includes('D'))
+   ||ps.find(p=>sessionStimuli(p).some(x=>['B','A_PULL','A_PUSH','LOWER'].includes(x)))
+   ||ps[0];
+ return priority?.title||title
 }
 function countStimulus(w,stim){
  return weekStimulusUnits(w).filter(unit=>{
@@ -1433,11 +1491,26 @@ function evaluateG21Week(w){
    alerts.push({severity,rule:`G21 · ${stim} minimum`,reason:`${n} stimulus planifié pour une cible de ${min} à ${max}.`,action:`Ajouter ${min-n} stimulus ${stim} ou documenter une adaptation volontaire.`})
   } else if(n>max) alerts.push({severity:'warning',rule:`G21 · ${stim} maximum`,reason:`${n} stimuli planifiés pour une limite de ${max}.`,action:`Retirer, fusionner ou alléger ${n-max} stimulus.`})
  });
- const ordered=sessions.filter(s=>DAY_INDEX[s.day]!==undefined&&!s.autoFlex).sort((a,b)=>DAY_INDEX[a.day]-DAY_INDEX[b.day]);
- for(let i=0;i<ordered.length;i++)for(let j=i+1;j<ordered.length;j++){
-  const a=ordered[i],b=ordered[j],req=minRecoveryHours(a,b),gap=(DAY_INDEX[b.day]-DAY_INDEX[a.day])*24;
-  if(req&&gap<req)alerts.push({severity:sessionIntensityClass(a)==='HIGH'&&sessionIntensityClass(b)==='HIGH'?'critical':'warning',rule:'G21 · TMR',reason:`${a.title} (${a.day}) puis ${b.title} (${b.day}) : ${gap} h pour ${req} h recommandées.`,action:'Déplacer une séance ou réduire son intensité.'})
- }
+ const ordered=sessions.filter(s=>DAY_INDEX[s.day]!==undefined&&!s.autoFlex).sort((a,b)=>sessionAbsoluteHour(a)-sessionAbsoluteHour(b));
+ const previousByStimulus=new Map();
+ ordered.forEach(current=>{
+  const previousUnits=new Map();
+  recoveryStimuli(current).forEach(stim=>{
+    const previous=previousByStimulus.get(stim);
+    if(previous)previousUnits.set(previous.containerId||`${previous.day}-${previous.slot}-${previous.title}`,previous)
+  });
+  previousUnits.forEach(previous=>{
+    const req=minRecoveryHours(previous,current);
+    const gap=sessionAbsoluteHour(current)-sessionAbsoluteHour(previous);
+    if(req&&gap<req)alerts.push({
+      severity:sessionIntensityClass(previous)==='HIGH'&&sessionIntensityClass(current)==='HIGH'?'critical':'warning',
+      rule:'G21 · TMR',
+      reason:`${recoverySessionLabel(previous)} (${previous.day}) puis ${recoverySessionLabel(current)} (${current.day}) : ${formatGapHours(gap)} pour ${req} h recommandées.`,
+      action:'Déplacer une séance, réduire son intensité ou documenter une adaptation volontaire.'
+    })
+  });
+  recoveryStimuli(current).forEach(stim=>previousByStimulus.set(stim,current))
+ });
  const byDay={};sessions.filter(s=>!s.autoFlex).forEach(s=>(byDay[s.day]||(byDay[s.day]=[])).push(s));
  Object.entries(byDay).forEach(([day,list])=>{
   const high=list.filter(s=>sessionIntensityClass(s)==='HIGH');
