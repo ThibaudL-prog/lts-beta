@@ -5,7 +5,7 @@
   const RELEASE_UNLOCK_KEY='lts-production-sync-unlock-v0582';
   const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Prête à synchroniser',schemaVersion:null,writeEnabled:false};
 
-  // v0.5.8.8 conserve la migration clôturée et normalise les stimuli distants. Le verrou hérité de v0.5.8.0/1
+  // v0.5.8.9 conserve la migration clôturée, normalise les stimuli distants et restaure les check-ins du jour. Le verrou hérité de v0.5.8.0/1
   // est retiré une seule fois sur chaque appareil, sans effacer les données locales.
   if(localStorage.getItem(RELEASE_UNLOCK_KEY)!=='done'){
     localStorage.setItem(MIGRATION_LOCK_KEY,'0');
@@ -521,6 +521,7 @@
         source:type==='EVENING'?'Check-in soir':type==='WEEKLY'?'Check-up dimanche':'Check-in matin',
         sleep:sheetNumber(row.sleep_duration_h),
         sleepQuality:sheetNumber(row.sleep_quality_0_10),
+        mood:sheetNumber(row.mood_0_10),
         fatigue:sheetNumber(row.fatigue_0_10)??sheetNumber(row.soreness_0_10),
         soreness:sheetNumber(row.soreness_0_10),
         stress:sheetNumber(row.stress_0_10),
@@ -532,6 +533,7 @@
         hrSupine:sheetNumber(row.lying_hr_bpm)??sheetNumber(row.supine_hr_bpm)??sheetNumber(row.hr_supine_bpm)??sheetNumber(row.resting_hr_bpm),
         hrStanding:sheetNumber(row.standing_hr_bpm)??sheetNumber(row.upright_hr_bpm)??sheetNumber(row.hr_standing_bpm),
         _remote:true,
+        checkin_id:row.checkin_id||'',
         _remoteId:row.checkin_id||''
       }
     })
@@ -596,6 +598,82 @@
     return [...map.values()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
   }
 
+  function localDayKey(date=new Date()){
+    const value=date instanceof Date?date:new Date(date);
+    if(Number.isNaN(value.getTime()))return String(date||'').slice(0,10);
+    return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`
+  }
+
+  function emptyMorningCheckin(){
+    return {sleep:0,quality:0,mood:0,fatigue:0,stress:0,energy:0,motivation:0,soreness:0,pain:0}
+  }
+
+  function emptyEveningCheckin(){
+    return {rpe:0,fatigue:0,soreness:0,pain:0,bike:0}
+  }
+
+  function latestCheckinForToday(sourceLabel){
+    const today=localDayKey();
+    return (state.records?.checkins||[])
+      .filter(record=>String(record.date||'').slice(0,10)===today&&String(record.source||'')===sourceLabel)
+      .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))[0]||null
+  }
+
+  function applyDefined(target,key,value){
+    if(value!==null&&value!==undefined&&value!=='')target[key]=Number(value)
+  }
+
+  function restoreTodayCheckinsFromSnapshot(){
+    state.checkStatus=state.checkStatus||{morning:'NOT_STARTED',evening:'NOT_STARTED',sunday:'NOT_STARTED'};
+    state.checkins=state.checkins||{morning:emptyMorningCheckin(),evening:emptyEveningCheckin()};
+
+    const today=localDayKey();
+    const knownDay=state.dailyCheckDate||'';
+    const dayChanged=!!knownDay&&knownDay!==today;
+    if(dayChanged){
+      state.checkins.morning=emptyMorningCheckin();
+      state.checkins.evening=emptyEveningCheckin();
+      state.checkStatus.morning='NOT_STARTED';
+      state.checkStatus.evening='NOT_STARTED'
+    }
+    state.dailyCheckDate=today;
+
+    const morning=latestCheckinForToday('Check-in matin');
+    const evening=latestCheckinForToday('Check-in soir');
+
+    // Une saisie locale en cours reste prioritaire. Dans tous les autres cas,
+    // la présence d'une ligne du jour dans Google Sheets restaure la carte et son statut.
+    if(morning&&state.checkStatus.morning!=='DRAFT'){
+      const target={...emptyMorningCheckin(),...(state.checkins.morning||{})};
+      applyDefined(target,'sleep',morning.sleep);
+      applyDefined(target,'quality',morning.sleepQuality);
+      applyDefined(target,'mood',morning.mood);
+      applyDefined(target,'fatigue',morning.fatigue);
+      applyDefined(target,'stress',morning.stress);
+      applyDefined(target,'energy',morning.energy);
+      applyDefined(target,'motivation',morning.motivation);
+      applyDefined(target,'soreness',morning.soreness);
+      applyDefined(target,'pain',morning.pain);
+      state.checkins.morning=target;
+      state.checkStatus.morning='VALIDATED'
+    }else if(!morning&&dayChanged){
+      state.checkStatus.morning='NOT_STARTED'
+    }
+
+    if(evening&&state.checkStatus.evening!=='DRAFT'){
+      const target={...emptyEveningCheckin(),...(state.checkins.evening||{})};
+      applyDefined(target,'rpe',evening.rpe);
+      applyDefined(target,'fatigue',evening.fatigue);
+      applyDefined(target,'soreness',evening.soreness);
+      applyDefined(target,'pain',evening.pain);
+      applyDefined(target,'bike',evening.bike);
+      state.checkins.evening=target;
+      state.checkStatus.evening='VALIDATED'
+    }else if(!evening&&dayChanged){
+      state.checkStatus.evening='NOT_STARTED'
+    }
+  }
+
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
     state.remoteSnapshot=snapshot;
@@ -628,6 +706,7 @@
     state.records.checkins=mergeSnapshotRecords(snapshotCheckinRecords(snapshot),localCheckinOverlay);
     state.records.measurements=mergeSnapshotRecords(snapshotMeasurementRecords(snapshot),localMeasurementOverlay);
     state.records.tests=mergeSnapshotRecords(snapshotTestRecords(snapshot),localTestOverlay);
+    restoreTodayCheckinsFromSnapshot();
     const latestMeasurement=state.records.measurements[state.records.measurements.length-1];
     if(latestMeasurement){
       state.weekly={...(state.weekly||{}),...latestMeasurement};

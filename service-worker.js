@@ -1,10 +1,10 @@
 const CACHE_PREFIX = 'lts-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.8`;
+const CACHE_NAME = `${CACHE_PREFIX}v0.5.8.9`;
 const APP_SHELL = [
   './',
   './index.html',
-  './api-client.js?v=0588',
-  './manifest.webmanifest?v=0588',
+  './api-client.js?v=0589',
+  './manifest.webmanifest?v=0589',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
