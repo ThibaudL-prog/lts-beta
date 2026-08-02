@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=05813">
+<link rel="manifest" href="manifest.webmanifest?v=05814">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=05813">
+<link rel="shortcut icon" href="favicon.ico?v=05814">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.8.13</title>
+<title>LTS v0.5.8.14</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -303,7 +303,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=05813"></script><script>
+<script src="api-client.js?v=05814"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -461,7 +461,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.8.13 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.8.14 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -801,7 +801,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.8.13</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Stabilisation v0.5.8.14</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -830,7 +830,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.13</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.14</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1158,8 +1158,12 @@ function flashGradeInfo(value){
 function isKilterFlashSession(session){
  const template=String(session?.templateId||'').toLowerCase();
  const mode=String(session?.climbing?.mode||session?.climbingMode||'').toUpperCase();
- const context=[session?.title,session?.notes,session?.coachComment,session?.climbing?.technicalFocus].filter(Boolean).join(' ').toLowerCase();
- return template.startsWith('kilter')||mode.startsWith('KILTER')||context.includes('kilter')
+ const problems=session?.execution?.problems||[];
+ const attemptContext=problems.map(problem=>[problem?.externalId,problem?.support].filter(Boolean).join(' ')).join(' ').toLowerCase();
+ const hasRecordedBoardAngle=problems.some(problem=>normalizeKilterAngle(problem?.wallAngleDeg??problem?.angle)!==null)
+   ||normalizeKilterAngle(session?.execution?.angle)!==null;
+ const context=[session?.title,session?.notes,session?.coachComment,session?.climbing?.technicalFocus,attemptContext].filter(Boolean).join(' ').toLowerCase();
+ return template.startsWith('kilter')||mode.startsWith('KILTER')||context.includes('kilter')||hasRecordedBoardAngle
 }
 function climbingFlashSessionEntries(){
  const bySession=new Map();
@@ -1187,8 +1191,7 @@ function topFlashData(kind,limit=5,angleFilter=null){
  climbingFlashSessionEntries().forEach(({week,session})=>{
   const kilter=isKilterFlashSession(session);
   if((kind==='kilter')!==kilter)return;
-  const normalizedAngle=kilter?normalizeKilterAngle(session.climbing?.angle):null;
-  if(kind==='kilter'&&angleFilter!==null&&normalizedAngle!==Number(angleFilter))return;
+  const sessionAngle=kilter?normalizeKilterAngle(session?.climbing?.angle??session?.execution?.angle):null;
   const container=(week.containers||[]).find(item=>String(item.containerId)===String(session.containerId));
   const plannedDate=container?containerCalendarDate(week,container):'';
   const date=String(session.execution?.completedAt||plannedDate||'').slice(0,10);
@@ -1196,12 +1199,16 @@ function topFlashData(kind,limit=5,angleFilter=null){
    if(problem?.flash!==true)return;
    const grade=flashGradeInfo(problem.grade);
    if(!grade)return;
+   const problemAngle=kilter
+     ?normalizeKilterAngle(problem?.wallAngleDeg??problem?.angle??sessionAngle)
+     :null;
+   if(kind==='kilter'&&angleFilter!==null&&problemAngle!==Number(angleFilter))return;
    records.push({
     grade,
     name:problem.name||`Bloc ${index+1}`,
     sessionTitle:session.title||'Escalade',
     date,
-    angle:normalizedAngle,
+    angle:problemAngle,
     completedAt:session.execution?.completedAt||date||''
    })
   })

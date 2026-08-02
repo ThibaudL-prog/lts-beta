@@ -2106,12 +2106,19 @@
     const climbing=(snapshot?.climbing_attempts||[])
       .filter(result=>String(result.session_execution_id)===String(row.session_execution_id));
     if(climbing.length){
+      const executionAngle=climbing
+        .map(result=>sheetNumber(result.wall_angle_deg))
+        .find(value=>value!==null);
       return {
         ...base,
         type:'CLIMBING',
+        angle:executionAngle??null,
         problems:climbing.map((result,index)=>({
           name:result.problem_name||`Bloc ${index+1}`,
+          externalId:result.problem_external_id||'',
+          gradingSystem:result.grading_system||'',
           grade:result.grade_code||'',
+          wallAngleDeg:sheetNumber(result.wall_angle_deg),
           flash:String(result.result_status||'').toUpperCase()==='FLASH',
           success:['FLASH','AFTER_WORK'].includes(String(result.result_status||'').toUpperCase()),
           attempts:sheetNumber(result.attempts_to_send)||sheetNumber(result.attempt_no)||1,
