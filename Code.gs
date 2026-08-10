@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.9.0-alpha1';
+const API_RELEASE = '0.5.9.0-alpha3';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -305,6 +305,8 @@ function upsertCheckin_(record, athleteId) {
   record.pain_intensity_0_10 = value_(record.pain);
   record.day_rpe_0_10 = value_(record.rpe);
   record.cycling_distance_km = value_(record.bike);
+  record.cycling_duration_min = value_(record.bikeDuration);
+  ensureHeader_('CHECKINS', 'cycling_duration_min');
   const hrSupine = value_(record.hrSupine);
   const hrStanding = value_(record.hrStanding);
   record.lying_hr_bpm = hrSupine;
@@ -321,6 +323,14 @@ function upsertCheckin_(record, athleteId) {
   record.sync_status = 'SYNCED';
   record.client_created_at = record.client_created_at || record.checked_at;
   return upsertById_('CHECKINS','checkin_id',record);
+}
+
+function ensureHeader_(sheetName, headerName) {
+  const sheet = sheet_(sheetName);
+  const lastColumn = Math.max(1, sheet.getLastColumn());
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(String);
+  if (headers.indexOf(headerName) >= 0) return;
+  sheet.getRange(1, lastColumn + 1).setValue(headerName);
 }
 
 function appendMeasurements_(records, athleteId) {

@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590a2">
+<link rel="manifest" href="manifest.webmanifest?v=0590a3">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590a2">
+<link rel="shortcut icon" href="favicon.ico?v=0590a3">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-alpha2</title>
+<title>LTS v0.5.9.0-alpha3</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -313,7 +313,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590a2"></script><script>
+<script src="api-client.js?v=0590a3"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -471,7 +471,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-alpha2 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-alpha3 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -507,6 +507,9 @@ try{
 const app=document.getElementById('app');
 
 if(!state.checkStatus)state.checkStatus={morning:'NOT_STARTED',evening:'NOT_STARTED',sunday:'NOT_STARTED'};
+if(!state.checkins)state.checkins={morning:{},evening:{}};
+if(!state.checkins.evening)state.checkins.evening={};
+if(state.checkins.evening.bikeDuration===undefined)state.checkins.evening.bikeDuration=0;
 
 if(!state.records)state.records={measurements:[],checkins:[],tests:[]};
 if(!state.trackingRange)state.trackingRange='30d';
@@ -514,25 +517,32 @@ if(!state.history)state.history={};
 if(!state.athlete.external1rm)state.athlete.external1rm={pull:44,dip:50};
 const REAL_METRICS={
 weight:{label:'Poids',unit:'kg'},waist:{label:'Tour de taille',unit:'cm'},chest:{label:'Poitrine',unit:'cm'},hips:{label:'Hanches',unit:'cm'},armRelaxed:{label:'Bras relâché',unit:'cm'},armContracted:{label:'Bras contracté',unit:'cm'},thigh:{label:'Cuisse',unit:'cm'},calf:{label:'Mollet',unit:'cm'},hrSupine:{label:'FC allongé',unit:'bpm'},hrStanding:{label:'FC debout',unit:'bpm'},
-sleep:{label:'Durée de sommeil',unit:'h'},sleepQuality:{label:'Qualité du sommeil',unit:'/10'},fatigue:{label:'Fatigue',unit:'/10'},stress:{label:'Stress',unit:'/10'},energy:{label:'Énergie',unit:'/10'},motivation:{label:'Motivation',unit:'/10'},pain:{label:'Douleur',unit:'/10'},bike:{label:'Vélo quotidien',unit:'km'},
+sleep:{label:'Durée de sommeil',unit:'h'},sleepQuality:{label:'Qualité du sommeil',unit:'/10'},fatigue:{label:'Fatigue',unit:'/10'},stress:{label:'Stress',unit:'/10'},energy:{label:'Énergie',unit:'/10'},motivation:{label:'Motivation',unit:'/10'},pain:{label:'Douleur',unit:'/10'},bike:{label:'Distance vélo',unit:'km'},bikeDuration:{label:'Durée vélo',unit:'min'},bikeSpeed:{label:'Vitesse moyenne vélo',unit:'km/h'},
 pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Repeaters',unit:'tours'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
 function nowIso(){return new Date().toISOString()}
 function recordDateLabel(iso){const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeCutoff(range){const d=new Date();if(range==='7d')d.setDate(d.getDate()-7);else if(range==='30d')d.setDate(d.getDate()-30);else if(range==='cycle'&&state.cycle?.start)return new Date(state.cycle.start);else return new Date(0);return d}
 function metricSeries(key){
  const cutoff=rangeCutoff(state.trackingRange),rows=[];
- ['measurements','checkins','tests'].forEach(bucket=>(state.records[bucket]||[]).forEach(r=>{
-  if(r[key]!==null&&r[key]!==undefined&&r[key]!==''&&new Date(r.date)>=cutoff)rows.push({date:r.date,value:+r[key],source:r.source||bucket})
- }));
+ if(key==='bikeSpeed'){
+  (state.records.checkins||[]).forEach(r=>{
+   if(new Date(r.date)<cutoff)return;
+   const distance=Number(r.bike),duration=Number(r.bikeDuration);
+   if(!Number.isFinite(distance)||!Number.isFinite(duration)||distance<0||duration<=0)return;
+   rows.push({date:r.date,value:+(distance/(duration/60)).toFixed(2),source:r.source||'checkins'})
+  })
+ }else{
+  ['measurements','checkins','tests'].forEach(bucket=>(state.records[bucket]||[]).forEach(r=>{
+   if(r[key]!==null&&r[key]!==undefined&&r[key]!==''&&new Date(r.date)>=cutoff)rows.push({date:r.date,value:+r[key],source:r.source||bucket})
+  }))
+ }
  rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
  if(key==='fatigue'){
   // Le graphique de fatigue repose exclusivement sur le check-in du soir.
-  // Une valeur matinale n'est jamais affichée, même si le check-in du soir
-  // du jour n'a pas encore été renseigné.
   return rows.filter(row=>String(row.source||'').toLowerCase().includes('soir'))
  }
- if(key!=='bike')return rows;
- // Le vélo est saisi au check-in du soir : une seule valeur quotidienne.
+ if(!['bike','bikeDuration','bikeSpeed'].includes(key))return rows;
+ // Les métriques vélo proviennent du check-in du soir : une seule valeur quotidienne.
  const byDay=new Map();
  rows.forEach(row=>{
   const day=String(row.date||'').slice(0,10);
@@ -840,7 +850,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-alpha2</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-alpha3</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1261,6 +1271,7 @@ function calcStrengthPlan(kind){
 
 function metricDisplayValue(key,value,unit){
  if(key==='sleep')return formatDurationMinutes(Number(value)*60);
+ if(key==='bikeDuration')return formatDurationMinutes(Number(value));
  if(unit==='s')return formatDurationSeconds(value);
  return `${Number.isFinite(Number(value))?Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2}):value} ${unit||''}`.trim()
 }
@@ -1310,6 +1321,22 @@ function chartCard(key){
   ${svgLine(vals,labels,displays,key)}
   <div id="charttip-${key}" class="charttooltip"><span class="muted">Touchez un point pour afficher la date et la performance.</span></div>
   <div class="metricSource">Dernière source : ${last.source}</div></div>`
+}
+
+function currentBikeMetric(){return window.currentBikeTrackingMetric||'bike'}
+function setBikeTrackingMetric(metric){
+ window.currentBikeTrackingMetric=metric;
+ if(state.role==='coach')trackingTab('life');
+ else athleteProfileTab('life')
+}
+function bikeTrackingCard(){
+ const metric=currentBikeMetric();
+ const labels={bike:'Distance',bikeDuration:'Durée',bikeSpeed:'Vitesse'};
+ return `<div class="card" style="margin-bottom:14px">
+  <div class="sectiontitle"><div><h3>Vélo quotidien</h3><p class="muted small">Distance, durée et vitesse moyenne calculée.</p></div></div>
+  <div class="trackingtabs">${Object.entries(labels).map(([key,label])=>`<button class="${metric===key?'active':''}" onclick="setBikeTrackingMetric('${key}')">${label}</button>`).join('')}</div>
+  ${chartCard(metric)}
+ </div>`
 }
 
 const FLASH_FONT_GRADES=['4a','4a+','4b','4b+','4c','4c+','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a'];
@@ -1516,7 +1543,7 @@ function renderDailyPerformanceTracking(){
 function trackingTab(tab){window.currentTrackingTab=tab;const tabs=`<div class="trackingtabs">${[['daily','Quotidien'],['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="trackingTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;let content='';
 if(tab==='daily')content=renderDailyPerformanceTracking();
 else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
-else if(tab==='life')content=`<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','bike','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
+else if(tab==='life')content=`${bikeTrackingCard()}<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
 else content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`;
 coachShell(`<div class="pagehead"><div><h1>Suivi et analyses</h1><p class="muted">Données réellement saisies par l’Athlète et résultats validés par le Coach.</p></div></div><div class="realDataBanner"><b>Données réelles uniquement</b><div class="muted small">La semaine fictive et ses éventuelles saisies ne sont pas utilisées dans les graphiques.</div></div>${trackingRangeBar()}${tabs}${content}`,'analytics')}
 
@@ -1573,7 +1600,7 @@ function athleteProfileTab(tab='perf'){
  if(tab==='perf'){
   content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div>`
  }else if(tab==='life'){
-  content=`<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','bike','hrSupine','hrStanding'].map(chartCard).join('')}</div>`
+  content=`${bikeTrackingCard()}<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`
  }else{
   content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`
  }
@@ -2927,7 +2954,41 @@ function draftNumber(key,val){
  else if(state.checkStatus[part]==='NOT_STARTED')state.checkStatus[part]='DRAFT';
  save()
 }
-function validateDailyCheckin(part){state.checkStatus[part]='VALIDATED';const c=state.checkins[part],date=nowIso();if(part==='morning')addOrReplaceDailyRecord('checkins',{date,source:'Check-in matin',sleep:c.sleep,sleepQuality:c.quality,mood:c.mood,fatigue:c.fatigue,stress:c.stress,energy:c.energy,motivation:c.motivation,soreness:c.soreness,pain:c.pain});else addOrReplaceDailyRecord('checkins',{date,source:'Check-in soir',rpe:c.rpe,fatigue:c.fatigue,soreness:c.soreness,pain:c.pain,bike:c.bike});save();renderDaily();toast(`Check-in ${part==='morning'?'du matin':'du soir'} validé`)}
+
+function bikeSpeedValue(distance,durationMin){
+ const d=Number(distance),m=Number(durationMin);
+ if(!Number.isFinite(d)||!Number.isFinite(m)||d<0||m<=0)return null;
+ return d/(m/60)
+}
+function draftBikeEntry(){
+ const distanceRaw=String(document.getElementById('bikeDistance')?.value??'').trim().replace(',','.');
+ const distance=distanceRaw===''?0:Number(distanceRaw);
+ const hours=Math.max(0,Math.floor(Number(document.getElementById('bikeHours')?.value)||0));
+ const minutes=Math.max(0,Math.min(59,Math.floor(Number(document.getElementById('bikeMinutes')?.value)||0)));
+ if(!Number.isFinite(distance)||distance<0)return;
+ state.checkins.evening.bike=distance;
+ state.checkins.evening.bikeDuration=hours*60+minutes;
+ if(state.checkStatus.evening==='VALIDATED')state.checkStatus.evening='DRAFT';
+ else if(state.checkStatus.evening==='NOT_STARTED')state.checkStatus.evening='DRAFT';
+ const speed=bikeSpeedValue(distance,state.checkins.evening.bikeDuration);
+ const target=document.getElementById('bikeSpeedLive');
+ if(target)target.textContent=speed===null?'—':`${speed.toLocaleString('fr-FR',{maximumFractionDigits:1})} km/h`;
+ save()
+}
+function bikeEntry(distance,durationMin){
+ const duration=Math.max(0,Math.round(Number(durationMin)||0));
+ const h=Math.floor(duration/60),m=duration%60;
+ const speed=bikeSpeedValue(distance,duration);
+ return `<div class="field"><label>Vélo aujourd’hui</label>
+  <div class="measuregrid">
+   <div class="field"><label class="muted small">Distance (km)</label><input id="bikeDistance" type="number" inputmode="decimal" min="0" max="300" step="0.01" value="${Number(distance)||0}" oninput="draftBikeEntry()"></div>
+   <div class="field"><label class="muted small">Heures</label><input id="bikeHours" type="number" inputmode="numeric" min="0" max="24" step="1" value="${h}" oninput="draftBikeEntry()"></div>
+   <div class="field"><label class="muted small">Minutes</label><input id="bikeMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="${m}" oninput="draftBikeEntry()"></div>
+  </div>
+  <div class="summaryBox" style="margin-top:8px"><div class="muted small">Vitesse moyenne</div><b id="bikeSpeedLive">${speed===null?'—':`${speed.toLocaleString('fr-FR',{maximumFractionDigits:1})} km/h`}</b></div>
+ </div>`
+}
+function validateDailyCheckin(part){state.checkStatus[part]='VALIDATED';const c=state.checkins[part],date=nowIso();if(part==='morning')addOrReplaceDailyRecord('checkins',{date,source:'Check-in matin',sleep:c.sleep,sleepQuality:c.quality,mood:c.mood,fatigue:c.fatigue,stress:c.stress,energy:c.energy,motivation:c.motivation,soreness:c.soreness,pain:c.pain});else addOrReplaceDailyRecord('checkins',{date,source:'Check-in soir',rpe:c.rpe,fatigue:c.fatigue,soreness:c.soreness,pain:c.pain,bike:c.bike,bikeDuration:c.bikeDuration});save();renderDaily();toast(`Check-in ${part==='morning'?'du matin':'du soir'} validé`)}
 function renderDaily(){
  const sundayCard=isSundayToday()?`<div class="card ${state.checkStatus.sunday==='VALIDATED'?'validatedCard':''}" style="margin-top:14px">
   <div class="statusline">${state.checkStatus.sunday==='VALIDATED'?'✓ Check hebdomadaire validé':'À remplir'}</div>
@@ -2935,7 +2996,7 @@ function renderDaily(){
   <p class="muted">Le check du dimanche est disponible aujourd’hui et sera enregistré comme <b>WEEKLY</b> dans CHECKINS.</p>
   <button class="btn full" onclick="renderSunday()">${state.checkStatus.sunday==='VALIDATED'?'Consulter / modifier':'Remplir le check du dimanche'}</button>
  </div>`:'';
- athleteShell(`<div class="sectiontitle"><div><div class="muted">Bonjour Thibaud</div><h1>Check quotidien</h1></div><span class="pill green">Brouillon auto</span></div><div class="card ${state.checkStatus.morning==='VALIDATED'?'validatedCard':state.checkStatus.morning==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.morning==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Matin</h3>${sleepDurationEntry(state.checkins.morning.sleep)}${slider('Qualité','morning.quality',state.checkins.morning.quality)}${slider('Humeur','morning.mood',state.checkins.morning.mood)}${slider('Fatigue','morning.fatigue',state.checkins.morning.fatigue)}${slider('Stress','morning.stress',state.checkins.morning.stress)}${slider('Énergie','morning.energy',state.checkins.morning.energy)}${slider('Motivation','morning.motivation',state.checkins.morning.motivation)}${slider('Courbatures','morning.soreness',state.checkins.morning.soreness)}${slider('Douleur','morning.pain',state.checkins.morning.pain)}<button class="btn full" onclick="validateDailyCheckin('morning')">Valider le matin</button></div><div class="card ${state.checkStatus.evening==='VALIDATED'?'validatedCard':state.checkStatus.evening==='DRAFT'?'draftCard':''}" style="margin-top:14px"><div class="statusline">${state.checkStatus.evening==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Soir</h3>${slider('RPE journée','evening.rpe',state.checkins.evening.rpe)}${slider('Fatigue','evening.fatigue',state.checkins.evening.fatigue)}${slider('Courbatures','evening.soreness',state.checkins.evening.soreness)}${slider('Douleur','evening.pain',state.checkins.evening.pain)}${exactNumberEntry('Vélo quotidien','evening.bike',state.checkins.evening.bike,{min:0,max:300,step:.01,unit:'km'})}<button class="btn full" onclick="validateDailyCheckin('evening')">Valider le soir</button></div>${sundayCard}`,'daily')
+ athleteShell(`<div class="sectiontitle"><div><div class="muted">Bonjour Thibaud</div><h1>Check quotidien</h1></div><span class="pill green">Brouillon auto</span></div><div class="card ${state.checkStatus.morning==='VALIDATED'?'validatedCard':state.checkStatus.morning==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.morning==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Matin</h3>${sleepDurationEntry(state.checkins.morning.sleep)}${slider('Qualité','morning.quality',state.checkins.morning.quality)}${slider('Humeur','morning.mood',state.checkins.morning.mood)}${slider('Fatigue','morning.fatigue',state.checkins.morning.fatigue)}${slider('Stress','morning.stress',state.checkins.morning.stress)}${slider('Énergie','morning.energy',state.checkins.morning.energy)}${slider('Motivation','morning.motivation',state.checkins.morning.motivation)}${slider('Courbatures','morning.soreness',state.checkins.morning.soreness)}${slider('Douleur','morning.pain',state.checkins.morning.pain)}<button class="btn full" onclick="validateDailyCheckin('morning')">Valider le matin</button></div><div class="card ${state.checkStatus.evening==='VALIDATED'?'validatedCard':state.checkStatus.evening==='DRAFT'?'draftCard':''}" style="margin-top:14px"><div class="statusline">${state.checkStatus.evening==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Soir</h3>${slider('RPE journée','evening.rpe',state.checkins.evening.rpe)}${slider('Fatigue','evening.fatigue',state.checkins.evening.fatigue)}${slider('Courbatures','evening.soreness',state.checkins.evening.soreness)}${slider('Douleur','evening.pain',state.checkins.evening.pain)}${bikeEntry(state.checkins.evening.bike,state.checkins.evening.bikeDuration)}<button class="btn full" onclick="validateDailyCheckin('evening')">Valider le soir</button></div>${sundayCard}`,'daily')
 }
 function renderSunday(){const w=state.weekly;athleteShell(`<div class="sectiontitle"><div><div class="muted">Dimanche</div><h1>Check-up hebdomadaire</h1></div><span class="pill orange">Obligatoire</span></div><div class="card ${state.checkStatus.sunday==='VALIDATED'?'validatedCard':state.checkStatus.sunday==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.sunday==='VALIDATED'?'✓ Check-up validé':'À remplir'}</div><p class="muted">Toutes les mensurations doivent être confirmées chaque dimanche.</p><div class="measuregrid">${[['Poids (kg)','weight',w.weight],['Taille (cm)','waist',w.waist],['Poitrine (cm)','chest',w.chest],['Hanches (cm)','hips',w.hips],['Bras relâché (cm)','armRelaxed',w.armRelaxed],['Bras contracté (cm)','armFlexed',w.armFlexed],['Cuisse (cm)','thigh',w.thigh],['Mollet (cm)','calf',w.calf],['FC allongé','hrSupine',w.hrSupine],['FC debout','hrStanding',w.hrStanding]].map(x=>`<div class="field"><label>${x[0]}</label><input data-week="${x[1]}" type="number" step=".1" value="${x[2]}"></div>`).join('')}</div><div class="field"><label>Disponibilités semaine suivante</label><input data-week="availability" value="${w.availability}"></div><div class="field"><label>Douleur persistante</label><input data-week="pain" value="${w.pain}"></div><div class="field"><label>Commentaire général</label><textarea data-week="comment">${w.comment}</textarea></div><button class="btn full" onclick="saveSunday()">Valider le check-up du dimanche</button></div>`,'checkup')}
 function saveSunday(){

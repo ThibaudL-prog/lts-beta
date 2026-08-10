@@ -530,6 +530,7 @@
         pain:painValue,
         rpe:sheetNumber(row.day_rpe_0_10)??sheetNumber(row.rpe_day_0_10),
         bike:sheetNumber(row.cycling_distance_km)??sheetNumber(row.bike_distance_km),
+        bikeDuration:sheetNumber(row.cycling_duration_min),
         hrSupine:sheetNumber(row.lying_hr_bpm)??sheetNumber(row.supine_hr_bpm)??sheetNumber(row.hr_supine_bpm)??sheetNumber(row.resting_hr_bpm),
         hrStanding:sheetNumber(row.standing_hr_bpm)??sheetNumber(row.upright_hr_bpm)??sheetNumber(row.hr_standing_bpm),
         _remote:true,
@@ -609,7 +610,7 @@
   }
 
   function emptyEveningCheckin(){
-    return {rpe:0,fatigue:0,soreness:0,pain:0,bike:0}
+    return {rpe:0,fatigue:0,soreness:0,pain:0,bike:0,bikeDuration:0}
   }
 
   function latestCheckinForToday(sourceLabel){
@@ -670,6 +671,7 @@
       applyDefined(target,'soreness',evening.soreness);
       applyDefined(target,'pain',evening.pain);
       applyDefined(target,'bike',evening.bike);
+      applyDefined(target,'bikeDuration',evening.bikeDuration);
       state.checkins.evening=target;
       state.checkStatus.evening='VALIDATED'
     }else if(!evening&&dayChanged){
