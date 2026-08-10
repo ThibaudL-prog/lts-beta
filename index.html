@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590a1">
+<link rel="manifest" href="manifest.webmanifest?v=0590a2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590a1">
+<link rel="shortcut icon" href="favicon.ico?v=0590a2">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-alpha1</title>
+<title>LTS v0.5.9.0-alpha2</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -105,6 +105,16 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .guidecard,.card,.athsession,.catalogcard,.reqcard{max-width:100%;box-sizing:border-box}
 .guidecardbody,.card,.athsession{overflow-wrap:anywhere}
 .chartbox{min-width:0}
+.chartpoint{cursor:pointer;outline:none}
+.chartpoint:focus .chart-visible{stroke:#0b3f8f;stroke-width:3}
+.charttooltip{margin-top:8px;min-height:45px;padding:9px 11px;border-radius:11px;background:#f3f7fd;border:1px solid #dbe6f5;font-size:13px}
+.charttooltip b{display:block;color:var(--ink);margin-bottom:2px}
+.previousSessionCard{margin:10px 0 14px;padding:11px 12px;border:1px solid #dbe6f5;border-radius:12px;background:#f7fbff}
+.previousSessionCard h4{margin:0 0 4px}
+.previousSetGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.previousSetCell{padding:7px;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:11px}
+.previousSetHint{margin-top:5px;padding:6px 8px;background:#eef5ff;border-radius:8px;font-size:11px;color:#38506d}
+@media(max-width:760px){.previousSetGrid{grid-template-columns:1fr 1fr}}
 .measuregrid,.climbcfg,.dualgrid,.metricgrid,.chartgrid{min-width:0}
 @media(max-width:760px){
  .scrollbox:after{display:block}
@@ -303,7 +313,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590a1"></script><script>
+<script src="api-client.js?v=0590a2"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -461,7 +471,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-alpha1 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-alpha2 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -830,7 +840,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-alpha1</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-alpha2</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1169,6 +1179,67 @@ function sleepDurationEntry(value){
 function isSundayToday(){return new Date().getDay()===0}
 
 function ceilKg(x){return Math.ceil(Math.max(0,+x||0))}
+
+const PREVIOUS_SET_TEMPLATES=new Set(['pullstrength','dipstrength','pullend','dipend']);
+
+function prescriptionReferenceDate(week,session){
+ const direct=String(session?.sessionDate||'').slice(0,10);
+ if(direct)return direct;
+ const container=(week?.containers||[]).find(c=>String(c.containerId)===String(session?.containerId));
+ if(container){
+  const derived=String(containerCalendarDate(week,container)||'').slice(0,10);
+  if(derived)return derived
+ }
+ return String(session?.execution?.completedAt||'').slice(0,10)
+}
+function previousComparableSetSession(current){
+ if(!PREVIOUS_SET_TEMPLATES.has(String(current?.templateId||'')))return null;
+ const rows=[],seen=new Set();
+ const sources=[...(state.remoteWeeks||[]),...(state.weeks||[])];
+ const currentDate=String(current?.sessionDate||'').slice(0,10)||'9999-12-31';
+ sources.forEach(week=>(week.sessions||[]).forEach(session=>{
+  if(String(session?.templateId||'')!==String(current.templateId||''))return;
+  if(String(session?.sessionId||'')===String(current.sessionId||''))return;
+  if(!session?.execution||!(session.execution.sets||[]).length)return;
+  const date=prescriptionReferenceDate(week,session);
+  if(!date||date>=currentDate)return;
+  const key=`${session.sessionId||session.title}-${session.execution.completedAt||date}`;
+  if(seen.has(key))return;
+  seen.add(key);
+  rows.push({week,session,date})
+ }));
+ rows.sort((a,b)=>String(b.session.execution?.completedAt||b.date).localeCompare(String(a.session.execution?.completedAt||a.date)));
+ return rows[0]||null
+}
+function previousSetDisplay(set,planned){
+ const load=String(set?.load??'').trim();
+ const reps=String(set?.reps??'').trim();
+ const rir=String(set?.rir??'').trim();
+ const parts=[];
+ if(reps)parts.push(`${reps} rep${Number(reps)===1?'':'s'}`);
+ if(load)parts.push(load==='0'?'PDC':(/kg/i.test(load)?load:`${load} kg`));
+ if(rir!=='')parts.push(`RIR ${rir}`);
+ return parts.join(' · ')||'—'
+}
+function previousComparableSummaryHtml(previous){
+ if(!previous)return '';
+ const session=previous.session;
+ const actual=session.execution?.sets||[];
+ const planned=session.structuredSets||[];
+ const date=new Date((session.execution?.completedAt||previous.date)+'T12:00:00');
+ const label=Number.isNaN(date.getTime())?previous.date:date.toLocaleDateString('fr-FR');
+ return `<div class="previousSessionCard">
+  <h4>Dernière séance comparable</h4>
+  <div class="muted small">${label} · ${session.title||''}</div>
+  <div class="previousSetGrid">${actual.map((set,i)=>`<div class="previousSetCell"><b>${planned[i]?.role||`S${i+1}`}</b><div>${previousSetDisplay(set,planned[i])}</div></div>`).join('')}</div>
+ </div>`
+}
+function previousSetHintHtml(previous,index){
+ const set=previous?.session?.execution?.sets?.[index];
+ if(!set)return '';
+ return `<div class="previousSetHint"><b>Dernière fois :</b> ${previousSetDisplay(set,previous.session.structuredSets?.[index])}</div>`
+}
+
 function calcStrengthPlan(kind){
  const bw=+state.weekly.weight||+state.athlete.weight||85;
  const ext1rm=kind==='pull'?+state.athlete.external1rm.pull:+state.athlete.external1rm.dip;
@@ -1188,8 +1259,58 @@ function calcStrengthPlan(kind){
  ]
 }
 
-function svgLine(values,labels){if(!values.length)return '';const w=320,h=140,p=22,min=Math.min(...values),max=Math.max(...values),span=max-min||1;const pts=values.map((v,i)=>{const x=values.length===1?w/2:p+i*(w-2*p)/(values.length-1),y=h-p-(v-min)*(h-2*p)/span;return[x,y]});const poly=pts.map(x=>x.join(',')).join(' ');return `<svg class="chartsvg" viewBox="0 0 ${w} ${h}"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#dce3ee"/>${values.length>1?`<polyline points="${poly}" fill="none" stroke="#1764e8" stroke-width="3"/>`:''}${pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="#1764e8"><title>${labels[i]} : ${values[i]}</title></circle>`).join('')}<text x="${p}" y="14" font-size="11">${max}</text><text x="${p}" y="${h-5}" font-size="11">${min}</text></svg>`}
-function chartCard(key){const meta=REAL_METRICS[key],rows=metricSeries(key);if(!rows.length)return `<div class="chartbox"><h4>${meta.label}</h4><div class="emptyChart">Aucune donnée réelle enregistrée pour cette période.</div></div>`;const vals=rows.map(r=>r.value),labels=rows.map(r=>recordDateLabel(r.date)),last=rows.at(-1);return `<div class="chartbox"><h4>${meta.label}</h4><div class="kpi">${last.value} ${meta.unit}</div>${svgLine(vals,labels)}<div class="metricSource">Dernière source : ${last.source}</div></div>`}
+function metricDisplayValue(key,value,unit){
+ if(key==='sleep')return formatDurationMinutes(Number(value)*60);
+ if(unit==='s')return formatDurationSeconds(value);
+ return `${Number.isFinite(Number(value))?Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2}):value} ${unit||''}`.trim()
+}
+function recordFullDateLabel(iso){
+ const d=new Date(iso);
+ if(Number.isNaN(d.getTime()))return String(iso||'');
+ return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})
+}
+function selectChartPoint(el){
+ const key=el?.dataset?.chartKey;
+ const box=document.getElementById(`charttip-${key}`);
+ if(!box)return;
+ box.innerHTML=`<b>${el.dataset.label||''}</b><span>${el.dataset.display||''}</span>`;
+ document.querySelectorAll(`[data-chart-key="${key}"] .chart-visible`).forEach(c=>{c.setAttribute('r','4');c.setAttribute('stroke','none')});
+ const visible=el.querySelector('.chart-visible');
+ if(visible){visible.setAttribute('r','6');visible.setAttribute('stroke','#0b3f8f');visible.setAttribute('stroke-width','2')}
+}
+function svgLine(values,labels,displays,chartKey){
+ if(!values.length)return '';
+ const w=320,h=140,p=22,min=Math.min(...values),max=Math.max(...values),span=max-min||1;
+ const pts=values.map((v,i)=>{
+  const x=values.length===1?w/2:p+i*(w-2*p)/(values.length-1);
+  const y=h-p-(v-min)*(h-2*p)/span;
+  return[x,y]
+ });
+ const poly=pts.map(x=>x.join(',')).join(' ');
+ return `<svg class="chartsvg" viewBox="0 0 ${w} ${h}" aria-label="Courbe interactive">
+  <line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}" stroke="#dce3ee"/>
+  ${values.length>1?`<polyline points="${poly}" fill="none" stroke="#1764e8" stroke-width="3"/>`:''}
+  ${pts.map((q,i)=>`<g class="chartpoint" tabindex="0" role="button" data-chart-key="${chartKey}" data-label="${labels[i]}" data-display="${displays[i]}" onclick="selectChartPoint(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectChartPoint(this)}">
+    <circle cx="${q[0]}" cy="${q[1]}" r="14" fill="transparent"/>
+    <circle class="chart-visible" cx="${q[0]}" cy="${q[1]}" r="4" fill="#1764e8"/>
+    <title>${labels[i]} : ${displays[i]}</title>
+   </g>`).join('')}
+  <text x="${p}" y="14" font-size="11">${Number(max).toLocaleString('fr-FR',{maximumFractionDigits:2})}</text>
+  <text x="${p}" y="${h-5}" font-size="11">${Number(min).toLocaleString('fr-FR',{maximumFractionDigits:2})}</text>
+ </svg>`
+}
+function chartCard(key){
+ const meta=REAL_METRICS[key],rows=metricSeries(key);
+ if(!rows.length)return `<div class="chartbox"><h4>${meta.label}</h4><div class="emptyChart">Aucune donnée réelle enregistrée pour cette période.</div></div>`;
+ const vals=rows.map(r=>r.value);
+ const labels=rows.map(r=>recordFullDateLabel(r.date));
+ const displays=rows.map(r=>metricDisplayValue(key,r.value,meta.unit));
+ const last=rows.at(-1);
+ return `<div class="chartbox"><h4>${meta.label}</h4><div class="kpi">${metricDisplayValue(key,last.value,meta.unit)}</div>
+  ${svgLine(vals,labels,displays,key)}
+  <div id="charttip-${key}" class="charttooltip"><span class="muted">Touchez un point pour afficher la date et la performance.</span></div>
+  <div class="metricSource">Dernière source : ${last.source}</div></div>`
+}
 
 const FLASH_FONT_GRADES=['4a','4a+','4b','4b+','4c','4c+','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c','8c+','9a'];
 const FLASH_COLOR_GRADES=['blanc','jaune','orange','vert','bleu','rouge','noir','rose','violet'];
@@ -2426,6 +2547,8 @@ function openAthleteSession(sessionId){
 }
 function openGuideSetExecution(s,schema){
  const existing=s.execution?.sets||[], labels=schema.labels||['Charge','Reps','RIR','Repos'];
+ const previous=previousComparableSetSession(s);
+ const previousSummary=previousComparableSummaryHtml(previous);
  const rows=(s.structuredSets||[]).map((p,i)=>{
    const a=existing[i]||{}, plannedWork=p.work??p.workSeconds??null;
    const plannedSecond=schema.type==='TIMED_SETS'?formatDurationSeconds(plannedWork||5):schema.type==='REPEATERS'?(plannedWork||'7/3'):p.reps;
@@ -2445,12 +2568,13 @@ function openGuideSetExecution(s,schema){
        ?durationPairHtml(`actDuration${i}`,a.reps??prefilledActual??0,{label:'Durée réelle'})
        :`<div class="field"><label>${schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??prefilledActual??''}"></div>`}
      <div class="field"><label>RIR réel</label><input data-actrir="${i}" value="${a.rir??p.rir??''}"></div>
+     ${previousSetHintHtml(previous,i)}
      <label><input class="check" data-actdone="${i}" type="checkbox" ${a.completed?'checked':''}> Série validée</label>
     </div>
    </div></div></div>`
  }).join('');
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="protocolnote">${s.notes||''}</div>${coachCommentBlock(s)}${rows}
+ <div class="protocolnote">${s.notes||''}</div>${coachCommentBlock(s)}${previousSummary}${rows}
  <div class="measuregrid"><div class="field"><label>RPE séance</label><input id="execRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="execPain" type="number" min="0" max="10" value="${s.execution?.pain??0}"></div></div>
  <div class="field"><label>Commentaire</label><textarea id="execNote">${s.execution?.note||''}</textarea></div>
  <button class="btn full" onclick="saveSetExecution('${s.sessionId}')">Enregistrer les performances</button></div></div>`)
