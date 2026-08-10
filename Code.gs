@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.8.7';
+const API_RELEASE = '0.5.9.0-alpha1';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -287,7 +287,12 @@ function upsertCheckin_(record, athleteId) {
   record = Object.assign({}, record);
   record.athlete_id = record.athlete_id || athleteId;
   record.checkin_id = record.checkin_id || ('ci-' + record.athlete_id + '-' + String(record.date || new Date().toISOString()).slice(0,10) + '-' + String(record.source || 'PWA').replace(/\s+/g,'_'));
-  record.checkin_type = record.checkin_type || (String(record.source || '').toLowerCase().indexOf('soir') >= 0 ? 'EVENING' : 'MORNING');
+  if (!record.checkin_type) {
+    const sourceLower = String(record.source || '').toLowerCase();
+    record.checkin_type = (sourceLower.indexOf('dimanche') >= 0 || sourceLower.indexOf('weekly') >= 0 || sourceLower.indexOf('hebdo') >= 0)
+      ? 'WEEKLY'
+      : (sourceLower.indexOf('soir') >= 0 ? 'EVENING' : 'MORNING');
+  }
   record.checked_at = record.checked_at || record.date || new Date().toISOString();
   record.sleep_duration_h = value_(record.sleep);
   record.sleep_quality_0_10 = value_(record.sleepQuality);
@@ -300,6 +305,14 @@ function upsertCheckin_(record, athleteId) {
   record.pain_intensity_0_10 = value_(record.pain);
   record.day_rpe_0_10 = value_(record.rpe);
   record.cycling_distance_km = value_(record.bike);
+  const hrSupine = value_(record.hrSupine);
+  const hrStanding = value_(record.hrStanding);
+  record.lying_hr_bpm = hrSupine;
+  record.supine_hr_bpm = hrSupine;
+  record.hr_supine_bpm = hrSupine;
+  record.standing_hr_bpm = hrStanding;
+  record.upright_hr_bpm = hrStanding;
+  record.hr_standing_bpm = hrStanding;
   record.pain_present = value_(record.pain) > 0;
   record.notes = record.notes || record.source || 'PWA';
   record.status = 'valid';

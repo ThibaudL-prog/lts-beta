@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=05814">
+<link rel="manifest" href="manifest.webmanifest?v=0590a1">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=05814">
+<link rel="shortcut icon" href="favicon.ico?v=0590a1">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.8.14</title>
+<title>LTS v0.5.9.0-alpha1</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -303,7 +303,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=05814"></script><script>
+<script src="api-client.js?v=0590a1"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -461,7 +461,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.8.14 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-alpha1 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -801,7 +801,7 @@ function renderV057ReleaseReadiness(){
  const label=!audit.valid?'À corriger':audit.fullyReady?'Prête':'À synchroniser';
  return `<div class="releaseAuditCard ${cls}">
   <div class="sectiontitle">
-   <div><h3 style="margin:0">Stabilisation v0.5.8.14</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
+   <div><h3 style="margin:0">Alpha 1 · v0.5.9.0</h3><p class="muted small" style="margin:4px 0 0">Diagnostic global en lecture seule avant fusion dans la branche stable.</p></div>
    <span class="pill ${!audit.valid?'orange':audit.fullyReady?'green':'orange'}">${label}</span>
   </div>
   <div class="releaseAuditGrid">
@@ -830,7 +830,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic de stabilisation v0.5.8.14</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-alpha1</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1106,6 +1106,67 @@ function ensureGuidePlannedStructure(p){
  return null
 }
 function plannedSetCell(v,unit=''){return '<span class="planvalue">'+(v===null||v===undefined||v===''?'—':v+(unit?' '+unit:''))+'</span>'}
+
+function splitDurationSeconds(value){
+ const total=Math.max(0,Math.round(Number(value)||0));
+ return {minutes:Math.floor(total/60),seconds:total%60}
+}
+function combineDurationSeconds(minutes,seconds){
+ const m=Math.max(0,Math.floor(Number(minutes)||0));
+ const s=Math.max(0,Math.min(59,Math.floor(Number(seconds)||0)));
+ return m*60+s
+}
+function formatDurationSeconds(value){
+ const total=Math.max(0,Math.round(Number(value)||0));
+ if(!total)return '0 s';
+ const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
+ if(h)return `${h} h ${String(m).padStart(2,'0')}${s?` ${String(s).padStart(2,'0')} s`:''}`;
+ if(m)return `${m} min${s?` ${String(s).padStart(2,'0')} s`:''}`;
+ return `${s} s`
+}
+function formatDurationMinutes(value){
+ const minutes=Number(value);
+ if(!Number.isFinite(minutes)||minutes<0)return '—';
+ const total=Math.round(minutes*60);
+ if(total<60)return formatDurationSeconds(total);
+ const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
+ if(h)return `${h} h ${String(m).padStart(2,'0')}${s?` ${String(s).padStart(2,'0')} s`:''}`;
+ return `${m} min${s?` ${String(s).padStart(2,'0')} s`:''}`
+}
+function durationPairHtml(prefix,totalSeconds,{label='Durée',oninput='',compact=false}={}){
+ const parts=splitDurationSeconds(totalSeconds);
+ const handler=oninput?` oninput="${oninput}"`:'';
+ return `<div class="field"><label>${label}</label><div class="measuregrid ${compact?'compacttime':''}">
+  <div class="field"><label class="muted small">min</label><input id="${prefix}Min" type="number" inputmode="numeric" min="0" step="1" value="${parts.minutes}"${handler}></div>
+  <div class="field"><label class="muted small">s</label><input id="${prefix}Sec" type="number" inputmode="numeric" min="0" max="59" step="1" value="${parts.seconds}"${handler}></div>
+ </div></div>`
+}
+function readDurationPair(prefix){
+ return combineDurationSeconds(
+  document.getElementById(prefix+'Min')?.value,
+  document.getElementById(prefix+'Sec')?.value
+ )
+}
+function sleepParts(value){
+ const total=Math.max(0,Math.round((Number(value)||0)*60));
+ return {hours:Math.floor(total/60),minutes:total%60}
+}
+function draftSleepDuration(){
+ const hours=Math.max(0,Math.floor(Number(document.getElementById('sleepHours')?.value)||0));
+ const minutes=Math.max(0,Math.min(59,Math.floor(Number(document.getElementById('sleepMinutes')?.value)||0)));
+ state.checkins.morning.sleep=+(hours+minutes/60).toFixed(4);
+ if(state.checkStatus.morning==='VALIDATED')state.checkStatus.morning='DRAFT';
+ else if(state.checkStatus.morning==='NOT_STARTED')state.checkStatus.morning='DRAFT';
+ save()
+}
+function sleepDurationEntry(value){
+ const p=sleepParts(value);
+ return `<div class="field"><label>Sommeil</label><div class="measuregrid">
+  <div class="field"><label class="muted small">Heures</label><input id="sleepHours" type="number" inputmode="numeric" min="0" max="24" step="1" value="${p.hours}" oninput="draftSleepDuration()"></div>
+  <div class="field"><label class="muted small">Minutes</label><input id="sleepMinutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="${p.minutes}" oninput="draftSleepDuration()"></div>
+ </div><div class="muted small">${p.hours} h ${String(p.minutes).padStart(2,'0')}</div></div>`
+}
+function isSundayToday(){return new Date().getDay()===0}
 
 function ceilKg(x){return Math.ceil(Math.max(0,+x||0))}
 function calcStrengthPlan(kind){
@@ -2330,10 +2391,10 @@ function athleteVisibleWeeks(){
 function sessionDetails(s){
  const sets=s.structuredSets?'<div class="small">'+s.structuredSets.map((x,i)=>
    'S'+(i+1)+' '+x.role+': '+(x.load||'—')+' '+(x.loadMode||'')+' × '+(x.reps||'—')+
-   ' · RIR '+(x.rir===''?'—':x.rir)+' · repos '+(x.rest||'—')+'s'
+   ' · RIR '+(x.rir===''?'—':x.rir)+' · repos '+(x.rest?formatDurationSeconds(x.rest):'—')
  ).join('<br>')+'</div>':'';
  const exercises=s.exercises?.length?'<div class="small">'+s.exercises.map(x=>
-   x.name+' · '+(x.sets||'—')+' séries · '+(x.reps||x.hold||'—')+(x.hold?' s':'')
+   x.name+' · '+(x.sets||'—')+' séries · '+(x.reps|| (x.hold?formatDurationSeconds(x.hold):'—'))
  ).join('<br>')+'</div>':'';
  const climb=s.climbing?'<div class="small">'+
    (s.climbing.angle?'Angle : '+s.climbing.angle+' · ':'')+
@@ -2367,7 +2428,7 @@ function openGuideSetExecution(s,schema){
  const existing=s.execution?.sets||[], labels=schema.labels||['Charge','Reps','RIR','Repos'];
  const rows=(s.structuredSets||[]).map((p,i)=>{
    const a=existing[i]||{}, plannedWork=p.work??p.workSeconds??null;
-   const plannedSecond=schema.type==='TIMED_SETS'?(plannedWork||5)+' s':schema.type==='REPEATERS'?(plannedWork||'7/3'):p.reps;
+   const plannedSecond=schema.type==='TIMED_SETS'?formatDurationSeconds(plannedWork||5):schema.type==='REPEATERS'?(plannedWork||'7/3'):p.reps;
    const prefilledActual=schema.type==='TIMED_SETS'?(plannedWork||5):(Number.isFinite(Number(p.reps))?p.reps:'');
    return `<div class="guidecard">
    <div class="guidecardhead"><b>${p.role||'Série '+(i+1)}</b></div>
@@ -2376,11 +2437,13 @@ function openGuideSetExecution(s,schema){
      <div class="row"><span>${labels[0]}</span>${plannedSetCell(p.load||'PDC')}</div>
      <div class="row"><span>${labels[1]}</span>${plannedSetCell(plannedSecond)}</div>
      <div class="row"><span>${labels[2]}</span>${plannedSetCell(p.rir)}</div>
-     <div class="row"><span>${labels[3]}</span>${plannedSetCell(p.rest,'s')}</div>
+     <div class="row"><span>${labels[3]}</span>${plannedSetCell(p.rest?formatDurationSeconds(p.rest):'—')}</div>
     </div>
     <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
      <div class="field"><label>Charge réelle</label><input data-actload="${i}" value="${a.load??p.load??''}" placeholder="${p.load||'PDC'}"></div>
-     <div class="field"><label>${schema.type==='TIMED_SETS'?'Durée réelle (s)':schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??prefilledActual??''}"></div>
+     ${schema.type==='TIMED_SETS'
+       ?durationPairHtml(`actDuration${i}`,a.reps??prefilledActual??0,{label:'Durée réelle'})
+       :`<div class="field"><label>${schema.type==='REPEATERS'?'Répétitions 7/3 réalisées':'Répétitions réalisées'}</label><input data-actreps="${i}" value="${a.reps??prefilledActual??''}"></div>`}
      <div class="field"><label>RIR réel</label><input data-actrir="${i}" value="${a.rir??p.rir??''}"></div>
      <label><input class="check" data-actdone="${i}" type="checkbox" ${a.completed?'checked':''}> Série validée</label>
     </div>
@@ -2395,7 +2458,7 @@ function openGuideSetExecution(s,schema){
 
 function saveSetExecution(sessionId){
  const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
- const s=found.session,planned=s.structuredSets||[],sets=[];
+ const s=found.session,planned=s.structuredSets||[],sets=[],schema=guideSchemaFor(s);
  for(let i=0;i<planned.length;i++){
    const load=document.querySelector(`[data-actload="${i}"]`);
    const reps=document.querySelector(`[data-actreps="${i}"]`);
@@ -2404,7 +2467,7 @@ function saveSetExecution(sessionId){
    sets.push({
      planned:planned[i],
      load:load?load.value:'',
-     reps:reps?reps.value:'',
+     reps:schema.type==='TIMED_SETS'?readDurationPair(`actDuration${i}`):(reps?reps.value:''),
      rir:rir?rir.value:'',
      completed:done?done.checked:false
    });
@@ -2425,7 +2488,7 @@ function saveSetExecution(sessionId){
 function openGenericExecution(s){
  const e=s.execution||{};
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${s.guide||''} · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>Consigne</span><b>${s.notes||'—'}</b></div></div>
+ ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration?formatDurationMinutes(s.duration):'—'}</b></div><div class="row"><span>Consigne</span><b>${s.notes||'—'}</b></div></div>
  <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée réalisée (min)</label><input id="genDuration" type="number" value="${e.duration??s.duration??''}"></div><div class="field"><label>RPE réel</label><input id="genRpe" type="number" min="0" max="10" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="genPain" type="number" min="0" max="10" value="${e.pain??0}"></div></div></div>
  <div class="field"><label>Commentaire</label><textarea id="genNote">${e.note||''}</textarea></div>
  <button class="btn full" onclick="saveGenericExecution('${s.sessionId}')">Valider la séance</button></div></div>`)
@@ -2453,14 +2516,14 @@ function openExerciseExecution(s,schema){
    <div class="dualcol"><b>Prévu par le Coach</b>
     <div class="row"><span>Séries</span>${plannedSetCell(x.sets)}</div>
     <div class="row"><span>Répétitions</span>${plannedSetCell(x.reps)}</div>
-    <div class="row"><span>Maintien</span>${plannedSetCell(x.hold,'s')}</div>
+    <div class="row"><span>Maintien</span>${plannedSetCell(x.hold?formatDurationSeconds(x.hold):'—')}</div>
     <div class="row"><span>Charge</span>${plannedSetCell(x.load,x.loadUnit||'')}</div>
-    <div class="row"><span>Repos</span>${plannedSetCell(x.rest,'s')}</div>
+    <div class="row"><span>Repos</span>${plannedSetCell(x.rest?formatDurationSeconds(x.rest):'—')}</div>
    </div>
    <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
     <div class="field"><label>Séries réalisées</label><input data-exactsets="${i}" value="${a.sets??x.sets??''}"></div>
     <div class="field"><label>Répétitions réalisées</label><input data-exactreps="${i}" value="${a.reps??x.reps??''}"></div>
-    <div class="field"><label>Meilleur maintien (s)</label><input data-exacthold="${i}" value="${a.hold??x.hold??''}"></div>
+    ${durationPairHtml(`exerciseHold${i}`,a.hold??x.hold??0,{label:'Meilleur maintien'})}
     <div class="field"><label>Charge réelle (${x.loadUnit||'kg'})</label><input data-exactload="${i}" value="${a.load??x.load??''}"></div>
     <div class="field"><label>Qualité /10</label><input data-exquality="${i}" value="${a.quality??''}"></div>
    </div>
@@ -2479,7 +2542,7 @@ function saveExerciseExecution(sessionId,count){
   planned:(s.exercises||[])[i]||null,
   sets:document.querySelector(`[data-exactsets="${i}"]`)?.value||'',
   reps:document.querySelector(`[data-exactreps="${i}"]`)?.value||'',
-  hold:document.querySelector(`[data-exacthold="${i}"]`)?.value||'',
+  hold:readDurationPair(`exerciseHold${i}`),
   load:document.querySelector(`[data-exactload="${i}"]`)?.value||'',
   quality:document.querySelector(`[data-exquality="${i}"]`)?.value||''
  });
@@ -2507,9 +2570,9 @@ function updateRunningCalculations(){
 
 function openRunningExecution(s,schema){
  const e=s.execution||{}, plannedIntervals=s.structuredSets||[];
- const intervals=plannedIntervals.length?plannedIntervals.map((p,i)=>`<div class="pa-row"><b>${i+1}</b>${plannedSetCell(p.work||p.workSeconds||p.reps)}<input data-runint="${i}" value="${e.intervals?.[i]?.actual??''}" placeholder="Réalisé"><span>${p.rest||''} s</span><input data-runqual="${i}" value="${e.intervals?.[i]?.quality??''}" placeholder="Qualité /10"></div>`).join(''):'';
+ const intervals=plannedIntervals.length?plannedIntervals.map((p,i)=>`<div class="pa-row"><b>${i+1}</b>${plannedSetCell(p.work||p.workSeconds||p.reps)}<input data-runint="${i}" value="${e.intervals?.[i]?.actual??''}" placeholder="Réalisé"><span>${p.rest?formatDurationSeconds(p.rest):'—'}</span><input data-runqual="${i}" value="${e.intervals?.[i]?.quality??''}" placeholder="Qualité /10"></div>`).join(''):'';
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">G17 · prévu et réalisé</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration||'—'} min</b></div><div class="row"><span>RPE cible</span><b>${s.rpe??'—'}</b></div><div class="row"><span>Allure / charge</span><b>${s.load||'Selon protocole'}</b></div></div>
+ ${coachCommentBlock(s)}<div class="dualgrid"><div class="dualcol"><b>Prévu par le Coach</b><div class="row"><span>Durée</span><b>${s.duration?formatDurationMinutes(s.duration):'—'}</b></div><div class="row"><span>RPE cible</span><b>${s.rpe??'—'}</b></div><div class="row"><span>Allure / charge</span><b>${s.load||'Selon protocole'}</b></div></div>
  <div class="dualcol actual"><b>Réalisé par l’Athlète</b><div class="field"><label>Durée (min)</label><input id="runDuration" type="number" step="0.1" value="${e.duration??''}" oninput="updateRunningCalculations()"></div><div class="field"><label>Distance (km)</label><input id="runDistance" type="number" step="0.01" value="${e.distance??''}" oninput="updateRunningCalculations()"></div><div class="measuregrid"><div class="field"><label>Vitesse calculée</label><div id="runSpeedCalculated" class="speedResult">${e.speed?Number(e.speed).toFixed(2)+' km/h':'—'}</div></div><div class="field"><label>Allure calculée</label><div id="runPaceCalculated" class="speedResult">${e.paceMinutes?formatPace(+e.paceMinutes):'—'}</div></div></div><div class="field"><label>FC moyenne</label><input id="runHr" value="${e.hr??''}"></div></div></div>
  ${intervals?`<h3>Intervalles</h3><div class="pa-scroll"><div class="pa-head"><span>#</span><span>Prévu</span><span>Réalisé</span><span>Repos</span><span>Qualité</span></div>${intervals}</div>`:''}
  <div class="measuregrid"><div class="field"><label>RPE réel</label><input id="runRpe" value="${e.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="runPain" value="${e.pain??0}"></div></div>
@@ -2741,9 +2804,46 @@ function draftNumber(key,val){
  save()
 }
 function validateDailyCheckin(part){state.checkStatus[part]='VALIDATED';const c=state.checkins[part],date=nowIso();if(part==='morning')addOrReplaceDailyRecord('checkins',{date,source:'Check-in matin',sleep:c.sleep,sleepQuality:c.quality,mood:c.mood,fatigue:c.fatigue,stress:c.stress,energy:c.energy,motivation:c.motivation,soreness:c.soreness,pain:c.pain});else addOrReplaceDailyRecord('checkins',{date,source:'Check-in soir',rpe:c.rpe,fatigue:c.fatigue,soreness:c.soreness,pain:c.pain,bike:c.bike});save();renderDaily();toast(`Check-in ${part==='morning'?'du matin':'du soir'} validé`)}
-function renderDaily(){athleteShell(`<div class="sectiontitle"><div><div class="muted">Bonjour Thibaud</div><h1>Check quotidien</h1></div><span class="pill green">Brouillon auto</span></div><div class="card ${state.checkStatus.morning==='VALIDATED'?'validatedCard':state.checkStatus.morning==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.morning==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Matin</h3>${slider('Sommeil (h)','morning.sleep',state.checkins.morning.sleep,4,10,.1)}${slider('Qualité','morning.quality',state.checkins.morning.quality)}${slider('Humeur','morning.mood',state.checkins.morning.mood)}${slider('Fatigue','morning.fatigue',state.checkins.morning.fatigue)}${slider('Stress','morning.stress',state.checkins.morning.stress)}${slider('Énergie','morning.energy',state.checkins.morning.energy)}${slider('Motivation','morning.motivation',state.checkins.morning.motivation)}${slider('Courbatures','morning.soreness',state.checkins.morning.soreness)}${slider('Douleur','morning.pain',state.checkins.morning.pain)}<button class="btn full" onclick="validateDailyCheckin('morning')">Valider le matin</button></div><div class="card ${state.checkStatus.evening==='VALIDATED'?'validatedCard':state.checkStatus.evening==='DRAFT'?'draftCard':''}" style="margin-top:14px"><div class="statusline">${state.checkStatus.evening==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Soir</h3>${slider('RPE journée','evening.rpe',state.checkins.evening.rpe)}${slider('Fatigue','evening.fatigue',state.checkins.evening.fatigue)}${slider('Courbatures','evening.soreness',state.checkins.evening.soreness)}${slider('Douleur','evening.pain',state.checkins.evening.pain)}${exactNumberEntry('Vélo quotidien','evening.bike',state.checkins.evening.bike,{min:0,max:300,step:.01,unit:'km'})}<button class="btn full" onclick="validateDailyCheckin('evening')">Valider le soir</button></div>`,'daily')}
+function renderDaily(){
+ const sundayCard=isSundayToday()?`<div class="card ${state.checkStatus.sunday==='VALIDATED'?'validatedCard':''}" style="margin-top:14px">
+  <div class="statusline">${state.checkStatus.sunday==='VALIDATED'?'✓ Check hebdomadaire validé':'À remplir'}</div>
+  <h3>Check hebdomadaire</h3>
+  <p class="muted">Le check du dimanche est disponible aujourd’hui et sera enregistré comme <b>WEEKLY</b> dans CHECKINS.</p>
+  <button class="btn full" onclick="renderSunday()">${state.checkStatus.sunday==='VALIDATED'?'Consulter / modifier':'Remplir le check du dimanche'}</button>
+ </div>`:'';
+ athleteShell(`<div class="sectiontitle"><div><div class="muted">Bonjour Thibaud</div><h1>Check quotidien</h1></div><span class="pill green">Brouillon auto</span></div><div class="card ${state.checkStatus.morning==='VALIDATED'?'validatedCard':state.checkStatus.morning==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.morning==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Matin</h3>${sleepDurationEntry(state.checkins.morning.sleep)}${slider('Qualité','morning.quality',state.checkins.morning.quality)}${slider('Humeur','morning.mood',state.checkins.morning.mood)}${slider('Fatigue','morning.fatigue',state.checkins.morning.fatigue)}${slider('Stress','morning.stress',state.checkins.morning.stress)}${slider('Énergie','morning.energy',state.checkins.morning.energy)}${slider('Motivation','morning.motivation',state.checkins.morning.motivation)}${slider('Courbatures','morning.soreness',state.checkins.morning.soreness)}${slider('Douleur','morning.pain',state.checkins.morning.pain)}<button class="btn full" onclick="validateDailyCheckin('morning')">Valider le matin</button></div><div class="card ${state.checkStatus.evening==='VALIDATED'?'validatedCard':state.checkStatus.evening==='DRAFT'?'draftCard':''}" style="margin-top:14px"><div class="statusline">${state.checkStatus.evening==='VALIDATED'?'✓ Validé':'À remplir'}</div><h3>Soir</h3>${slider('RPE journée','evening.rpe',state.checkins.evening.rpe)}${slider('Fatigue','evening.fatigue',state.checkins.evening.fatigue)}${slider('Courbatures','evening.soreness',state.checkins.evening.soreness)}${slider('Douleur','evening.pain',state.checkins.evening.pain)}${exactNumberEntry('Vélo quotidien','evening.bike',state.checkins.evening.bike,{min:0,max:300,step:.01,unit:'km'})}<button class="btn full" onclick="validateDailyCheckin('evening')">Valider le soir</button></div>${sundayCard}`,'daily')
+}
 function renderSunday(){const w=state.weekly;athleteShell(`<div class="sectiontitle"><div><div class="muted">Dimanche</div><h1>Check-up hebdomadaire</h1></div><span class="pill orange">Obligatoire</span></div><div class="card ${state.checkStatus.sunday==='VALIDATED'?'validatedCard':state.checkStatus.sunday==='DRAFT'?'draftCard':''}"><div class="statusline">${state.checkStatus.sunday==='VALIDATED'?'✓ Check-up validé':'À remplir'}</div><p class="muted">Toutes les mensurations doivent être confirmées chaque dimanche.</p><div class="measuregrid">${[['Poids (kg)','weight',w.weight],['Taille (cm)','waist',w.waist],['Poitrine (cm)','chest',w.chest],['Hanches (cm)','hips',w.hips],['Bras relâché (cm)','armRelaxed',w.armRelaxed],['Bras contracté (cm)','armFlexed',w.armFlexed],['Cuisse (cm)','thigh',w.thigh],['Mollet (cm)','calf',w.calf],['FC allongé','hrSupine',w.hrSupine],['FC debout','hrStanding',w.hrStanding]].map(x=>`<div class="field"><label>${x[0]}</label><input data-week="${x[1]}" type="number" step=".1" value="${x[2]}"></div>`).join('')}</div><div class="field"><label>Disponibilités semaine suivante</label><input data-week="availability" value="${w.availability}"></div><div class="field"><label>Douleur persistante</label><input data-week="pain" value="${w.pain}"></div><div class="field"><label>Commentaire général</label><textarea data-week="comment">${w.comment}</textarea></div><button class="btn full" onclick="saveSunday()">Valider le check-up du dimanche</button></div>`,'checkup')}
-function saveSunday(){let ok=true;document.querySelectorAll('[data-week]').forEach(el=>{el.classList.remove('invalid');if(el.value.trim()===''){el.classList.add('invalid');ok=false}else state.weekly[el.dataset.week]=isNaN(el.value)?el.value:+el.value});if(!ok)return toast('Toutes les mesures obligatoires doivent être renseignées');state.checkStatus.sunday='VALIDATED';addOrReplaceDailyRecord('measurements',{date:nowIso(),source:'Check-up dimanche',weight:state.weekly.weight,waist:state.weekly.waist,chest:state.weekly.chest,hips:state.weekly.hips,armRelaxed:state.weekly.armRelaxed,armContracted:state.weekly.armFlexed,thigh:state.weekly.thigh,calf:state.weekly.calf,hrSupine:state.weekly.hrSupine,hrStanding:state.weekly.hrStanding});state.athlete.weight=state.weekly.weight;save();renderSunday();toast('Check-up hebdomadaire validé')}
+function saveSunday(){
+ let ok=true;
+ document.querySelectorAll('[data-week]').forEach(el=>{
+  el.classList.remove('invalid');
+  if(el.value.trim()===''){el.classList.add('invalid');ok=false}
+  else state.weekly[el.dataset.week]=isNaN(el.value)?el.value:+el.value
+ });
+ if(!ok)return toast('Toutes les mesures obligatoires doivent être renseignées');
+ const date=nowIso();
+ state.checkStatus.sunday='VALIDATED';
+ addOrReplaceDailyRecord('measurements',{
+  date,source:'Check-up dimanche',weight:state.weekly.weight,waist:state.weekly.waist,chest:state.weekly.chest,
+  hips:state.weekly.hips,armRelaxed:state.weekly.armRelaxed,armContracted:state.weekly.armFlexed,
+  thigh:state.weekly.thigh,calf:state.weekly.calf,hrSupine:state.weekly.hrSupine,hrStanding:state.weekly.hrStanding
+ });
+ addOrReplaceDailyRecord('checkins',{
+  date,
+  source:'Check-up dimanche',
+  checkin_type:'WEEKLY',
+  hrSupine:state.weekly.hrSupine,
+  hrStanding:state.weekly.hrStanding,
+  notes:[
+   state.weekly.availability?`Disponibilités : ${state.weekly.availability}`:'',
+   state.weekly.pain?`Douleur persistante : ${state.weekly.pain}`:'',
+   state.weekly.comment?`Commentaire : ${state.weekly.comment}`:''
+  ].filter(Boolean).join(' · ')
+ });
+ state.athlete.weight=state.weekly.weight;
+ save();renderSunday();toast('Check-up hebdomadaire validé')
+}
 
 PRESCRIPTIONS.push(
 {id:'fingerpower',domain:'B',quality:'Puissance doigts',name:'Puissance doigts — Pan Güllich',guide:'G04',objective:'Puissance',summary:'Choisir 1 à 2 orientations et les exercices officiels',editor:'exerciseLibrary',exerciseGuide:'G04',durationMin:45},

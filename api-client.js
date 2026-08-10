@@ -634,12 +634,15 @@
       state.checkins.morning=emptyMorningCheckin();
       state.checkins.evening=emptyEveningCheckin();
       state.checkStatus.morning='NOT_STARTED';
-      state.checkStatus.evening='NOT_STARTED'
+      state.checkStatus.evening='NOT_STARTED';
+      state.checkStatus.sunday='NOT_STARTED'
     }
     state.dailyCheckDate=today;
 
     const morning=latestCheckinForToday('Check-in matin');
     const evening=latestCheckinForToday('Check-in soir');
+    const weekly=latestCheckinForToday('Check-up dimanche');
+    const sundayToday=new Date().getDay()===0;
 
     // Une saisie locale en cours reste prioritaire. Dans tous les autres cas,
     // la présence d'une ligne du jour dans Google Sheets restaure la carte et son statut.
@@ -671,6 +674,12 @@
       state.checkStatus.evening='VALIDATED'
     }else if(!evening&&dayChanged){
       state.checkStatus.evening='NOT_STARTED'
+    }
+
+    if(sundayToday&&weekly&&state.checkStatus.sunday!=='DRAFT'){
+      state.checkStatus.sunday='VALIDATED'
+    }else if((!weekly&&dayChanged)||!sundayToday){
+      state.checkStatus.sunday='NOT_STARTED'
     }
   }
 
