@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.9.0-beta1';
+const API_RELEASE = '0.5.9.0';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
