@@ -1498,6 +1498,10 @@
   }
 
   function exerciseCatalogIdFor(session,index=0){
+    const selectedExercise=session?.exercises?.[index]||{};
+    const exactCatalogId=selectedExercise.exerciseCatalogId||selectedExercise.exercise_catalog_id||'';
+    if(exactCatalogId)return String(exactCatalogId);
+
     const id=String(session?.templateId||'').toLowerCase();
     const templateMap={
       maxhang:'ex_hang5',repeaters:'ex_hang73',fingerpower:'ex_finger_power',

@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590">
+<link rel="manifest" href="manifest.webmanifest?v=0590b11">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590">
+<link rel="shortcut icon" href="favicon.ico?v=0590b11">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0</title>
+<title>LTS v0.5.9.0-beta1.1</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -317,7 +317,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590"></script><script>
+<script src="api-client.js?v=0590b11"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -382,7 +382,7 @@ const PRESCRIPTIONS=[
 {id:'corearc',domain:'E',quality:'Gainage',name:'Méthode Kevin Arc',guide:'G10',objective:'Tension corporelle',summary:'2 séances/semaine en développement · choix du coach',durationMin:35},
 {id:'mobility',domain:'MOB',quality:'Mobilité',name:'Mobilité complète — 5 articulations',guide:'G11',objective:'Mobilité active',summary:'Hanches · chevilles · thorax · épaules · poignets',durationMin:20},
 {id:'flexibility',domain:'SOUP',quality:'Souplesse',name:'Souplesse courte quotidienne',guide:'G12',objective:'Amplitude passive',summary:'10 à 20 min · 7 à 14 séances courtes/semaine',durationMin:15},
-{id:'prevfinger',domain:'PREV',quality:'Prévention',name:'Prévention doigts',guide:'G20',objective:'Prévention primaire',summary:'Finger Extensions · Rice Bucket · Finger Rolls · suspensions thérapeutiques',durationMin:15,editor:'exerciseLibrary',exerciseGuide:'G20-DOIGTS'},
+{id:'prevfinger',domain:'PREV',quality:'Prévention',name:'Prévention doigts',guide:'G20',objective:'Prévention primaire',summary:'Finger Extensions · Finger Rolls · Finger Curls · Rice Bucket · suspensions thérapeutiques',durationMin:15,editor:'exerciseLibrary',exerciseGuide:'G20-DOIGTS'},
 {id:'prevwrist',domain:'PREV',quality:'Prévention',name:'Prévention poignets',guide:'G20',objective:'Tolérance poignet et avant-bras',summary:'Flexion · extension · pronation · supination · déviations',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-POIGNETS'},
 {id:'prevelbow',domain:'PREV',quality:'Prévention',name:'Prévention coudes',guide:'G20',objective:'Prévention tendinopathies du coude',summary:'Tyler Twist · Reverse Tyler Twist · excentriques poignet',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-COUDES'},
 {id:'prevshoulder',domain:'PREV',quality:'Prévention',name:'Prévention épaules',guide:'G20',objective:'Coiffe et contrôle scapulaire',summary:'Face Pull élastique · rotations externes · Y-T-W · contrôle scapulaire',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-EPAULES'},
@@ -475,7 +475,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.1 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -854,7 +854,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.1</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -2431,9 +2431,122 @@ function setRowsHtml(sets){
  return `<div class="scrollbox"><table class="settable"><thead><tr><th>Bloc</th><th>% / durée</th><th>Charge prévue</th><th>Reps</th><th>RIR</th><th>Repos</th><th></th></tr></thead><tbody id="setRows">${sets.map((s,i)=>`<tr><td><input data-set="${i}" data-k="role" value="${s.role}"></td><td><input data-set="${i}" data-k="${s.work!==undefined?'work':'pct'}" value="${s.work??s.pct??''}"></td><td><input data-set="${i}" data-k="load" value="${s.load===0?'PDC':(s.load||'')}"></td><td><input data-set="${i}" data-k="reps" value="${s.reps??''}"></td><td><input data-set="${i}" data-k="rir" value="${s.rir??''}"></td><td><input data-set="${i}" data-k="rest" value="${s.rest??''}"></td><td><button class="btn ghost" onclick="this.closest('tr').remove()">×</button></td></tr>`).join('')}</tbody></table></div><button class="btn secondary" onclick="addSetRow()">+ Ajouter une série</button>`
 }
 function addSetRow(){document.getElementById('setRows').insertAdjacentHTML('beforeend',`<tr><td><input data-k="role" value="TRAVAIL"></td><td><input data-k="loadMode" value="kg"></td><td><input data-k="load"></td><td><input data-k="reps"></td><td><input data-k="rir"></td><td><input data-k="rest" value="180"></td><td><button class="btn ghost" onclick="this.closest('tr').remove()">×</button></td></tr>`)}
+function normalizeExerciseName(value){
+ return String(value||'').trim().toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^a-z0-9]+/g,' ')
+  .trim()
+}
+function remoteReferenceExercises(){
+ return Array.isArray(state.remoteSnapshot?.reference_exercises)?state.remoteSnapshot.reference_exercises:[]
+}
+function refExerciseText(row){
+ return [
+  row?.exercise_catalog_id,row?.exercise_code,row?.name,row?.exercise_name,row?.exercise_family,row?.family,
+  row?.primary_quality_id,row?.movement_pattern,row?.instructions
+ ].filter(Boolean).join(' ').toLowerCase()
+}
+function remoteExerciseMatchesGuide(row,guide){
+ const text=refExerciseText(row);
+ const family=String(row?.exercise_family||row?.family||'').toLowerCase();
+ const movement=String(row?.movement_pattern||'').toLowerCase();
+ const code=String(row?.exercise_code||'').toLowerCase();
+
+ if(guide==='G20-DOIGTS'){
+  return family==='prevention' && (movement.startsWith('finger_')||code.includes('finger')||text.includes('finger '))
+ }
+ if(guide==='G20-POIGNETS'){
+  return family==='prevention' && (
+   movement.startsWith('wrist_')||text.includes('wrist ')||text.includes('pronation')||
+   text.includes('supination')||text.includes('deviation radiale')||text.includes('deviation ulnaire')
+  )
+ }
+ if(guide==='G20-COUDES'){
+  return family==='prevention' && (
+   text.includes('tyler')||text.includes('elbow')||text.includes('coude')||
+   text.includes('eccentric')||text.includes('excentri')
+  )
+ }
+ if(guide==='G20-EPAULES'){
+  return family==='prevention' && (
+   movement.startsWith('shoulder_')||movement.startsWith('scapular_')||
+   text.includes('face pull')||text.includes('rotation externe')||text.includes('rotation interne')||
+   text.includes('scapular')||text.includes('serratus')||text.includes('raise')
+  )
+ }
+ if(guide==='G20-TRONC'){
+  return family==='prevention' && (
+   movement.startsWith('trunk_')||text.includes('bird dog')||text.includes('dead bug')||
+   text.includes('side plank')||text.includes('core')
+  )
+ }
+ if(guide==='G20-MI'){
+  return family==='prevention' && (
+   text.includes('calf')||text.includes('tibial')||text.includes('hamstring')||
+   text.includes('copenhagen')||text.includes('single leg')||text.includes('hip ')||
+   text.includes('glute')||text.includes('squat')||text.includes('plantar')
+  )
+ }
+ return false
+}
+function normalizeRemoteExercise(row,guide){
+ return {
+  guide,
+  name:row?.name||row?.exercise_name||row?.exercise_code||row?.exercise_catalog_id||'Exercice',
+  category:row?.exercise_family||row?.family||'REF_EXERCISES',
+  sets:'',
+  reps:'',
+  hold:'',
+  rest:'',
+  exerciseCatalogId:row?.exercise_catalog_id||row?.exercise_id||row?.id||'',
+  exerciseCode:row?.exercise_code||'',
+  source:'REF_EXERCISES'
+ }
+}
+function exerciseOptionsForGuide(guide){
+ const local=EXERCISE_LIBRARY.filter(x=>x.guide===guide).map(x=>({...x,source:x.source||'PWA'}));
+ const refs=remoteReferenceExercises().filter(row=>remoteExerciseMatchesGuide(row,guide)).map(row=>normalizeRemoteExercise(row,guide));
+ const merged=new Map();
+
+ local.forEach(x=>merged.set(normalizeExerciseName(x.name),x));
+ refs.forEach(ref=>{
+  const key=normalizeExerciseName(ref.name);
+  const existing=merged.get(key);
+  if(existing){
+   merged.set(key,{
+    ...ref,
+    ...existing,
+    exerciseCatalogId:ref.exerciseCatalogId||existing.exerciseCatalogId||'',
+    exerciseCode:ref.exerciseCode||existing.exerciseCode||'',
+    source:'REF_EXERCISES'
+   })
+  }else{
+   merged.set(key,ref)
+  }
+ });
+
+ return [...merged.values()].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'fr'))
+}
 function exerciseSelector(p){
- const list=EXERCISE_LIBRARY.filter(x=>x.guide===p.exerciseGuide);
- return `<div class="field"><label>Exercices / situations à sélectionner</label><div class="exgrid">${list.map((x,i)=>`<label class="exitem"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}"> <b>${x.name}</b><div class="muted small">${x.category}</div><div class="measuregrid" style="margin-top:7px"><input data-exfield="sets" data-index="${i}" value="${x.sets||''}" placeholder="Séries"><input data-exfield="reps" data-index="${i}" value="${x.reps||''}" placeholder="Reps"><input data-exfield="hold" data-index="${i}" value="${x.hold||''}" placeholder="Durée s"><input data-exfield="rest" data-index="${i}" value="${x.rest||''}" placeholder="Repos s"></div></label>`).join('')}</div></div>`
+ const list=exerciseOptionsForGuide(p.exerciseGuide);
+ const remoteCount=list.filter(x=>x.source==='REF_EXERCISES').length;
+ return `<div class="field"><label>Exercices / situations à sélectionner</label>
+  <div class="muted small" style="margin-bottom:8px">${remoteCount?`${remoteCount} exercice(s) relié(s) à REF_EXERCISES · `:''}les valeurs de séries/reps restent modifiables par le Coach.</div>
+  <div class="exgrid">${list.map((x,i)=>`<label class="exitem"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}"> <b>${x.name}</b>${x.source==='REF_EXERCISES'?'<span class="pill green" style="margin-left:6px">Sheets</span>':''}<div class="muted small">${x.category}${x.exerciseCode?` · ${x.exerciseCode}`:''}</div><div class="measuregrid" style="margin-top:7px"><input data-exfield="sets" data-index="${i}" value="${x.sets??''}" placeholder="Séries"><input data-exfield="reps" data-index="${i}" value="${x.reps??''}" placeholder="Reps"><input data-exfield="hold" data-index="${i}" value="${x.hold??''}" placeholder="Durée s"><input data-exfield="rest" data-index="${i}" value="${x.rest??''}" placeholder="Repos s"></div></label>`).join('')}</div>
+  <div class="card" style="margin-top:12px">
+   <h4>Exercice personnalisé</h4>
+   <p class="muted small">À utiliser lorsqu’un exercice n’est pas encore présent dans le catalogue. Il sera conservé dans la prescription sans modifier REF_EXERCISES.</p>
+   <label><input id="customExerciseEnabled" class="check" type="checkbox"> Ajouter un exercice personnalisé</label>
+   <div class="field" style="margin-top:8px"><label>Nom</label><input id="customExerciseName" placeholder="Ex. variante personnelle"></div>
+   <div class="field"><label>Catégorie</label><input id="customExerciseCategory" value="Personnalisé"></div>
+   <div class="measuregrid">
+    <input id="customExerciseSets" inputmode="numeric" placeholder="Séries">
+    <input id="customExerciseReps" inputmode="numeric" placeholder="Reps">
+    <input id="customExerciseHold" inputmode="numeric" placeholder="Durée s">
+    <input id="customExerciseRest" inputmode="numeric" placeholder="Repos s">
+   </div>
+  </div>
+ </div>`
 }
 
 function climbingEditor(p){
@@ -2473,12 +2586,30 @@ function collectStructuredSets(){
  return [...document.querySelectorAll('#setRows tr')].map(tr=>{const o={};tr.querySelectorAll('input').forEach(inp=>o[inp.dataset.k]=inp.value);return o})
 }
 function collectExercises(guide){
- const all=EXERCISE_LIBRARY.filter(x=>x.guide===guide),selected=[];
+ const all=exerciseOptionsForGuide(guide),selected=[];
  document.querySelectorAll(`input[type=checkbox][data-guide="${guide}"]:checked`).forEach(cb=>{
   const i=+cb.dataset.ex,x=all[i],fields={};
+  if(!x)return;
   document.querySelectorAll(`[data-exfield][data-index="${i}"]`).forEach(inp=>fields[inp.dataset.exfield]=inp.value);
   selected.push({...x,...fields})
- });return selected
+ });
+
+ const customEnabled=document.getElementById('customExerciseEnabled')?.checked;
+ const customName=String(document.getElementById('customExerciseName')?.value||'').trim();
+ if(customEnabled&&customName){
+  selected.push({
+   guide,
+   name:customName,
+   category:String(document.getElementById('customExerciseCategory')?.value||'Personnalisé').trim()||'Personnalisé',
+   sets:document.getElementById('customExerciseSets')?.value||'',
+   reps:document.getElementById('customExerciseReps')?.value||'',
+   hold:document.getElementById('customExerciseHold')?.value||'',
+   rest:document.getElementById('customExerciseRest')?.value||'',
+   custom:true,
+   source:'CUSTOM'
+  })
+ }
+ return selected
 }
 function savePrescription(n,id,containerId=state.pendingContainerId){
  try{
@@ -3319,6 +3450,7 @@ const EXERCISE_LIBRARY=[
 {guide:'G20-DOIGTS',name:'Finger Extensions',category:'Doigts',sets:3,reps:20,rest:45},
 {guide:'G20-DOIGTS',name:'Rice Bucket',category:'Doigts',sets:3,hold:45,rest:45},
 {guide:'G20-DOIGTS',name:'Finger Rolls',category:'Doigts',sets:3,reps:12,rest:60},
+{guide:'G20-DOIGTS',name:'Finger Curls',category:'Doigts',sets:null,reps:null,hold:null,rest:null,exerciseCatalogId:'ex_finger_curls'},
 {guide:'G20-DOIGTS',name:'Suspensions thérapeutiques',category:'Doigts',sets:3,hold:10,rest:120},
 {guide:'G20-POIGNETS',name:'Wrist Curl',category:'Poignets',sets:3,reps:15,rest:60},
 {guide:'G20-POIGNETS',name:'Reverse Wrist Curl',category:'Poignets',sets:3,reps:15,rest:60},
