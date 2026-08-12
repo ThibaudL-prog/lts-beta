@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b12">
+<link rel="manifest" href="manifest.webmanifest?v=0590b13">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b12">
+<link rel="shortcut icon" href="favicon.ico?v=0590b13">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.2</title>
+<title>LTS v0.5.9.0-beta1.3</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -317,7 +317,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b12"></script><script>
+<script src="api-client.js?v=0590b13"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -475,7 +475,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.2 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.3 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -854,7 +854,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.2</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.3</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -2158,6 +2158,51 @@ function createDuplicatedWeek(){
  }
 }
 
+
+function remoteWeekExists(number){
+ return (state.remoteWeeks||[]).some(w=>Number(w.number)===Number(number))
+}
+function weekHasAnyExecution(week){
+ return (week?.sessions||[]).some(session=>{
+  if(session?.execution)return true;
+  if(Array.isArray(session?.executions)&&session.executions.length)return true;
+  return false
+ })
+}
+function canDeleteLocalOnlyWeek(week){
+ return !!week && !remoteWeekExists(week.number) && !weekHasAnyExecution(week)
+}
+function deleteLocalOnlyWeek(number){
+ const week=(state.weeks||[]).find(w=>Number(w.number)===Number(number));
+ if(!week)return toast('Semaine locale introuvable');
+ if(remoteWeekExists(number))return toast('Suppression bloquée : cette semaine existe encore dans Google Sheets');
+ if(weekHasAnyExecution(week))return toast('Suppression bloquée : cette semaine contient des résultats locaux');
+
+ const ok=confirm(`Semaine ${number} existe uniquement dans la PWA et ne contient aucun résultat.\n\nLa supprimer localement ?\n\nGoogle Sheets ne sera pas modifié.`);
+ if(!ok)return;
+
+ state.weeks=(state.weeks||[]).filter(w=>Number(w.number)!==Number(number));
+ if(Number(state.cycle?.currentWeek)===Number(number)){
+  const remaining=(state.weeks||[]).map(w=>Number(w.number)).filter(Number.isFinite);
+  state.cycle.currentWeek=remaining.length?Math.max(...remaining):1
+ }
+ logAudit('DELETE_LOCAL_ONLY','WEEK',week.weekId||`S${number}`,`Suppression locale S${number} · aucune écriture Google Sheets`);
+ save();
+ closeAllSheets();
+ renderWeeks();
+ toast(`Semaine ${number} supprimée localement`)
+}
+function localOnlyWeekRecoveryHtml(week){
+ if(!week||remoteWeekExists(week.number))return '';
+ if(weekHasAnyExecution(week)){
+  return `<div class="protocolnote"><b>Semaine locale uniquement.</b> Elle n’existe plus dans Google Sheets mais contient des résultats locaux : suppression bloquée.</div>`
+ }
+ return `<div class="protocolnote">
+  <b>Semaine locale uniquement.</b> Elle n’existe plus dans Google Sheets. Tu peux la supprimer de la PWA pour libérer son numéro, puis refaire une duplication propre.
+  <div class="dataTools" style="margin-top:9px"><button class="btn danger" onclick="deleteLocalOnlyWeek(${week.number})">Supprimer cette semaine locale</button></div>
+ </div>`
+}
+
 function renderWeeks(){
 if(!state.cycle){return renderCycle()}
 const nextNumber=state.weeks.length===0?1:Math.min(8,Math.max(...state.weeks.map(w=>w.number))+1);
@@ -2166,7 +2211,7 @@ coachShell(`<div class="pagehead"><div><h1>Semaines du cycle</h1><p class="muted
 <div class="card"><h3>Feuille de route de la prochaine semaine</h3><p class="muted">L’application compte les stimuli planifiés, pas seulement les séances.</p><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,nextNumber)).join('')}</div></div>
 <div class="weekgrid" style="margin-top:14px">${[1,2,3,4,5,6,7,8].map(n=>{
  const w=state.weeks.find(x=>Number(x.number)===Number(n));const typ=n===4?'DELOAD':n===8?'TESTS':'TRAVAIL';
- return `<div class="weekcard ${w?'active':''}"><b>S${n}</b><div class="weektype ${n===4?'deload':n===8?'test':'work'}">${typ}</div><p class="muted small">${w?w.status:'Non créée'}</p>${w?weekPlanSyncBadge(w):''}${w?`<button class="btn ghost full" onclick="openWeek(${n})">Construire / modifier</button>`:''}</div>`
+ return `<div class="weekcard ${w?'active':''}"><b>S${n}</b><div class="weektype ${n===4?'deload':n===8?'test':'work'}">${typ}</div><p class="muted small">${w?(w.status+(remoteWeekExists(w.number)?'':' · Local uniquement')):'Non créée'}</p>${w?weekPlanSyncBadge(w):''}${w?`<button class="btn ghost full" onclick="openWeek(${n})">Construire / modifier</button>`:''}</div>`
 }).join('')}</div>`,'weeks')
 }
 function ensureDailyFlexibility(w){
@@ -2194,7 +2239,7 @@ const newWeek={number:next,type:'WORK',status:'DRAFT',sessions:[]};ensureDailyFl
 function openWeek(n){
 const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w)return toast('Semaine introuvable');ensureWeekSessionStructureV0570(w);if(!w.sessions)w.sessions=[];
 document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Semaine ${n}</h2><p class="muted">${w.type} · planification guidée</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
-<div class="weekTopAction"><div class="dataTools"><button class="btn" onclick="openNewSessionContainer(${n})">+ Ajouter une séance</button>${state.weeks.length<8?`<button class="btn secondary" onclick="closeSheet();openDuplicateWeek(${n})">Dupliquer cette semaine</button>`:''}</div><div class="navhint" style="margin-top:6px">Crée un créneau, puis ajoute une ou plusieurs prescriptions à l’intérieur.</div></div>
+${localOnlyWeekRecoveryHtml(w)}<div class="weekTopAction"><div class="dataTools"><button class="btn" onclick="openNewSessionContainer(${n})">+ Ajouter une séance</button>${state.weeks.length<8?`<button class="btn secondary" onclick="closeSheet();openDuplicateWeek(${n})">Dupliquer cette semaine</button>`:''}</div><div class="navhint" style="margin-top:6px">Crée un créneau, puis ajoute une ou plusieurs prescriptions à l’intérieur.</div></div>
 ${renderSessionStructureStatus(w)}${renderG21Status(w)}${renderWeekSummary(w)}${renderG21Alerts(w)}
 <div class="card"><h3>À placer dans cette semaine</h3><div class="reqboard">${GUIDE_REQUIREMENTS.map(r=>requirementCard(r,n)).join('')}</div></div>
 <div class="card" style="margin-top:14px"><div class="sectiontitle"><h3>Planning</h3></div>
