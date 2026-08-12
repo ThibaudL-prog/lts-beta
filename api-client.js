@@ -1950,8 +1950,12 @@
             reps_target_max:Number(exercise?.reps)||Number(first.reps)||Number(p.reps)||'',
             duration_target_s:Number(exercise?.hold)||Number(first.work)||Number(p.workSeconds)||'',
             distance_target_m:'',
-            load_target_value:Number(first.load)||Number(p.load)||'',
-            load_target_unit:first.loadMode||'',
+            load_target_value:(exercise&&exercise.load!==''&&exercise.load!==undefined&&exercise.load!==null)
+              ?Number(exercise.load)
+              :(Number(first.load)||Number(p.load)||''),
+            load_target_unit:(exercise&&exercise.load!==''&&exercise.load!==undefined&&exercise.load!==null)
+              ?(exercise.loadUnit||'kg')
+              :(first.loadMode||''),
             rir_target:first.rir!==''&&first.rir!==undefined?Number(first.rir):(p.rir??''),
             rpe_target:p.rpe??'',
             rest_seconds:Number(exercise?.rest)||Number(first.rest)||Number(p.restSeconds)||'',

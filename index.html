@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b13">
+<link rel="manifest" href="manifest.webmanifest?v=0590b14">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b13">
+<link rel="shortcut icon" href="favicon.ico?v=0590b14">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.3</title>
+<title>LTS v0.5.9.0-beta1.4</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -317,7 +317,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b13"></script><script>
+<script src="api-client.js?v=0590b14"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -475,7 +475,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.3 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.4 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -854,7 +854,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.3</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.4</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -2539,6 +2539,8 @@ function remoteExerciseMatchesGuide(row,guide){
  return false
 }
 function normalizeRemoteExercise(row,guide){
+ const loadMode=String(row?.load_mode||'').trim();
+ const defaultUnit=String(row?.default_unit||'').trim();
  return {
   guide,
   name:row?.name||row?.exercise_name||row?.exercise_code||row?.exercise_catalog_id||'Exercice',
@@ -2547,6 +2549,9 @@ function normalizeRemoteExercise(row,guide){
   reps:'',
   hold:'',
   rest:'',
+  load:'',
+  loadMode,
+  loadUnit:loadMode==='external_load'?(defaultUnit||'kg'):'',
   exerciseCatalogId:row?.exercise_catalog_id||row?.exercise_id||row?.id||'',
   exerciseCode:row?.exercise_code||'',
   source:'REF_EXERCISES'
@@ -2580,8 +2585,20 @@ function exerciseSelector(p){
  const list=exerciseOptionsForGuide(p.exerciseGuide);
  const remoteCount=list.filter(x=>x.source==='REF_EXERCISES').length;
  return `<div class="field"><label>Exercices / situations à sélectionner</label>
-  <div class="muted small" style="margin-bottom:8px">${remoteCount?`${remoteCount} exercice(s) relié(s) à REF_EXERCISES · `:''}les valeurs de séries/reps restent modifiables par le Coach.</div>
-  <div class="exgrid">${list.map((x,i)=>`<label class="exitem"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}"> <b>${x.name}</b>${x.source==='REF_EXERCISES'?'<span class="pill green" style="margin-left:6px">Sheets</span>':''}<div class="muted small">${x.category}${x.exerciseCode?` · ${x.exerciseCode}`:''}</div><div class="measuregrid" style="margin-top:7px"><input data-exfield="sets" data-index="${i}" value="${x.sets??''}" placeholder="Séries"><input data-exfield="reps" data-index="${i}" value="${x.reps??''}" placeholder="Reps"><input data-exfield="hold" data-index="${i}" value="${x.hold??''}" placeholder="Durée s"><input data-exfield="rest" data-index="${i}" value="${x.rest??''}" placeholder="Repos s"></div></label>`).join('')}</div>
+  <div class="muted small" style="margin-bottom:8px">${remoteCount?`${remoteCount} exercice(s) relié(s) à REF_EXERCISES · `:''}séries, reps, charge, durée et repos restent modifiables par le Coach.</div>
+  <div class="exgrid">${list.map((x,i)=>{
+   const suggestedUnit=x.loadUnit||'kg';
+   return `<label class="exitem"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}"> <b>${x.name}</b>${x.source==='REF_EXERCISES'?'<span class="pill green" style="margin-left:6px">Sheets</span>':''}<div class="muted small">${x.category}${x.exerciseCode?` · ${x.exerciseCode}`:''}${x.loadMode==='external_load'?' · charge externe':''}</div>
+    <div class="measuregrid" style="margin-top:7px">
+     <input data-exfield="sets" data-index="${i}" value="${x.sets??''}" placeholder="Séries">
+     <input data-exfield="reps" data-index="${i}" value="${x.reps??''}" placeholder="Reps">
+     <input data-exfield="load" data-index="${i}" type="number" inputmode="decimal" step="0.1" value="${x.load??''}" placeholder="Charge">
+     <input data-exfield="loadUnit" data-index="${i}" value="${x.loadUnit??''}" placeholder="Unité (${suggestedUnit})">
+     <input data-exfield="hold" data-index="${i}" value="${x.hold??''}" placeholder="Durée s">
+     <input data-exfield="rest" data-index="${i}" value="${x.rest??''}" placeholder="Repos s">
+    </div>
+   </label>`
+  }).join('')}</div>
   <div class="card" style="margin-top:12px">
    <h4>Exercice personnalisé</h4>
    <p class="muted small">À utiliser lorsqu’un exercice n’est pas encore présent dans le catalogue. Il sera conservé dans la prescription sans modifier REF_EXERCISES.</p>
@@ -2591,6 +2608,8 @@ function exerciseSelector(p){
    <div class="measuregrid">
     <input id="customExerciseSets" inputmode="numeric" placeholder="Séries">
     <input id="customExerciseReps" inputmode="numeric" placeholder="Reps">
+    <input id="customExerciseLoad" type="number" inputmode="decimal" step="0.1" placeholder="Charge">
+    <input id="customExerciseLoadUnit" value="kg" placeholder="Unité">
     <input id="customExerciseHold" inputmode="numeric" placeholder="Durée s">
     <input id="customExerciseRest" inputmode="numeric" placeholder="Repos s">
    </div>
@@ -2640,6 +2659,9 @@ function collectExercises(guide){
   const i=+cb.dataset.ex,x=all[i],fields={};
   if(!x)return;
   document.querySelectorAll(`[data-exfield][data-index="${i}"]`).forEach(inp=>fields[inp.dataset.exfield]=inp.value);
+  if(fields.load!==undefined&&String(fields.load).trim()!==''&&!String(fields.loadUnit||'').trim()){
+   fields.loadUnit=x.loadUnit||'kg'
+  }
   selected.push({...x,...fields})
  });
 
@@ -2652,6 +2674,8 @@ function collectExercises(guide){
    category:String(document.getElementById('customExerciseCategory')?.value||'Personnalisé').trim()||'Personnalisé',
    sets:document.getElementById('customExerciseSets')?.value||'',
    reps:document.getElementById('customExerciseReps')?.value||'',
+   load:document.getElementById('customExerciseLoad')?.value||'',
+   loadUnit:document.getElementById('customExerciseLoadUnit')?.value||'kg',
    hold:document.getElementById('customExerciseHold')?.value||'',
    rest:document.getElementById('customExerciseRest')?.value||'',
    custom:true,
