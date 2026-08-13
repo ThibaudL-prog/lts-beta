@@ -1471,13 +1471,14 @@
       coordination:'CLIMB_COORDINATION',
       core:'CORE',corearc:'CORE',
       mobility:'MOBILITY',mob:'MOBILITY',
-      flexibility:'FLEXIBILITY',flex:'FLEXIBILITY',
+      flexibility:'FLEXIBILITY',flexjessica20:'FLEXIBILITY',flexjessica38:'FLEXIBILITY',flex:'FLEXIBILITY',
+      lowerstrength:'LOWER_MAX',lowerpower:'LOWER_POWER',
       prevshoulder:'PREVENTION',prevfinger:'PREVENTION',prevwrist:'PREVENTION',
       prevelbow:'PREVENTION',prevlower:'PREVENTION',prevtrunk:'PREVENTION',prev:'PREVENTION',
       runef:'RUN_EASY',run:'RUN_EASY',
       runtempo:'RUN_THRESHOLD',
       run4x4:'RUN_INTERVAL',runshort:'RUN_INTERVAL',runhills:'RUN_INTERVAL',
-      runsprint:'RUN_TEST',speedtech:'RUN_TEST'
+      runsprint:'RUN_TEST',speedtech:'CLIMB_TECHNIQUE'
     };
     return map[id]||'PREVENTION'
   }
@@ -1514,7 +1515,8 @@
       coordination:'ex_climb_coord',
       core:'ex_core_circuit',corearc:'ex_core_circuit',
       mobility:'ex_mobility',mob:'ex_mobility',
-      flexibility:'ex_flexibility',flex:'ex_flexibility',
+      flexibility:'ex_flexibility',flexjessica20:'ex_flex_jp20',flexjessica38:'ex_flex_jp38',flex:'ex_flexibility',
+      lowerstrength:'ex_leg_strength',lowerpower:'ex_leg_power',
       runef:'ex_run',run:'ex_run',runtempo:'ex_run_threshold',
       run4x4:'ex_run_interval',runshort:'ex_run_interval',runhills:'ex_run_interval',
       runsprint:'ex_run_interval',speedtech:'ex_run_interval'
@@ -2252,7 +2254,7 @@
 
   function remoteExerciseCategory(row,referenceMap,fallback='Exercice'){
     const ref=referenceMap.get(String(row.exercise_catalog_id||''))||{};
-    return ref.category||ref.exercise_category||ref.family||ref.discipline||fallback
+    return ref.category||ref.exercise_category||ref.exercise_family||ref.family||ref.discipline||fallback
   }
 
   function remoteCoachNotes(row){
@@ -2272,7 +2274,7 @@
     CLIMB_VOLUME:['ESC'],CLIMB_TECHNIQUE:['ESC','C'],CLIMB_COORDINATION:['ESC','C'],CLIMB_ANAEROBIC:['ESC'],
     CORE:['E'],MOBILITY:['MOB'],FLEXIBILITY:['SOUP'],PREVENTION:['PREV'],
     RUN_EASY:['D'],RUN_LONG:['D'],RUN_THRESHOLD:['D'],RUN_INTERVAL:['D'],RUN_TEST:['D'],
-    LOWER_MAX:['LOWER'],LOWER_END:['LOWER'],LOWER_POWER:['LOWER']
+    LOWER_MAX:['LOWER','LOWER_MAX'],LOWER_END:['LOWER','LOWER_END'],LOWER_POWER:['LOWER','LOWER_POWER']
   };
 
   function remoteDomainsForPrescription(targetRow,templateId,title,exerciseRows){
@@ -2283,7 +2285,7 @@
       q_core:['E'],q_mobility:['MOB'],q_prevention:['PREV'],
       q_aerobic_end:['D'],q_aerobic_threshold:['D'],q_aerobic_power:['D'],
       q_technique:['ESC'],q_full_coord:['ESC','C'],q_anaerobic:['ESC'],
-      q_calisthenics:['CALI'],q_lower_max:['LOWER'],q_lower_end:['LOWER'],q_lower_power:['LOWER']
+      q_calisthenics:['CALI'],q_lower_max:['LOWER','LOWER_MAX'],q_lower_end:['LOWER','LOWER_END'],q_lower_power:['LOWER','LOWER_POWER']
     };
     const domains=[...(REMOTE_STIMULUS_DOMAIN_MAP[code]||qualityMap[quality]||[])];
     if(/^UPPER_(MAX|END|POWER)$/.test(code)||quality.startsWith('q_upper_')){
@@ -2299,7 +2301,7 @@
   function remoteGuideForTemplate(templateId){
     const map={
       maxhang:'G01',pullstrength:'G02',dipstrength:'G03',pullend:'G08',dipend:'G09',
-      corearc:'G10',mobility:'G11',flexibility:'G12',climbtech:'G13-G15 / G21',
+      corearc:'G10',mobility:'G11',flexibility:'G12',flexjessica20:'G12',flexjessica38:'G12',climbtech:'G13-G15 / G21',
       climbfun:'G21',climbmax:'G21',kiltervolume:'G21',runef:'G17',
       prevfinger:'G20',prevshoulder:'G20',lowerstrength:'G23',lowerpower:'G24'
     };
@@ -2409,15 +2411,18 @@
   }
 
   function remoteClimbingConfig(templateId,block,exerciseRows){
-    if(!['climbtech','climbfun','climbmax','kiltervolume'].includes(templateId))return null;
+    if(!['climbtech','climbfun','climbmax','kiltertech','kiltervolume'].includes(templateId))return null;
     const text=[block.name,block.objective_text,block.notes,...exerciseRows.map(remoteCoachNotes)].join(' ');
     const angleMatch=text.match(/(\d{1,2})\s*°/);
     const gradeMatch=text.match(/(Rouge\+|Rose-?|Noir-?|[4-8][abc]\+?)/i);
-    const mode=templateId==='climbfun'?'FREE_FUN':templateId==='climbmax'?'BOULDER_MAX':templateId==='kiltervolume'?'KILTER_VOLUME':'CLIMB_TECH';
+    const mode=templateId==='climbfun'?'FREE_FUN':templateId==='climbmax'?'BOULDER_MAX':templateId==='kiltervolume'?'KILTER_VOLUME':templateId==='kiltertech'?'KILTER_TECH':'CLIMB_TECH';
+    const problemCount=/un seul bloc/i.test(text)?1:0;
     return {
       mode,
+      prescriptionMode:['CLIMB_TECH','KILTER_TECH'].includes(mode)?(problemCount?'PROBLEMS':'DURATION'):'PROBLEMS',
+      durationTargetMin:['CLIMB_TECH','KILTER_TECH'].includes(mode)&&!problemCount?(Number(block.duration_target_min)||null):null,
       angle:angleMatch?`${angleMatch[1]}°`:null,
-      problemCount:/un seul bloc/i.test(text)?1:0,
+      problemCount,
       attemptLimit:5,
       targetGrade:gradeMatch?gradeMatch[1]:'',
       technicalFocus:templateId==='climbtech'?(block.name||'Technique'):'',
