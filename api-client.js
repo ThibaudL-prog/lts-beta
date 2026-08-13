@@ -1687,7 +1687,7 @@
         climbing_attempt_id:`climb-${session.sessionId}-${i+1}`,
         session_execution_id:executionId(session.sessionId),
         problem_external_id:p.name||`bloc-${i+1}`,
-        problem_name:p.name||`Bloc ${i+1}`,
+        problem_name:p.name||[p.exerciseName,`Bloc ${i+1}`].filter(Boolean).join(' — '),
         grading_system:fontGrade?'FONT':'INTERNAL',
         grade_code:fontGrade||rawGrade,
         wall_angle_deg:angleMatch?Number(angleMatch[0]):null,
@@ -1695,7 +1695,7 @@
         result_status:p.flash?'FLASH':p.success?'AFTER_WORK':'NOT_DONE',
         attempts_to_send:p.success?(p.attempts||1):null,
         perceived_difficulty:num(e.quality),
-        notes:p.comment||'',
+        notes:safeJson({comment:p.comment||'',exerciseKey:p.exerciseKey||'',exerciseName:p.exerciseName||''}),
         validation_status:'athlete_entered'
       }
     })
@@ -1915,7 +1915,10 @@
           day:container.day,
           slot:container.slot,
           title:container.title,
-          comment:container.comment||''
+          comment:container.comment||'',
+          warmup:typeof resolvedContainerWarmup==='function'
+            ?resolvedContainerWarmup(week,container)
+            :(container.warmup||null)
         }),
         cancel_reason:''
       });
@@ -2134,17 +2137,22 @@
         ...base,
         type:'CLIMBING',
         angle:executionAngle??null,
-        problems:climbing.map((result,index)=>({
-          name:result.problem_name||`Bloc ${index+1}`,
-          externalId:result.problem_external_id||'',
-          gradingSystem:result.grading_system||'',
-          grade:result.grade_code||'',
-          wallAngleDeg:sheetNumber(result.wall_angle_deg),
-          flash:String(result.result_status||'').toUpperCase()==='FLASH',
-          success:['FLASH','AFTER_WORK'].includes(String(result.result_status||'').toUpperCase()),
-          attempts:sheetNumber(result.attempts_to_send)||sheetNumber(result.attempt_no)||1,
-          comment:result.notes||''
-        })),
+        problems:climbing.map((result,index)=>{
+          const meta=parseJson(result.notes,null);
+          return {
+            name:result.problem_name||`Bloc ${index+1}`,
+            externalId:result.problem_external_id||'',
+            gradingSystem:result.grading_system||'',
+            grade:result.grade_code||'',
+            wallAngleDeg:sheetNumber(result.wall_angle_deg),
+            flash:String(result.result_status||'').toUpperCase()==='FLASH',
+            success:['FLASH','AFTER_WORK'].includes(String(result.result_status||'').toUpperCase()),
+            attempts:sheetNumber(result.attempts_to_send)||sheetNumber(result.attempt_no)||1,
+            comment:meta&&typeof meta==='object'?(meta.comment||''):(result.notes||''),
+            exerciseKey:meta&&typeof meta==='object'?(meta.exerciseKey||''):'',
+            exerciseName:meta&&typeof meta==='object'?(meta.exerciseName||''):''
+          }
+        }),
         quality:sheetNumber(climbing[0]?.perceived_difficulty)
       }
     }
@@ -2262,10 +2270,18 @@
     if(parsed&&typeof parsed==='object'){
       const parts=[];
       if(parsed.notes)parts.push(remoteText(parsed.notes));
-      if(parsed.exercise?.name)parts.push(remoteText(parsed.exercise.name));
+      if(parsed.exercise?.coachComment)parts.push(remoteText(parsed.exercise.coachComment));
+      if(parsed.exercise?.comment)parts.push(remoteText(parsed.exercise.comment));
+      if(parsed.coachComment)parts.push(remoteText(parsed.coachComment));
       return parts.filter(Boolean).join(' · ')
     }
     return remoteText(row?.coach_notes)
+  }
+
+  function remoteExerciseCoachComment(row){
+    const parsed=parseJson(row?.coach_notes,null);
+    if(!parsed||typeof parsed!=='object')return '';
+    return remoteText(parsed.exercise?.coachComment||parsed.exercise?.comment||'')
   }
 
   const REMOTE_STIMULUS_DOMAIN_MAP={
@@ -2338,21 +2354,30 @@
 
   function remoteExerciseObject(row,referenceMap,block){
     const reps=sheetNumber(row.reps_target_max)??sheetNumber(row.reps_target_min)??'';
+    const durationSeconds=sheetNumber(row.duration_target_s);
+    const restSeconds=sheetNumber(row.rest_seconds)??0;
     return {
       name:remoteExerciseName(row,referenceMap),
       category:remoteExerciseCategory(row,referenceMap,block.name||'Exercice'),
       sets:sheetNumber(row.sets_target)??1,
       reps,
-      hold:sheetNumber(row.duration_target_s)??'',
+      hold:durationSeconds??'',
       distance:sheetNumber(row.distance_target_m)??'',
       load:sheetNumber(row.load_target_value)??'',
       loadUnit:row.load_target_unit||'',
       rir:sheetNumber(row.rir_target)??'',
       rpe:sheetNumber(row.rpe_target)??'',
       rest:sheetNumber(row.rest_seconds)??'',
+      targetMode:durationSeconds?'DURATION':'COUNT',
+      targetDurationMin:durationSeconds?durationSeconds/60:null,
+      targetCount:durationSeconds?null:(reps||null),
+      targetUnit:'BLOCKS',
+      restBetweenSeconds:restSeconds,
+      athleteCanLogBlocks:true,
       tempo:row.tempo_code||'',
       progressionRule:remoteText(row.progression_rule_text),
       coachNotes:remoteCoachNotes(row),
+      coachComment:remoteExerciseCoachComment(row),
       exerciseCatalogId:row.exercise_catalog_id||''
     }
   }
@@ -2470,6 +2495,7 @@
           sessionDate:String(s.session_date||'').slice(0,10),
           title:meta.title||fallbackTitle,
           comment:meta.comment||plainInstructions||'',
+          warmup:meta.warmup||null,
           status:'PLANNED',
           sessionOrder:Number(s.priority_order)||sessionIndex+1,
           structureType:'SESSION_CONTAINER',
@@ -2511,7 +2537,7 @@
             structureType:'PRESCRIPTION',
             execution:null,
             notes,
-            coachComment:progressionRule||coachRows.join(' · ')||notes,
+            coachComment:p.coachComment||progressionRule||coachRows.join(' · ')||notes,
             progressionRule,
             structuredSets:structuredSets||undefined,
             exercises:(Array.isArray(p.exercises)&&p.exercises.length)?p.exercises:(structuredSets?undefined:exerciseObjects),

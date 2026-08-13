@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b15">
+<link rel="manifest" href="manifest.webmanifest?v=0590b16">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b15">
+<link rel="shortcut icon" href="favicon.ico?v=0590b16">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.5</title>
+<title>LTS v0.5.9.0-beta1.6</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -47,6 +47,11 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .autoflex{border-left:4px solid #9b6de3}.subreq{font-size:12px;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}
 .climbcfg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .problem{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+.climbingExercisePrescription{border:1px solid #cfdcf4;border-radius:16px;padding:13px;margin:12px 0;background:#fbfdff}
+.climbingExercisePrescription .exerciseTarget{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+.exerciseCoachNote{border-left:4px solid var(--blue);background:#f3f7ff;border-radius:10px;padding:9px 11px;margin:9px 0;white-space:pre-line}
+.warmupCard{border:1px solid #f1c889;background:#fff9ed;border-radius:15px;padding:12px;margin:11px 0}
+.warmupCard h4{margin:0 0 5px}.warmupMeta{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.warmupSteps{margin:8px 0 0;padding-left:20px}.warmupSteps li{margin:5px 0}
 @media(max-width:760px){.execrow{grid-template-columns:54px 1fr 1fr 1fr 42px}.climbcfg{grid-template-columns:1fr}}
 
 .validatedCard{background:#eefaf4!important;border-color:#9bd7b9!important}
@@ -346,7 +351,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b15"></script><script>
+<script src="api-client.js?v=0590b16"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -421,12 +426,12 @@ const PRESCRIPTIONS=[
 {id:'prevshoulder',domain:'PREV',quality:'Prévention',name:'Prévention épaules',guide:'G20',objective:'Coiffe et contrôle scapulaire',summary:'Face Pull élastique · rotations externes · Y-T-W · contrôle scapulaire',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-EPAULES'},
 {id:'prevtrunk',domain:'PREV',quality:'Prévention',name:'Prévention tronc',guide:'G20',objective:'Stabilité lombo-pelvienne',summary:'Bird Dog · Dead Bug · Side Plank',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-TRONC'},
 {id:'prevlower',domain:'PREV',quality:'Prévention',name:'Prévention membres inférieurs',guide:'G20',objective:'Prévention running',summary:'Mollets · tibial · ischios · adducteurs · hanche',durationMin:20,editor:'exerciseLibrary',exerciseGuide:'G20-MI'},
-{id:'climbfun',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Escalade libre / fun',editor:'climbing',climbingMode:'FREE_FUN',guide:'G21',objective:'Plaisir, adhésion et grimpe libre',summary:'Séance libre sans objectif de performance imposé · blocs ajoutables par l’athlète',durationMin:90},
-{id:'climbmax',domain:'ESC',extraDomains:['BM'],quality:'Escalade',name:'Bloc maximal général',editor:'climbing',climbingMode:'BOULDER_MAX',guide:'G21',objective:'Bloc maximal + stimulus doigts',summary:'Compte ESC + BM + B si le stimulus doigts est explicite',durationMin:120},
+{id:'climbfun',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Escalade libre / fun',editor:'climbingExercises',exerciseGuide:'G-CLIMB-ALL',presetExerciseCatalogIds:['ex_climb_general'],climbingMode:'FREE_FUN',guide:'G21',objective:'Plaisir, adhésion et grimpe libre',summary:'Définir l’objectif et le droit de relevé pour chaque exercice d’escalade',durationMin:90},
+{id:'climbmax',domain:'ESC',extraDomains:['BM'],quality:'Escalade',name:'Bloc maximal général',editor:'climbingExercises',exerciseGuide:'G-CLIMB-ALL',presetExerciseCatalogIds:['ex_climb_general'],climbingMode:'BOULDER_MAX',guide:'G21',objective:'Bloc maximal + stimulus doigts',summary:'Objectif, récupération, commentaire et relevé configurables par exercice',durationMin:120},
 {id:'climbtech',domain:'ESC',extraDomains:['C'],quality:'Technique',name:'Escalade technique facile',guide:'G13-G15 / G21',objective:'Coordination, vitesse ou précision',summary:'Prescrire une durée ou un nombre de blocs · choisir les exercices techniques depuis REF_EXERCISES',durationMin:60,editor:'climbingExercises',exerciseGuide:'G13-G15',climbingMode:'CLIMB_TECH'},
 {id:'kiltertech',domain:'ESC',extraDomains:['C'],quality:'Technique',name:'Kilterboard technique',guide:'G21 / G13-G15',objective:'Technique standardisée',summary:'Angle réglable · durée ou nombre de blocs · exercices techniques depuis REF_EXERCISES',durationMin:60,editor:'climbingExercises',exerciseGuide:'G13-G15',climbingMode:'KILTER_TECH'},
-{id:'kilterintense',domain:'ESC',extraDomains:['BM','B'],quality:'Escalade',name:'Kilterboard intense',guide:'G21',objective:'Intensité et doigts',summary:'Angle réglable · intensité élevée à maximale · stimulus doigts par défaut',durationMin:105,editor:'climbing',climbingMode:'KILTER_INTENSE'},
-{id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle réglable · volume contrôlé · stimulus doigts optionnel',durationMin:105,editor:'climbing',climbingMode:'KILTER_VOLUME'},
+{id:'kilterintense',domain:'ESC',extraDomains:['BM','B'],quality:'Escalade',name:'Kilterboard intense',guide:'G21',objective:'Intensité et doigts',summary:'Angle, objectif, récupération et relevé configurables par exercice',durationMin:105,editor:'climbingExercises',exerciseGuide:'G-CLIMB-ALL',presetExerciseCatalogIds:['ex_kilter'],climbingMode:'KILTER_INTENSE'},
+{id:'kiltervolume',domain:'ESC',extraDomains:[],quality:'Escalade',name:'Kilterboard volume',guide:'G21',objective:'Volume standardisé',summary:'Angle, volume, récupération et relevé configurables par exercice',durationMin:105,editor:'climbingExercises',exerciseGuide:'G-CLIMB-ALL',presetExerciseCatalogIds:['ex_kilter'],climbingMode:'KILTER_VOLUME'},
 {id:'lowerstrength',domain:'LOWER',extraDomains:['LOWER_MAX'],quality:'Force maximale bas du corps',name:'Jambes — force',guide:'G23',objective:'Force maximale',summary:'Séance de 30 min maximum · choisir les exercices de force dans REF_EXERCISES',durationMin:30,editor:'exerciseLibrary',exerciseGuide:'G23'},
 {id:'lowerpower',domain:'LOWER',extraDomains:['LOWER_POWER'],quality:'Puissance bas du corps',name:'Jambes — puissance',guide:'G24',objective:'Puissance',summary:'Séance de 30 min maximum · qualité des sauts prioritaire · choisir les exercices dans REF_EXERCISES',durationMin:30,editor:'exerciseLibrary',exerciseGuide:'G24'}
 ];
@@ -510,7 +515,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.5 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.6 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -594,6 +599,77 @@ function addOrReplaceDailyRecord(bucket,record){record={...record,_remote:false}
 
 function newContainerId(){return 'ctr-'+Date.now()+'-'+Math.random().toString(16).slice(2)}
 function slotLabel(slot){return ({matin:'Matin',midi:'Midi',soir:'Soir'})[slot]||'Midi'}
+function htmlEscape(value){return String(value??'').replace(/[&<>"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]))}
+
+const WARMUP_PRESETS=[
+ {id:'GENERAL',title:'Échauffement général progressif',durationMin:10,description:'Mise en route polyvalente avant une séance mixte.',steps:['3 min de mise en mouvement progressive','Mobilité dynamique des articulations sollicitées','Activation légère du tronc et des groupes musculaires principaux','1 à 2 séries d’approche avant la première prescription']},
+ {id:'CLIMBING',title:'Échauffement escalade progressif',durationMin:20,description:'Du général vers la grimpe, sans comptabiliser les blocs d’échauffement.',steps:['5 min de mise en route générale et mobilisation épaules, coudes, poignets','Activation doigts et avant-bras à très faible intensité','5 à 8 min de grimpe facile en privilégiant l’amplitude et la précision','3 à 5 blocs de difficulté croissante, avec récupération libre','Débuter la prescription lorsque les mouvements sont fluides et les doigts prêts']},
+ {id:'FINGER_STRENGTH',title:'Échauffement force des doigts',durationMin:15,description:'Préparation progressive des doigts avant suspensions ou travail spécifique.',steps:['3 à 5 min de mise en route générale','Mobilisation poignets et doigts, puis activation très légère des fléchisseurs','Suspensions faciles ou délestées sur prises confortables','Montées de charge progressives sans fatigue ni échec','Commencer la première série de travail seulement après une série d’approche fluide']},
+ {id:'UPPER_STRENGTH',title:'Échauffement haut du corps',durationMin:15,description:'Préparation épaules, omoplates et mouvement spécifique.',steps:['3 à 5 min de mise en route générale','Mobilité dynamique des épaules, coudes et poignets','Activation scapulaire et coiffe des rotateurs à faible intensité','2 à 4 séries d’approche progressives du mouvement principal','Conserver une exécution rapide et facile avant les séries de travail']},
+ {id:'LOWER_STRENGTH',title:'Échauffement jambes — force',durationMin:15,description:'Mobilité active, stabilité et montées de charge.',steps:['4 min de mise en route générale','Mobilité dynamique hanches, genoux et chevilles','Activation fessiers, ischio-jambiers, quadriceps et mollets','2 à 4 séries d’approche progressives du premier exercice','Commencer sans fatigue résiduelle ni perte d’amplitude']},
+ {id:'LOWER_POWER',title:'Échauffement jambes — puissance',durationMin:15,description:'Préparation nerveuse et technique avant les sauts.',steps:['4 min de mise en route générale','Mobilité dynamique hanches, genoux et chevilles','Activation élastique légère : pogos, montées de genoux ou petits bonds','Répétitions techniques de réception puis sauts sous-maximaux progressifs','Commencer la prescription avec des appuis réactifs et silencieux']},
+ {id:'RUN_EASY',title:'Échauffement running — endurance',durationMin:10,description:'Départ très progressif avant une sortie facile.',steps:['2 min de marche active ou trot très lent','Mobilité dynamique des chevilles, hanches et rachis','6 à 8 min de course facile en accélération très progressive','Adopter ensuite l’allure prévue sans rupture brutale']},
+ {id:'RUN_QUALITY',title:'Échauffement running — séance qualitative',durationMin:18,description:'Préparation complète avant tempo, côtes, intervalles ou sprint.',steps:['8 à 10 min de footing facile progressif','Mobilité dynamique des chevilles et hanches','Gammes techniques choisies : montées de genoux, talons-fesses, foulées actives','3 à 5 accélérations progressives avec récupération complète','Débuter la première répétition sans fatigue accumulée']},
+ {id:'CORE_MOBILITY',title:'Échauffement gainage / mobilité',durationMin:8,description:'Mise en mouvement douce et activation du tronc.',steps:['2 à 3 min de mouvement facile','Mobilité contrôlée du rachis, des épaules et des hanches','Activation respiratoire et gainage de faible intensité','Une répétition d’essai de chaque mouvement principal']},
+ {id:'FLEXIBILITY',title:'Échauffement souplesse',durationMin:6,description:'Élever légèrement la température avant les amplitudes passives.',steps:['3 min de marche, vélo très facile ou mouvements continus','Mobilité articulaire douce des zones travaillées','Entrer progressivement dans les amplitudes, sans rebond ni douleur','Commencer les maintiens longs seulement lorsque les tissus sont chauds']},
+ {id:'PREVENTION',title:'Échauffement prévention localisé',durationMin:8,description:'Préparation légère de la zone ciblée.',steps:['2 à 3 min de mise en route générale','Mobilité douce de la zone concernée','Une série très légère de chaque exercice prévu','Augmenter progressivement l’amplitude ou la résistance sans provoquer de douleur']},
+ {id:'CALISTHENICS',title:'Échauffement calisthénie / skill',durationMin:15,description:'Préparation des poignets, épaules, omoplates et du tronc.',steps:['3 à 5 min de mise en route générale','Mobilité poignets et épaules','Activation scapulaire et gainage léger','Progressions faciles de la figure ou du mouvement choisi','Débuter le travail principal avant toute baisse de qualité']}
+];
+function warmupPresetById(id){return WARMUP_PRESETS.find(item=>item.id===id)||WARMUP_PRESETS[0]}
+function inferWarmupPresetId(prescriptions=[]){
+ const p=prescriptions[0]||{};
+ const id=String(p.templateId||'').toLowerCase(),domain=String(p.domain||'').toUpperCase();
+ if(domain==='ESC'||['climbfun','climbmax','climbtech','kiltertech','kilterintense','kiltervolume','coordination','speedtech','precision'].includes(id))return 'CLIMBING';
+ if(domain==='B'||['maxhang','repeaters','fingerpower'].includes(id))return 'FINGER_STRENGTH';
+ if(domain==='A'||id.includes('pull')||id.includes('dip')||id.includes('push'))return 'UPPER_STRENGTH';
+ if(domain==='LOWER'||domain==='LOWER_MAX'||id==='lowerstrength')return 'LOWER_STRENGTH';
+ if(domain==='LOWER_POWER'||id==='lowerpower')return 'LOWER_POWER';
+ if(domain==='D')return ['runef'].includes(id)?'RUN_EASY':'RUN_QUALITY';
+ if(domain==='SOUP')return 'FLEXIBILITY';
+ if(domain==='PREV')return 'PREVENTION';
+ if(domain==='CALI')return 'CALISTHENICS';
+ if(['E','MOB'].includes(domain))return 'CORE_MOBILITY';
+ return 'GENERAL'
+}
+function resolvedContainerWarmup(w,c){
+ const saved=c?.warmup&&typeof c.warmup==='object'?c.warmup:{};
+ const requestedId=String(saved.presetId||c?.warmupPresetId||'AUTO').toUpperCase();
+ const resolvedId=requestedId==='AUTO'?inferWarmupPresetId(orderedContainerPrescriptions(w,c)):requestedId;
+ const preset=warmupPresetById(resolvedId);
+ return {
+  ...preset,
+  ...(Array.isArray(saved.steps)&&saved.steps.length?saved:{}),
+  presetId:preset.id,
+  selectedPresetId:requestedId,
+  coachNote:String(saved.coachNote||c?.warmupCoachNote||'').trim()
+ }
+}
+function warmupPresetOptions(selected='AUTO'){
+ return `<option value="AUTO" ${selected==='AUTO'?'selected':''}>Automatique — selon la première prescription</option>`+
+  WARMUP_PRESETS.map(item=>`<option value="${item.id}" ${selected===item.id?'selected':''}>${item.title} · ${item.durationMin} min</option>`).join('')
+}
+function warmupCoachEditorHtml(warmup={},prefix='ctr'){
+ const selected=String(warmup?.presetId||'AUTO').toUpperCase();
+ return `<div class="warmupCard"><h4>Échauffement visible par l’Athlète</h4><p class="muted small">Lecture seule côté Athlète : aucun champ à remplir et aucun résultat enregistré.</p>
+  <div class="field"><label>Typologie prédéfinie</label><select id="${prefix}WarmupPreset" onchange="updateWarmupCoachPreview('${prefix}')">${warmupPresetOptions(selected)}</select></div>
+  <div id="${prefix}WarmupPreview" class="protocolnote">${selected==='AUTO'?'Le protocole sera choisi à partir de la première prescription de la séance.':`${warmupPresetById(selected).title} · ${warmupPresetById(selected).durationMin} min`}</div>
+  <div class="field"><label>Précision Coach facultative</label><textarea id="${prefix}WarmupNote" placeholder="Ex. insister sur les poignets ou prolonger la grimpe facile">${htmlEscape(warmup?.coachNote||'')}</textarea></div></div>`
+}
+function updateWarmupCoachPreview(prefix){
+ const id=document.getElementById(`${prefix}WarmupPreset`)?.value||'AUTO';
+ const target=document.getElementById(`${prefix}WarmupPreview`);if(!target)return;
+ if(id==='AUTO'){target.textContent='Le protocole sera choisi à partir de la première prescription de la séance.';return}
+ const preset=warmupPresetById(id);target.textContent=`${preset.title} · ${preset.durationMin} min — ${preset.description}`
+}
+function collectContainerWarmup(prefix){
+ return {presetId:document.getElementById(`${prefix}WarmupPreset`)?.value||'AUTO',coachNote:document.getElementById(`${prefix}WarmupNote`)?.value||''}
+}
+function warmupReadOnlyHtml(warmup,compact=false){
+ if(!warmup)return '';
+ return `<div class="warmupCard"><div class="row" style="padding:0;border:0"><div><h4>Échauffement · ${htmlEscape(warmup.title)}</h4><div class="muted small">À réaliser avant la séance · lecture seule</div></div><span class="pill orange">${Number(warmup.durationMin)||0} min</span></div>
+  ${compact?`<p class="muted small">${htmlEscape(warmup.description)}</p>`:`<p>${htmlEscape(warmup.description)}</p><ol class="warmupSteps">${(warmup.steps||[]).map(step=>`<li>${htmlEscape(step)}</li>`).join('')}</ol>`}
+  ${warmup.coachNote?`<div class="exerciseCoachNote"><b>Précision du Coach</b><br>${htmlEscape(warmup.coachNote)}</div>`:''}</div>`
+}
 
 const SESSION_STRUCTURE_VERSION='1.0';
 const SESSION_STRUCTURE_DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
@@ -889,7 +965,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.5</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.6</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1134,9 +1210,9 @@ const GUIDE_CARD_SCHEMAS={
  flexibility:{type:'EXERCISES',guide:'G12'},
  flexjessica20:{type:'EXERCISES',guide:'G12'},
  flexjessica38:{type:'EXERCISES',guide:'G12'},
- coordination:{type:'EXERCISES',guide:'G13'},
- speedtech:{type:'EXERCISES',guide:'G14'},
- precision:{type:'EXERCISES',guide:'G15'},
+ coordination:{type:'CLIMBING',guide:'G13/G21'},
+ speedtech:{type:'CLIMBING',guide:'G14/G21'},
+ precision:{type:'CLIMBING',guide:'G15/G21'},
  calisthenics:{type:'EXERCISES',guide:'G16'},
  prevfinger:{type:'EXERCISES',guide:'G20'},
  prevwrist:{type:'EXERCISES',guide:'G20'},
@@ -1965,8 +2041,10 @@ function renderWeekSummary(w){
 }
 function previewSessionForAthlete(n,i){
  const w=state.weeks.find(x=>Number(x.number)===Number(n)),s=w?.sessions?.[i];if(!s)return toast('Séance introuvable');
+ const c=w.containers?.find(container=>String(container.containerId)===String(s.containerId));
+ const warmup=c?resolvedContainerWarmup(w,c):null;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Aperçu Athlète</h2><p class="muted">Voici la carte telle qu’elle sera comprise côté Athlète.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
- <div class="previewAthlete"><div class="athsession published athletePreviewInteractive" role="button" tabindex="0" aria-label="Ouvrir la prescription ${s.title}" onclick="closeSheet();openAthleteSession('${s.sessionId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeSheet();openAthleteSession('${s.sessionId}')}"><b>${s.title}</b><div class="sessionmeta"><span class="pill">${s.guide||''}</span><span class="pill">${s.duration||0} min</span><span class="pill">${s.day}</span></div>${sessionDetails(s)}<div class="statusline">${s.execution?'Touchez la carte pour voir le prévu et le réalisé':'Touchez la carte pour voir le prévu et saisir le réalisé'}</div></div></div>
+ ${warmupReadOnlyHtml(warmup,false)}<div class="previewAthlete"><div class="athsession published athletePreviewInteractive" role="button" tabindex="0" aria-label="Ouvrir la prescription ${s.title}" onclick="closeSheet();openAthleteSession('${s.sessionId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeSheet();openAthleteSession('${s.sessionId}')}"><b>${s.title}</b><div class="sessionmeta"><span class="pill">${s.guide||''}</span><span class="pill">${s.duration||0} min</span><span class="pill">${s.day}</span></div>${sessionDetails(s)}<div class="statusline">${s.execution?'Touchez la carte pour voir le prévu et le réalisé':'Touchez la carte pour voir le prévu et saisir le réalisé'}</div></div></div>
  <button type="button" class="btn secondary full" onclick="closeSheet();openAthleteSession('${s.sessionId}')">${s.execution?'Voir le prévu et le réalisé':'Ouvrir comme Athlète'}</button>
  <button type="button" class="btn ghost full" style="margin-top:8px" onclick="closeSheet();editWeekSession(${n},${i})">Modifier la prescription Coach</button></div></div>`)
 }
@@ -2323,7 +2401,8 @@ function renderPlannerPrescription(w,n,p){
   </div></div>`
 }
 function renderPlannerContainer(w,n,c){
- return `<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>
+ const warmup=resolvedContainerWarmup(w,c);
+ return `<div class="sessionContainer"><div class="sessionContainerHeader"><div><div class="sessionSlot">${c.day} · ${slotLabel(c.slot)}</div><h4>${c.title||'Séance'}</h4><div class="muted small">${containerDuration(w,c)} min · ${containerStatus(w,c)}</div><div class="muted small">Échauffement : ${warmup.title} · ${warmup.durationMin} min</div></div><span class="sessionBadge">${containerPrescriptions(w,c).length} prescription(s)</span></div>
   <div class="prescriptionStack">${orderedContainerPrescriptions(w,c).map(p=>renderPlannerPrescription(w,n,p)).join('')}</div>
   <div class="compactActionRow"><button type="button" class="btn ghost" onclick="addPrescriptionToContainer(${n},'${c.containerId}')">+ Prescription</button><button type="button" class="btn ghost" onclick="editSessionContainer(${n},'${c.containerId}')">Modifier séance</button>
    <details class="actionDisclosure"><summary>Plus</summary><div class="actionDisclosureBody">
@@ -2526,11 +2605,12 @@ function openNewSessionContainer(n,defaultDay=selectedWeekPlannerDay(n)){
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Nouvelle séance</h2><p class="muted">Un créneau réel pouvant contenir plusieurs prescriptions.</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
  <div class="measuregrid"><div class="field"><label>Jour</label><select id="ctrDay">${WEEK_PLANNER_DAYS.map(d=>`<option ${d===defaultDay?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Créneau</label><select id="ctrSlot"><option value="matin">Matin</option><option value="midi">Midi</option><option value="soir">Soir</option></select></div></div>
  <div class="field"><label>Nom de la séance</label><input id="ctrTitle" value="Séance"></div><div class="field"><label>Commentaire Coach</label><textarea id="ctrComment"></textarea></div>
+ ${warmupCoachEditorHtml({},'ctr')}
  <button class="btn full" onclick="saveNewSessionContainer(${n})">Créer puis ajouter une prescription</button></div></div>`)
 }
 function saveNewSessionContainer(n){
  const w=state.weeks.find(x=>Number(x.number)===Number(n));if(!w)return;
- const c={containerId:newContainerId(),day:ctrDay.value,slot:ctrSlot.value,title:ctrTitle.value||'Séance',comment:ctrComment.value||'',status:'PLANNED',sessionOrder:nextSessionOrder(w),structureType:'SESSION_CONTAINER'};
+ const c={containerId:newContainerId(),day:ctrDay.value,slot:ctrSlot.value,title:ctrTitle.value||'Séance',comment:ctrComment.value||'',warmup:collectContainerWarmup('ctr'),status:'PLANNED',sessionOrder:nextSessionOrder(w),structureType:'SESSION_CONTAINER'};
  w.containers=w.containers||[];w.containers.push(c);window.weekPlannerDayByWeek[n]=c.day;state.pendingContainerId=c.containerId;save();closeSheet();chooseRequirement(n)
 }
 function addPrescriptionToContainer(n,id){state.pendingContainerId=id;chooseRequirement(n,id)}
@@ -2539,11 +2619,12 @@ function editSessionContainer(n,id){
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>Modifier la séance</h2></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>
  <div class="measuregrid"><div class="field"><label>Jour</label><select id="editCtrDay">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d=>`<option ${d===c.day?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Créneau</label><select id="editCtrSlot">${['matin','midi','soir'].map(s=>`<option value="${s}" ${s===c.slot?'selected':''}>${slotLabel(s)}</option>`).join('')}</select></div></div>
  <div class="field"><label>Nom</label><input id="editCtrTitle" value="${c.title||''}"></div><div class="field"><label>Commentaire</label><textarea id="editCtrComment">${c.comment||''}</textarea></div>
+ ${warmupCoachEditorHtml(c.warmup||{presetId:c.warmupPresetId||'AUTO',coachNote:c.warmupCoachNote||''},'editCtr')}
  <button class="btn full" onclick="saveSessionContainer(${n},'${id}')">Enregistrer</button></div></div>`)
 }
 function saveSessionContainer(n,id){
  const {week:w,container:c}=findContainer(n,id);if(!c)return;
- c.day=editCtrDay.value;c.slot=editCtrSlot.value;c.title=editCtrTitle.value;c.comment=editCtrComment.value;
+ c.day=editCtrDay.value;c.slot=editCtrSlot.value;c.title=editCtrTitle.value;c.comment=editCtrComment.value;c.warmup=collectContainerWarmup('editCtr');
  (w.sessions||[]).filter(p=>p.containerId===id).forEach(p=>{p.day=c.day;p.slot=c.slot});
  markWeekDraftAfterChange(w);save();closeSheet();openWeek(n);logAudit('UPDATE','SESSION_CONTAINER',id,c.title);toast('Séance modifiée')
 }
@@ -2634,6 +2715,7 @@ function remoteExerciseMatchesGuide(row,guide){
    text.includes('stretch')||text.includes('souplesse')||text.includes('jessica')
   )
  }
+ if(guide==='G-CLIMB-ALL')return family==='climbing'||catalogId.includes('climb')||catalogId.includes('kilter')||code.includes('climb')||code.includes('kilter');
  if(['G13','G14','G15','G13-G15'].includes(guide)){
   const technicalQualities=['q_technique','q_hand_coord','q_foot_coord','q_full_coord'];
   const genericClimb=['climb_general','kilter_max'].some(value=>code.includes(value));
@@ -2700,7 +2782,7 @@ function normalizeRemoteExercise(row,guide){
  }
 }
 function exerciseOptionsForGuide(guide){
- const localGuides=guide==='G13-G15'?['G13','G14','G15']:[guide];
+ const localGuides=guide==='G13-G15'?['G13','G14','G15']:guide==='G-CLIMB-ALL'?['G-CLIMB-ALL','G13','G14','G15']:[guide];
  const local=EXERCISE_LIBRARY.filter(x=>localGuides.includes(x.guide)).map(x=>({...x,source:x.source||'PWA'}));
  const refs=remoteReferenceExercises().filter(row=>remoteExerciseMatchesGuide(row,guide)).map(row=>normalizeRemoteExercise(row,guide));
  const technicalGuide=['G13','G14','G15','G13-G15'].includes(guide);
@@ -2738,9 +2820,35 @@ function sameExerciseReference(a,b){
  if(aId&&bId)return aId===bId;
  return normalizeExerciseName(a?.name)===normalizeExerciseName(b?.name)
 }
+function toggleClimbingExerciseTarget(select){
+ const root=select?.closest('.climbingExerciseFields');if(!root)return;
+ root.querySelectorAll('[data-climbing-target]').forEach(panel=>panel.hidden=panel.dataset.climbingTarget!==select.value)
+}
+function climbingExerciseEditorFields(value,index){
+ const mode=value.targetMode||(Number(value.targetCount)>0?'COUNT':(value.durationMin||value.targetDurationMin||value.hold?'DURATION':'DURATION'));
+ const duration=value.targetDurationMin??value.durationMin??(Number(value.hold)>0?Math.round(Number(value.hold)/60):15);
+ const count=value.targetCount??(mode==='COUNT'?(value.reps??''):'');
+ const unit=value.targetUnit||'BLOCKS';
+ const rest=value.restBetweenSeconds??value.rest??30;
+ const canLog=value.athleteCanLogBlocks===true||String(value.athleteCanLogBlocks).toLowerCase()==='true';
+ return `<div class="climbingExerciseFields" style="margin-top:9px">
+  <div class="field"><label>Objectif imposé pour cet exercice</label><select data-exfield="targetMode" data-index="${index}" onchange="toggleClimbingExerciseTarget(this)"><option value="DURATION" ${mode==='DURATION'?'selected':''}>Temps total en minutes</option><option value="COUNT" ${mode==='COUNT'?'selected':''}>Quantité imposée</option></select></div>
+  <div class="field" data-climbing-target="DURATION" ${mode==='DURATION'?'':'hidden'}><label>Temps total de l’exercice (min)</label><input data-exfield="targetDurationMin" data-index="${index}" type="number" min="1" step="1" value="${duration}" placeholder="Ex. 20"></div>
+  <div class="measuregrid" data-climbing-target="COUNT" ${mode==='COUNT'?'':'hidden'}>
+   <div class="field"><label>Quantité</label><input data-exfield="targetCount" data-index="${index}" type="number" min="1" step="1" value="${count}" placeholder="Ex. 15 ou 30"></div>
+   <div class="field"><label>Unité</label><select data-exfield="targetUnit" data-index="${index}"><option value="BLOCKS" ${unit==='BLOCKS'?'selected':''}>Blocs</option><option value="ATTEMPTS" ${unit==='ATTEMPTS'?'selected':''}>Essais</option></select></div>
+  </div>
+  <div class="measuregrid">
+   <div class="field"><label>Pause entre blocs / essais (s)</label><input data-exfield="restBetweenSeconds" data-index="${index}" type="number" min="0" step="5" value="${rest}" placeholder="Facultatif"></div>
+   <div class="field"><label>Saisie bloc par bloc par l’Athlète</label><select data-exfield="athleteCanLogBlocks" data-index="${index}"><option value="false" ${canLog?'':'selected'}>Non — consigne en lecture seule</option><option value="true" ${canLog?'selected':''}>Oui — autoriser le relevé</option></select></div>
+  </div>
+  <div class="field"><label>Commentaire Coach pour cet exercice</label><textarea data-exfield="coachComment" data-index="${index}" placeholder="Ex. coordination de pieds, pieds/mains, niveau ou consigne technique">${htmlEscape(value.coachComment||'')}</textarea></div>
+ </div>`
+}
 function exerciseSelector(p,selectedExercises=[]){
  const selected=Array.isArray(selectedExercises)?selectedExercises:[];
  const custom=selected.find(x=>x?.custom||x?.source==='CUSTOM')||null;
+ const climbing=prescriptionUsesClimbing(p);
  const catalog=exerciseOptionsForGuide(p.exerciseGuide);
  const missingSelected=selected.filter(item=>!item?.custom&&item?.source!=='CUSTOM'&&!catalog.some(option=>sameExerciseReference(option,item)));
  const list=[...catalog,...missingSelected];
@@ -2748,22 +2856,22 @@ function exerciseSelector(p,selectedExercises=[]){
  window.exerciseSelectorOptions[p.exerciseGuide]=list;
  const remoteCount=list.filter(x=>x.source==='REF_EXERCISES').length;
  return `<div class="field"><label>Exercices / situations à sélectionner</label>
-  <div class="muted small" style="margin-bottom:8px">${remoteCount?`${remoteCount} exercice(s) relié(s) à REF_EXERCISES · `:''}séries, reps, charge, durée et repos restent modifiables par le Coach.</div>
+  <div class="muted small" style="margin-bottom:8px">${remoteCount?`${remoteCount} exercice(s) relié(s) à REF_EXERCISES · `:''}${climbing?'objectif, récupération, commentaire et droit de saisie sont définis exercice par exercice.':'séries, reps, charge, durée, repos et commentaire restent modifiables par le Coach.'}</div>
   <div class="exgrid">${list.map((x,i)=>{
    const existing=selected.find(item=>sameExerciseReference(x,item));
-   const preset=(p.presetExerciseCatalogIds||[]).includes(x.exerciseCatalogId);
+   const preset=(p.presetExerciseCatalogIds||[]).includes(x.exerciseCatalogId)&&list.findIndex(item=>sameExerciseReference(item,x))===i;
    const value=existing?{...x,...existing}:x;
    const suggestedUnit=value.loadUnit||'kg';
-   return `<label class="exitem ${existing||preset?'selected':''}"><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}" ${existing||preset?'checked':''} onchange="this.closest('.exitem').classList.toggle('selected',this.checked)"> <b>${value.name}</b>${value.source==='REF_EXERCISES'?'<span class="pill green" style="margin-left:6px">Sheets</span>':''}<div class="muted small">${value.category}${value.exerciseCode?` · ${value.exerciseCode}`:''}${value.loadMode==='external_load'?' · charge externe':''}</div>
-    <div class="measuregrid" style="margin-top:7px">
+   return `<div class="exitem ${existing||preset?'selected':''}"><label><input type="checkbox" data-ex="${i}" data-guide="${p.exerciseGuide}" ${existing||preset?'checked':''} onchange="this.closest('.exitem').classList.toggle('selected',this.checked)"> <b>${htmlEscape(value.name)}</b>${value.source==='REF_EXERCISES'?'<span class="pill green" style="margin-left:6px">Sheets</span>':''}</label><div class="muted small">${htmlEscape(value.category)}${value.exerciseCode?` · ${htmlEscape(value.exerciseCode)}`:''}${value.loadMode==='external_load'?' · charge externe':''}</div>
+    ${climbing?climbingExerciseEditorFields(value,i):`<div class="measuregrid" style="margin-top:7px">
      <input data-exfield="sets" data-index="${i}" value="${value.sets??''}" placeholder="Séries">
      <input data-exfield="reps" data-index="${i}" value="${value.reps??''}" placeholder="Reps">
      <input data-exfield="load" data-index="${i}" type="number" inputmode="decimal" step="0.1" value="${value.load??''}" placeholder="Charge">
      <input data-exfield="loadUnit" data-index="${i}" value="${value.loadUnit??''}" placeholder="Unité (${suggestedUnit})">
      <input data-exfield="hold" data-index="${i}" value="${value.hold??''}" placeholder="Durée s">
      <input data-exfield="rest" data-index="${i}" value="${value.rest??''}" placeholder="Repos s">
-    </div>
-   </label>`
+    </div><div class="field"><label>Commentaire Coach pour cet exercice</label><textarea data-exfield="coachComment" data-index="${i}" placeholder="Consigne visible par l’Athlète">${htmlEscape(value.coachComment||'')}</textarea></div>`}
+   </div>`
   }).join('')}</div>
   <div class="card" style="margin-top:12px">
    <h4>Exercice personnalisé</h4>
@@ -2771,42 +2879,35 @@ function exerciseSelector(p,selectedExercises=[]){
    <label><input id="customExerciseEnabled" class="check" type="checkbox" ${custom?'checked':''}> Ajouter un exercice personnalisé</label>
    <div class="field" style="margin-top:8px"><label>Nom</label><input id="customExerciseName" value="${custom?.name||''}" placeholder="Ex. variante personnelle"></div>
    <div class="field"><label>Catégorie</label><input id="customExerciseCategory" value="${custom?.category||'Personnalisé'}"></div>
-   <div class="measuregrid">
+   ${climbing?`<div class="climbingExerciseFields">
+    <div class="field"><label>Objectif imposé</label><select id="customClimbingTargetMode" onchange="toggleClimbingExerciseTarget(this)"><option value="DURATION" ${custom?.targetMode!=='COUNT'?'selected':''}>Temps total en minutes</option><option value="COUNT" ${custom?.targetMode==='COUNT'?'selected':''}>Quantité imposée</option></select></div>
+    <div class="field" data-climbing-target="DURATION" ${custom?.targetMode==='COUNT'?'hidden':''}><label>Temps total (min)</label><input id="customClimbingDuration" type="number" min="1" value="${custom?.targetDurationMin??15}"></div>
+    <div class="measuregrid" data-climbing-target="COUNT" ${custom?.targetMode==='COUNT'?'':'hidden'}><div class="field"><label>Quantité</label><input id="customClimbingCount" type="number" min="1" value="${custom?.targetCount??''}"></div><div class="field"><label>Unité</label><select id="customClimbingUnit"><option value="BLOCKS" ${custom?.targetUnit!=='ATTEMPTS'?'selected':''}>Blocs</option><option value="ATTEMPTS" ${custom?.targetUnit==='ATTEMPTS'?'selected':''}>Essais</option></select></div></div>
+    <div class="measuregrid"><div class="field"><label>Pause entre blocs / essais (s)</label><input id="customClimbingRest" type="number" min="0" value="${custom?.restBetweenSeconds??30}"></div><div class="field"><label>Saisie bloc par bloc</label><select id="customClimbingAthleteLog"><option value="false" ${custom?.athleteCanLogBlocks?'':'selected'}>Non</option><option value="true" ${custom?.athleteCanLogBlocks?'selected':''}>Oui</option></select></div></div>
+    <div class="field"><label>Commentaire Coach pour cet exercice</label><textarea id="customExerciseCoachComment">${htmlEscape(custom?.coachComment||'')}</textarea></div>
+   </div>`:`<div class="measuregrid">
     <input id="customExerciseSets" inputmode="numeric" value="${custom?.sets??''}" placeholder="Séries">
     <input id="customExerciseReps" inputmode="numeric" value="${custom?.reps??''}" placeholder="Reps">
     <input id="customExerciseLoad" type="number" inputmode="decimal" step="0.1" value="${custom?.load??''}" placeholder="Charge">
     <input id="customExerciseLoadUnit" value="${custom?.loadUnit||'kg'}" placeholder="Unité">
     <input id="customExerciseHold" inputmode="numeric" value="${custom?.hold??''}" placeholder="Durée s">
     <input id="customExerciseRest" inputmode="numeric" value="${custom?.rest??''}" placeholder="Repos s">
-   </div>
+   </div><div class="field"><label>Commentaire Coach pour cet exercice</label><textarea id="customExerciseCoachComment">${htmlEscape(custom?.coachComment||'')}</textarea></div>`}
   </div>
  </div>`
 }
 
 function prescriptionUsesExerciseLibrary(p){return ['exerciseLibrary','climbingExercises'].includes(p?.editor)}
 function prescriptionUsesClimbing(p){return ['climbing','climbingExercises'].includes(p?.editor)}
-function toggleClimbingPrescriptionMode(value,prefix='climb'){
- const duration=document.getElementById(`${prefix}DurationWrap`),problems=document.getElementById(`${prefix}ProblemsWrap`);
- if(duration)duration.hidden=value!=='DURATION';
- if(problems)problems.hidden=value!=='PROBLEMS'
-}
-function syncClimbingDurationTarget(value){
- const total=document.getElementById('prTotalDuration');
- if(total&&Number(value)>0)total.value=value
-}
 function climbingEditor(p){
  const isKilter=p.climbingMode&&p.climbingMode.startsWith('KILTER');
- const isTechnical=['CLIMB_TECH','KILTER_TECH'].includes(p.climbingMode);
- const defaultProblems=p.climbingMode==='FREE_FUN'?0:(p.climbingMode==='KILTER_VOLUME'?8:4);
  return `<div class="climbcfg">
  ${isKilter?`<div class="field"><label>Angle Kilterboard</label><select id="climbAngle"><option>20°</option><option selected>30°</option><option>40°</option><option>50°</option><option>60°</option><option>70°</option></select></div>`:''}
- ${isTechnical?`<div class="field"><label>Prescription mesurée par</label><select id="climbPrescriptionMode" onchange="toggleClimbingPrescriptionMode(this.value)"><option value="DURATION" selected>Durée imposée</option><option value="PROBLEMS">Nombre de blocs imposé</option></select></div>
- <div class="field climbingMetricFields" id="climbDurationWrap"><label>Temps technique imposé (min)</label><input id="climbDurationTarget" type="number" min="1" value="${p.durationMin||60}" oninput="syncClimbingDurationTarget(this.value)"></div>
- <div class="field climbingMetricFields" id="climbProblemsWrap" hidden><label>Nombre de blocs imposé</label><input id="climbProblems" type="number" min="1" value="${defaultProblems}"></div>`:`<input id="climbPrescriptionMode" type="hidden" value="PROBLEMS"><div class="field" id="climbProblemsWrap"><label>Nombre de blocs prévus</label><input id="climbProblems" type="number" min="0" value="${defaultProblems}"></div>`}
  <div class="field"><label>Essais maximum par bloc</label><input id="climbAttempts" type="number" value="${p.climbingMode==='FREE_FUN'?0:(p.climbingMode==='KILTER_VOLUME'?4:5)}"></div>
  <div class="field"><label>Cotation / niveau cible</label><input id="climbGrade" placeholder="Ex. 6B–6C"></div>
  <div class="field"><label>Stimulus doigts significatif</label><select id="climbFinger"><option value="false">Non</option><option value="true" ${p.climbingMode==='KILTER_INTENSE'?'selected':''}>Oui</option></select></div>
  <div class="field"><label>Objectif technique</label><input id="climbFocus" placeholder="Précision, coordination, lecture…"></div>
+ <div class="protocolnote">La durée ou la quantité, la récupération, le commentaire Coach et l’autorisation de relevé sont configurés dans chaque exercice sélectionné ci-dessus.</div>
  </div>`
 }
 
@@ -2830,13 +2931,15 @@ function configurePrescription(n,id,containerId=state.pendingContainerId){
  ${p.rpe!=null?`<div class="field"><label>RPE cible</label><input id="prRpe" type="number" value="${p.rpe}"></div>`:''}
  <div class="field"><label>Charge / allure / variante</label><input id="prLoad" placeholder="À préciser par le coach"></div></div>`:''}
  <div class="field"><label>Consigne générale</label><textarea id="prNotes">${p.summary}</textarea></div>
+ <div class="field"><label>Commentaire Coach — prescription entière</label><textarea id="prCoachComment" placeholder="Visible par l’Athlète pour tous les types d’exercice"></textarea></div>
  </div></div><button type="button" class="btn full" onclick="savePrescription(${n},'${id}','${containerId||''}')">Ajouter au planning</button></div></div>`)
 }
 function collectStructuredSets(){
  return [...document.querySelectorAll('#setRows tr')].map(tr=>{const o={};tr.querySelectorAll('input').forEach(inp=>o[inp.dataset.k]=inp.value);return o})
 }
-function collectExercises(guide){
+function collectExercises(guide,p=null){
  const all=window.exerciseSelectorOptions?.[guide]||exerciseOptionsForGuide(guide),selected=[];
+ const climbing=prescriptionUsesClimbing(p)||!!document.querySelector('[data-exfield="targetMode"]');
  document.querySelectorAll(`input[type=checkbox][data-guide="${guide}"]:checked`).forEach(cb=>{
   const i=+cb.dataset.ex,x=all[i],fields={};
   if(!x)return;
@@ -2844,27 +2947,63 @@ function collectExercises(guide){
   if(fields.load!==undefined&&String(fields.load).trim()!==''&&!String(fields.loadUnit||'').trim()){
    fields.loadUnit=x.loadUnit||'kg'
   }
+  if(climbing){
+   fields.targetMode=fields.targetMode==='COUNT'?'COUNT':'DURATION';
+   fields.targetDurationMin=fields.targetMode==='DURATION'?(Number(fields.targetDurationMin)||null):null;
+   fields.targetCount=fields.targetMode==='COUNT'?(Number(fields.targetCount)||null):null;
+   fields.targetUnit=fields.targetUnit==='ATTEMPTS'?'ATTEMPTS':'BLOCKS';
+   fields.restBetweenSeconds=Number(fields.restBetweenSeconds)||0;
+   fields.athleteCanLogBlocks=fields.athleteCanLogBlocks==='true';
+   fields.hold=fields.targetMode==='DURATION'&&fields.targetDurationMin?fields.targetDurationMin*60:'';
+   fields.reps=fields.targetMode==='COUNT'&&fields.targetCount?fields.targetCount:'';
+   fields.rest=fields.restBetweenSeconds;
+  }
   selected.push({...x,...fields})
  });
 
  const customEnabled=document.getElementById('customExerciseEnabled')?.checked;
  const customName=String(document.getElementById('customExerciseName')?.value||'').trim();
  if(customEnabled&&customName){
-  selected.push({
+  const customExercise={
    guide,
    name:customName,
    category:String(document.getElementById('customExerciseCategory')?.value||'Personnalisé').trim()||'Personnalisé',
-   sets:document.getElementById('customExerciseSets')?.value||'',
-   reps:document.getElementById('customExerciseReps')?.value||'',
-   load:document.getElementById('customExerciseLoad')?.value||'',
-   loadUnit:document.getElementById('customExerciseLoadUnit')?.value||'kg',
-   hold:document.getElementById('customExerciseHold')?.value||'',
-   rest:document.getElementById('customExerciseRest')?.value||'',
+   coachComment:document.getElementById('customExerciseCoachComment')?.value||'',
    custom:true,
    source:'CUSTOM'
-  })
+  };
+  if(climbing){
+   customExercise.targetMode=document.getElementById('customClimbingTargetMode')?.value==='COUNT'?'COUNT':'DURATION';
+   customExercise.targetDurationMin=customExercise.targetMode==='DURATION'?(Number(document.getElementById('customClimbingDuration')?.value)||null):null;
+   customExercise.targetCount=customExercise.targetMode==='COUNT'?(Number(document.getElementById('customClimbingCount')?.value)||null):null;
+   customExercise.targetUnit=document.getElementById('customClimbingUnit')?.value==='ATTEMPTS'?'ATTEMPTS':'BLOCKS';
+   customExercise.restBetweenSeconds=Number(document.getElementById('customClimbingRest')?.value)||0;
+   customExercise.athleteCanLogBlocks=document.getElementById('customClimbingAthleteLog')?.value==='true';
+   customExercise.hold=customExercise.targetDurationMin?customExercise.targetDurationMin*60:'';
+   customExercise.reps=customExercise.targetCount||'';
+   customExercise.rest=customExercise.restBetweenSeconds
+  }else{
+   customExercise.sets=document.getElementById('customExerciseSets')?.value||'';
+   customExercise.reps=document.getElementById('customExerciseReps')?.value||'';
+   customExercise.load=document.getElementById('customExerciseLoad')?.value||'';
+   customExercise.loadUnit=document.getElementById('customExerciseLoadUnit')?.value||'kg';
+   customExercise.hold=document.getElementById('customExerciseHold')?.value||'';
+   customExercise.rest=document.getElementById('customExerciseRest')?.value||''
+  }
+  selected.push(customExercise)
  }
  return selected
+}
+function invalidClimbingExercise(exercises=[]){
+ return exercises.find(exercise=>exercise.targetMode==='COUNT'?!Number(exercise.targetCount):!Number(exercise.targetDurationMin))||null
+}
+function climbingSummaryFromExercises(exercises=[]){
+ return {
+  durationTargetMin:exercises.filter(x=>x.targetMode==='DURATION').reduce((sum,x)=>sum+(Number(x.targetDurationMin)||0),0)||null,
+  problemCount:exercises.filter(x=>x.targetMode==='COUNT'&&x.targetUnit==='BLOCKS').reduce((sum,x)=>sum+(Number(x.targetCount)||0),0),
+  attemptTarget:exercises.filter(x=>x.targetMode==='COUNT'&&x.targetUnit==='ATTEMPTS').reduce((sum,x)=>sum+(Number(x.targetCount)||0),0),
+  athleteCanLogBlocks:exercises.some(x=>x.athleteCanLogBlocks===true)
+ }
 }
 function savePrescription(n,id,containerId=state.pendingContainerId){
  try{
@@ -2879,21 +3018,20 @@ function savePrescription(n,id,containerId=state.pendingContainerId){
  if(!ctr)return toast('Séance de destination introuvable');
  const structured=document.getElementById('setRows')?collectStructuredSets():null;
  const usesExercises=prescriptionUsesExerciseLibrary(p),usesClimbing=prescriptionUsesClimbing(p);
- const exercises=usesExercises?collectExercises(p.exerciseGuide):null;
+ const exercises=usesExercises?collectExercises(p.exerciseGuide,p):null;
  if(usesExercises&&exercises.length===0)return toast('Sélectionne au moins un exercice de REF_EXERCISES');
+ const invalidExercise=usesClimbing?invalidClimbingExercise(exercises||[]):null;
+ if(invalidExercise)return toast(`Renseigne l’objectif de « ${invalidExercise.name} »`);
  let extra=[...(p.extraDomains||[])];
- const metricMode=document.getElementById('climbPrescriptionMode')?.value||'PROBLEMS';
- const rawProblemCount=Number(document.getElementById('climbProblems')?.value);
- const rawDurationTarget=Number(document.getElementById('climbDurationTarget')?.value);
- const isTechnicalClimbing=usesClimbing&&['CLIMB_TECH','KILTER_TECH'].includes(p.climbingMode);
- if(isTechnicalClimbing&&metricMode==='DURATION'&&!(rawDurationTarget>0))return toast('Renseigne un temps technique supérieur à 0');
- if(isTechnicalClimbing&&metricMode==='PROBLEMS'&&!(rawProblemCount>0))return toast('Renseigne un nombre de blocs supérieur à 0');
+ const climbSummary=usesClimbing?climbingSummaryFromExercises(exercises||[]):{};
  const climbing=usesClimbing?{
    mode:p.climbingMode,
-   prescriptionMode:isTechnicalClimbing?metricMode:'PROBLEMS',
-   durationTargetMin:isTechnicalClimbing&&metricMode==='DURATION'?rawDurationTarget:null,
+   prescriptionMode:'EXERCISES',
+   durationTargetMin:climbSummary.durationTargetMin||null,
    angle:document.getElementById('climbAngle')?.value||null,
-   problemCount:isTechnicalClimbing&&metricMode==='DURATION'?0:(Number.isFinite(rawProblemCount)?rawProblemCount:0),
+   problemCount:climbSummary.problemCount||0,
+   attemptTarget:climbSummary.attemptTarget||0,
+   athleteCanLogBlocks:climbSummary.athleteCanLogBlocks===true,
    attemptLimit:Number(document.getElementById('climbAttempts')?.value)||0,
    targetGrade:document.getElementById('climbGrade')?.value||'',
    technicalFocus:document.getElementById('climbFocus')?.value||'',
@@ -2901,8 +3039,8 @@ function savePrescription(n,id,containerId=state.pendingContainerId){
  }:null;
  if(climbing?.fingerStimulus&&!extra.includes('B'))extra.push('B');
  if(climbing&&!climbing.fingerStimulus)extra=extra.filter(x=>x!=='B');
- const plannedDuration=climbing?.prescriptionMode==='DURATION'&&climbing.durationTargetMin?climbing.durationTargetMin:(+document.getElementById('prTotalDuration')?.value||45);
- const newSession={sessionId:'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2),prescriptionOrder:nextPrescriptionOrder(w,ctr.containerId),structureType:'PRESCRIPTION',templateId:p.id,title:p.name,day:ctr.day,slot:ctr.slot,containerId:ctr.containerId,domain:p.domain,extraDomains:extra,guide:p.guide,duration:plannedDuration,structuredSets:structured,exercises:exercises,climbing:climbing,sets:+get('prSets')||null,reps:+get('prReps')||null,workSeconds:+get('prWork')||null,restSeconds:+get('prRest')||null,rir:get('prRir')!==null?+get('prRir'):null,rpe:get('prRpe')!==null?+get('prRpe'):null,load:get('prLoad'),notes:document.getElementById('prNotes')?.value||'',execution:null};
+ const plannedDuration=+document.getElementById('prTotalDuration')?.value||45;
+ const newSession={sessionId:'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2),prescriptionOrder:nextPrescriptionOrder(w,ctr.containerId),structureType:'PRESCRIPTION',templateId:p.id,title:p.name,day:ctr.day,slot:ctr.slot,containerId:ctr.containerId,domain:p.domain,extraDomains:extra,guide:p.guide,duration:plannedDuration,structuredSets:structured,exercises:exercises,climbing:climbing,sets:+get('prSets')||null,reps:+get('prReps')||null,workSeconds:+get('prWork')||null,restSeconds:+get('prRest')||null,rir:get('prRir')!==null?+get('prRir'):null,rpe:get('prRpe')!==null?+get('prRpe'):null,load:get('prLoad'),notes:document.getElementById('prNotes')?.value||'',coachComment:document.getElementById('prCoachComment')?.value||'',execution:null};
  w.sessions.push(newSession);
  state.pendingContainerId=null;
  save();
@@ -2916,6 +3054,26 @@ function savePrescription(n,id,containerId=state.pendingContainerId){
  }
 }
 
+function prescriptionExercisesForEdit(p,s){
+ if(Array.isArray(s?.exercises)&&s.exercises.length)return s.exercises;
+ if(!prescriptionUsesClimbing(p))return [];
+ const catalog=exerciseOptionsForGuide(p.exerciseGuide);
+ const preset=catalog.find(x=>(p.presetExerciseCatalogIds||[]).includes(x.exerciseCatalogId));
+ if(!preset)return [];
+ const old=s.climbing||{};
+ const durationMode=old.prescriptionMode==='DURATION'||(!Number(old.problemCount)&&Number(old.durationTargetMin));
+ return [{
+  ...preset,
+  targetMode:durationMode?'DURATION':'COUNT',
+  targetDurationMin:durationMode?(Number(old.durationTargetMin)||Number(s.duration)||15):null,
+  targetCount:durationMode?null:(Number(old.problemCount)||1),
+  targetUnit:'BLOCKS',
+  restBetweenSeconds:0,
+  athleteCanLogBlocks:true,
+  coachComment:old.technicalFocus||''
+ }]
+}
+
 
 function editWeekSessionById(n,sessionId){
  const w=state.weeks.find(x=>Number(x.number)===Number(n));
@@ -2925,25 +3083,22 @@ function editWeekSessionById(n,sessionId){
  const p=PRESCRIPTIONS.find(x=>x.id===s.templateId)||{guide:s.guide||'Prescription',objective:'Séance personnalisée',summary:s.notes||''};
  closeSheet();
 
- const isTechnicalClimbing=s.climbing&&['CLIMB_TECH','KILTER_TECH'].includes(s.climbing.mode);
- const currentMetricMode=s.climbing?.prescriptionMode||(isTechnicalClimbing&&Number(s.climbing?.problemCount||0)===0?'DURATION':'PROBLEMS');
- const climbingFields=s.climbing?`<div class="card"><h3>Paramètres escalade</h3><div class="measuregrid">
-  ${isTechnicalClimbing?`<div class="field"><label>Prescription mesurée par</label><select id="edClimbPrescriptionMode" onchange="toggleClimbingPrescriptionMode(this.value,'edClimb')"><option value="DURATION" ${currentMetricMode==='DURATION'?'selected':''}>Durée imposée</option><option value="PROBLEMS" ${currentMetricMode==='PROBLEMS'?'selected':''}>Nombre de blocs imposé</option></select></div>
-  <div class="field climbingMetricFields" id="edClimbDurationWrap" ${currentMetricMode==='DURATION'?'':'hidden'}><label>Temps technique imposé (min)</label><input id="edClimbDurationTarget" type="number" min="1" value="${s.climbing.durationTargetMin||s.duration||60}"></div>`:''}
-  <div class="field climbingMetricFields" id="edClimbProblemsWrap" ${isTechnicalClimbing&&currentMetricMode!=='PROBLEMS'?'hidden':''}><label>${isTechnicalClimbing?'Nombre de blocs imposé':'Nombre de blocs'}</label><input id="edClimbProblems" type="number" min="0" value="${s.climbing.problemCount??0}"></div>
-  <div class="field"><label>Angle</label><input id="edClimbAngle" value="${s.climbing.angle||''}"></div>
+ const editableExercises=prescriptionExercisesForEdit(p,s);
+ const climbingFields=s.climbing?`<div class="card"><h3>Paramètres généraux escalade</h3><div class="measuregrid">
+  <div class="field"><label>Angle</label><input id="edClimbAngle" value="${s.climbing.angle||''}" placeholder="Ex. 30°"></div>
   <div class="field"><label>Essais maximum</label><input id="edClimbAttempts" type="number" value="${s.climbing.attemptLimit??0}"></div>
   <div class="field"><label>Cotation cible</label><input id="edClimbGrade" value="${s.climbing.targetGrade||''}"></div>
- </div><div class="field"><label>Focus technique</label><input id="edClimbFocus" value="${s.climbing.technicalFocus||''}"></div></div>`:'';
+  <div class="field"><label>Stimulus doigts significatif</label><select id="edClimbFinger"><option value="false" ${s.climbing.fingerStimulus?'':'selected'}>Non</option><option value="true" ${s.climbing.fingerStimulus?'selected':''}>Oui</option></select></div>
+ </div><div class="field"><label>Focus technique général</label><input id="edClimbFocus" value="${s.climbing.technicalFocus||''}"></div><div class="protocolnote">Les objectifs, récupérations, commentaires et droits de saisie sont modifiés directement dans chaque exercice.</div></div>`:'';
 
- const exerciseFields=prescriptionUsesExerciseLibrary(p)?`<div class="card"><h3>Exercices de REF_EXERCISES</h3>${exerciseSelector(p,s.exercises||[])}</div>`:(s.exercises?.length?`<div class="card"><h3>Exercices complémentaires</h3>${s.exercises.map((x,j)=>`<div class="guidecard"><div class="guidecardhead"><b>${x.name}</b></div><div class="guidecardbody"><div class="measuregrid">
+ const exerciseFields=prescriptionUsesExerciseLibrary(p)?`<div class="card"><h3>Exercices de REF_EXERCISES</h3>${exerciseSelector(p,editableExercises)}</div>`:(s.exercises?.length?`<div class="card"><h3>Exercices complémentaires</h3>${s.exercises.map((x,j)=>`<div class="guidecard"><div class="guidecardhead"><b>${x.name}</b></div><div class="guidecardbody"><div class="measuregrid">
   <div class="field"><label>Séries</label><input data-edex="${j}" data-k="sets" value="${x.sets??''}"></div>
   <div class="field"><label>Répétitions</label><input data-edex="${j}" data-k="reps" value="${x.reps??''}"></div>
   <div class="field"><label>Charge</label><input data-edex="${j}" data-k="load" type="number" step="0.1" value="${x.load??''}"></div>
   <div class="field"><label>Unité</label><input data-edex="${j}" data-k="loadUnit" value="${x.loadUnit??''}"></div>
   <div class="field"><label>Durée</label><input data-edex="${j}" data-k="hold" value="${x.hold??''}"></div>
   <div class="field"><label>Repos</label><input data-edex="${j}" data-k="rest" value="${x.rest??''}"></div>
- </div></div></div>`).join('')}</div>`:'');
+ </div><div class="field"><label>Commentaire Coach pour cet exercice</label><textarea data-edex="${j}" data-k="coachComment">${htmlEscape(x.coachComment||'')}</textarea></div></div></div>`).join('')}</div>`:'');
 
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="prescriptionEditSheet"><div class="sheet"><div class="sheethead"><div><h2>Modifier la séance</h2><p class="muted">${s.guide||''}</p></div><button type="button" class="btn ghost" onclick="closeSheetById('prescriptionEditSheet')">Fermer</button></div>
  <div class="guidecard"><div class="guidecardhead"><b>Carte prescription Coach · ${p.guide}</b><div class="muted small">${p.objective||''}</div></div><div class="guidecardbody"><div class="protocolnote">${p.summary||''}</div>
@@ -2952,6 +3107,7 @@ function editWeekSessionById(n,sessionId){
  ${s.structuredSets?setRowsHtml(s.structuredSets):''}
  ${exerciseFields}${climbingFields}
  <div class="field"><label>Consigne</label><textarea id="edNotes">${s.notes||''}</textarea></div>
+ <div class="field"><label>Commentaire Coach — prescription entière</label><textarea id="edCoachComment">${htmlEscape(s.coachComment||'')}</textarea></div>
  <button type="button" class="btn full" onclick="saveEditedSessionById(${n},'${s.sessionId}')">Enregistrer les modifications</button></div></div>`)
 }
 
@@ -2962,9 +3118,11 @@ function saveEditedSessionById(n,sessionId){
   if(!w||!s)return toast('Prescription introuvable après synchronisation');
   const p=PRESCRIPTIONS.find(x=>x.id===s.templateId)||null;
   const usesExercises=prescriptionUsesExerciseLibrary(p);
-  const editedExercises=usesExercises?collectExercises(p.exerciseGuide):null;
-  const isTechnicalClimbing=s.climbing&&['CLIMB_TECH','KILTER_TECH'].includes(s.climbing.mode);
+  const usesClimbing=prescriptionUsesClimbing(p)||!!s.climbing;
+  const editedExercises=usesExercises?collectExercises(p.exerciseGuide,p):null;
   if(usesExercises&&editedExercises.length===0)return toast('Conserve au moins un exercice de REF_EXERCISES');
+  const invalidExercise=usesClimbing?invalidClimbingExercise(editedExercises||[]):null;
+  if(invalidExercise)return toast(`Renseigne l’objectif de « ${invalidExercise.name} »`);
 
   s.title=document.getElementById('edTitle')?.value||s.title;
   const parentContainer=w.containers?.find(c=>String(c.containerId)===String(s.containerId));
@@ -2974,6 +3132,7 @@ function saveEditedSessionById(n,sessionId){
   }
   s.duration=+document.getElementById('edDuration')?.value||s.duration;
   s.notes=document.getElementById('edNotes')?.value||'';
+  s.coachComment=document.getElementById('edCoachComment')?.value||'';
 
   if(document.getElementById('setRows'))s.structuredSets=collectStructuredSets();
 
@@ -2987,19 +3146,20 @@ function saveEditedSessionById(n,sessionId){
   }
 
   if(s.climbing){
-    const metricMode=document.getElementById('edClimbPrescriptionMode')?.value||s.climbing.prescriptionMode||'PROBLEMS';
-    const durationTarget=Number(document.getElementById('edClimbDurationTarget')?.value);
-    const problemCount=Number(document.getElementById('edClimbProblems')?.value);
-    if(isTechnicalClimbing&&metricMode==='DURATION'&&!(durationTarget>0))return toast('Renseigne un temps technique supérieur à 0');
-    if(isTechnicalClimbing&&metricMode==='PROBLEMS'&&!(problemCount>0))return toast('Renseigne un nombre de blocs supérieur à 0');
-    s.climbing.prescriptionMode=isTechnicalClimbing?metricMode:'PROBLEMS';
-    s.climbing.durationTargetMin=isTechnicalClimbing&&metricMode==='DURATION'?durationTarget:null;
+    const summary=climbingSummaryFromExercises(editedExercises||s.exercises||[]);
+    s.climbing.prescriptionMode='EXERCISES';
+    s.climbing.durationTargetMin=summary.durationTargetMin||null;
     s.climbing.angle=document.getElementById('edClimbAngle')?.value||null;
-    s.climbing.problemCount=isTechnicalClimbing&&metricMode==='DURATION'?0:(Number.isFinite(problemCount)?problemCount:0);
+    s.climbing.problemCount=summary.problemCount||0;
+    s.climbing.attemptTarget=summary.attemptTarget||0;
+    s.climbing.athleteCanLogBlocks=summary.athleteCanLogBlocks===true;
     s.climbing.attemptLimit=+document.getElementById('edClimbAttempts')?.value||0;
     s.climbing.targetGrade=document.getElementById('edClimbGrade')?.value||'';
     s.climbing.technicalFocus=document.getElementById('edClimbFocus')?.value||'';
-    if(s.climbing.durationTargetMin)s.duration=s.climbing.durationTargetMin;
+    s.climbing.fingerStimulus=document.getElementById('edClimbFinger')?.value==='true';
+    s.extraDomains=Array.isArray(s.extraDomains)?s.extraDomains:[];
+    if(s.climbing.fingerStimulus&&!s.extraDomains.includes('B'))s.extraDomains.push('B');
+    if(!s.climbing.fingerStimulus)s.extraDomains=s.extraDomains.filter(x=>x!=='B')
   }
 
   s.revision=(s.revision||0)+1;
@@ -3029,7 +3189,8 @@ function weekPlanningFingerprint(w){
   day:c.day,
   slot:c.slot,
   title:c.title||'',
-  comment:c.comment||''
+  comment:c.comment||'',
+  warmup:c.warmup||null
  })).sort((a,b)=>String(a.containerId).localeCompare(String(b.containerId)));
 
  const cleanPrescriptions=(w.sessions||[]).map(p=>({
@@ -3043,6 +3204,7 @@ function weekPlanningFingerprint(w){
   templateId:p.templateId||'',
   duration:p.duration??null,
   notes:p.notes||'',
+  coachComment:p.coachComment||'',
   structuredSets:p.structuredSets||[],
   exercises:p.exercises||[],
   climbing:p.climbing||null,
@@ -3128,9 +3290,25 @@ function publishedWeeks(){
  return [...latestByNumber.values()].sort((a,b)=>Number(a.number)-Number(b.number))
 }
 function coachCommentBlock(s){
- const text=(s?.progressionRule||s?.coachComment||'').trim();
+ const text=[s?.coachComment,s?.progressionRule].map(value=>String(value||'').trim()).filter((value,index,all)=>value&&all.indexOf(value)===index).join('\n');
  if(!text)return '';
- return `<div class="coachComment"><b>Commentaire du Coach</b>${text}</div>`
+ return `<div class="coachComment"><b>Commentaire du Coach</b>${htmlEscape(text)}</div>`
+}
+function climbingExerciseKey(exercise,index){
+ const base=exercise?.exerciseCatalogId||exercise?.exercise_catalog_id||exercise?.exerciseCode||normalizeExerciseName(exercise?.name)||'exercise';
+ return `${String(base).replace(/[^a-zA-Z0-9_-]+/g,'-')}-${index+1}`
+}
+function climbingExerciseTargetText(exercise){
+ if(exercise?.targetMode==='COUNT'){
+  const unit=exercise.targetUnit==='ATTEMPTS'?'essai(s)':'bloc(s)';
+  return `${Number(exercise.targetCount)||0} ${unit}`
+ }
+ const minutes=Number(exercise?.targetDurationMin)||(Number(exercise?.hold)>0?Math.round(Number(exercise.hold)/60):0);
+ return `${minutes} min de travail total`
+}
+function exerciseCoachCommentBlock(exercise){
+ const text=String(exercise?.coachComment||'').trim();
+ return text?`<div class="exerciseCoachNote"><b>Commentaire du Coach</b><br>${htmlEscape(text)}</div>`:''
 }
 function localIsoDate(date=new Date()){
  const year=date.getFullYear(),month=String(date.getMonth()+1).padStart(2,'0'),day=String(date.getDate()).padStart(2,'0');
@@ -3168,15 +3346,15 @@ function sessionDetails(s){
    ' · RIR '+(x.rir===''?'—':x.rir)+' · repos '+(x.rest?formatDurationSeconds(x.rest):'—')
  ).join('<br>')+'</div>':'';
  const exercises=s.exercises?.length?'<div class="small">'+s.exercises.map(x=>
-   x.name+' · '+(x.sets||'—')+' séries · '+(x.reps|| (x.hold?formatDurationSeconds(x.hold):'—'))
+   s.climbing
+    ?`${htmlEscape(x.name)} · ${climbingExerciseTargetText(x)}${Number(x.restBetweenSeconds)>=0?` · pause ${formatDurationSeconds(x.restBetweenSeconds||0)}`:''}${x.coachComment?`<br><span class="muted">↳ ${htmlEscape(x.coachComment)}</span>`:''}`
+    :`${htmlEscape(x.name)} · ${x.sets||'—'} séries · ${x.reps||(x.hold?formatDurationSeconds(x.hold):'—')}${x.coachComment?`<br><span class="muted">↳ ${htmlEscape(x.coachComment)}</span>`:''}`
  ).join('<br>')+'</div>':'';
  const climb=s.climbing?'<div class="small">'+
-   (s.climbing.angle?'Angle : '+s.climbing.angle+' · ':'')+
-   (s.climbing.prescriptionMode==='DURATION'
-    ?(s.climbing.durationTargetMin||s.duration||0)+' min imposées'
-    :(s.climbing.problemCount||0)+' blocs'+(s.climbing.attemptLimit?' · '+s.climbing.attemptLimit+' essais max':''))+
-   (s.climbing.targetGrade?' · cible '+s.climbing.targetGrade:'')+
-   (s.climbing.technicalFocus?' · '+s.climbing.technicalFocus:'')+
+   (s.climbing.angle?'Angle : '+htmlEscape(s.climbing.angle)+' · ':'')+
+   (s.climbing.attemptLimit?s.climbing.attemptLimit+' essais max · ':'')+
+   (s.climbing.targetGrade?'cible '+htmlEscape(s.climbing.targetGrade)+' · ':'')+
+   (s.climbing.technicalFocus?htmlEscape(s.climbing.technicalFocus):'')+
    '</div>':'';
  return sets+exercises+climb+'<p class="muted small">'+(s.notes||'')+'</p>'+coachCommentBlock(s)
 }
@@ -3296,8 +3474,9 @@ function openExerciseExecution(s,schema){
     <div class="row"><span>Séries</span>${plannedSetCell(x.sets)}</div>
     <div class="row"><span>Répétitions</span>${plannedSetCell(x.reps)}</div>
     <div class="row"><span>Maintien</span>${plannedSetCell(x.hold?formatDurationSeconds(x.hold):'—')}</div>
-    <div class="row"><span>Charge</span>${plannedSetCell(x.load,x.loadUnit||'')}</div>
-    <div class="row"><span>Repos</span>${plannedSetCell(x.rest?formatDurationSeconds(x.rest):'—')}</div>
+   <div class="row"><span>Charge</span>${plannedSetCell(x.load,x.loadUnit||'')}</div>
+   <div class="row"><span>Repos</span>${plannedSetCell(x.rest?formatDurationSeconds(x.rest):'—')}</div>
+   ${exerciseCoachCommentBlock(x)}
    </div>
    <div class="dualcol actual"><b>Réalisé par l’Athlète</b>
     <div class="field"><label>Séries réalisées</label><input data-exactsets="${i}" value="${a.sets??x.sets??''}"></div>
@@ -3399,83 +3578,108 @@ function openClimbingExecution(s){
  };
  s.climbing=cfg;
  const existing=s.execution?.problems||[];
- const plannedCount=Number.isFinite(+cfg.problemCount)?+cfg.problemCount:0;
- const count=Math.max(plannedCount,existing.length);
- const rows=Array.from({length:count},(_,i)=>{
-   const a=existing[i]||{};
-   return `<div class="problem"><b>Bloc ${i+1}</b><div class="measuregrid">
-   <div class="field"><label>Nom / identifiant</label><input data-cname="${i}" value="${a.name||''}"></div>
-   <div class="field"><label>Cotation</label><input data-cgrade="${i}" value="${a.grade||cfg.targetGrade||''}"></div>
-   <div class="field"><label>Flash</label><select data-cflash="${i}" onchange="toggleAttempts(${i},this.value)"><option value="">—</option><option value="yes" ${a.flash===true?'selected':''}>Oui</option><option value="no" ${a.flash===false?'selected':''}>Non</option></select></div>
-   <div class="field" id="successWrap${i}" style="${a.flash===true?'display:none':''}"><label>Réussi</label><select data-csuccess="${i}"><option value="yes" ${a.success===true?'selected':''}>Oui</option><option value="no" ${a.success===false?'selected':''}>Non</option></select></div>
-   <div class="field" id="attemptWrap${i}" style="${a.flash===true?'display:none':''}"><label>Nombre d’essais</label><input data-cattempts="${i}" type="number" value="${a.attempts||''}"></div>
-   <div class="field"><label>Commentaire bloc</label><input data-ccomment="${i}" value="${a.comment||''}"></div>
-   </div></div>`
+ const exercises=(Array.isArray(s.exercises)&&s.exercises.length?s.exercises:[{
+  name:s.title||'Escalade',category:'Escalade',targetMode:cfg.prescriptionMode==='DURATION'?'DURATION':'COUNT',
+  targetDurationMin:cfg.durationTargetMin||s.duration||null,targetCount:cfg.problemCount||null,targetUnit:'BLOCKS',
+  restBetweenSeconds:0,athleteCanLogBlocks:true,coachComment:cfg.technicalFocus||''
+ }]).map((exercise,index)=>{
+  const legacyMode=cfg.prescriptionMode==='PROBLEMS'?'COUNT':'DURATION';
+  const targetMode=exercise.targetMode||(cfg.prescriptionMode==='DURATION'||cfg.prescriptionMode==='PROBLEMS'?legacyMode:(Number(exercise.targetCount||exercise.reps)>0?'COUNT':'DURATION'));
+  const normalized={
+   ...exercise,
+   targetMode,
+   targetDurationMin:targetMode==='DURATION'?(Number(exercise.targetDurationMin)||Number(exercise.durationMin)||(Number(exercise.hold)>0?Math.round(Number(exercise.hold)/60):0)||Number(cfg.durationTargetMin)||Number(s.duration)||15):null,
+   targetCount:targetMode==='COUNT'?(Number(exercise.targetCount)||Number(exercise.reps)||Number(cfg.problemCount)||1):null,
+   targetUnit:exercise.targetUnit==='ATTEMPTS'?'ATTEMPTS':'BLOCKS',
+   restBetweenSeconds:Number(exercise.restBetweenSeconds??exercise.rest)||0,
+   athleteCanLogBlocks:Object.prototype.hasOwnProperty.call(exercise,'athleteCanLogBlocks')?exercise.athleteCanLogBlocks:true
+  };
+  return {...normalized,_key:climbingExerciseKey(normalized,index)}
+ });
+ const exerciseCards=exercises.map((exercise,exerciseIndex)=>{
+  const related=existing.filter((problem,index)=>problem.exerciseKey?String(problem.exerciseKey)===exercise._key:exerciseIndex===0);
+  const canLog=exercise.athleteCanLogBlocks===true||String(exercise.athleteCanLogBlocks).toLowerCase()==='true';
+  const rest=Number(exercise.restBetweenSeconds??exercise.rest)||0;
+  const rows=canLog?related.map((problem,index)=>climbingProblemEditorHtml(problem,exerciseIndex,index,cfg.targetGrade)).join(''):'';
+  return `<section class="climbingExercisePrescription" data-climbing-exercise="${exerciseIndex}" data-exercise-key="${exercise._key}" data-exercise-name="${htmlEscape(exercise.name)}" data-default-grade="${htmlEscape(cfg.targetGrade||'')}" data-target-mode="${exercise.targetMode||'DURATION'}" data-target-count="${Number(exercise.targetCount)||0}" data-target-unit="${exercise.targetUnit||'BLOCKS'}" data-can-log="${canLog?'true':'false'}">
+   <div class="row" style="padding:0;border:0"><div><b>${htmlEscape(exercise.name)}</b><div class="muted small">${htmlEscape(exercise.category||'Escalade')}</div></div><span class="pill">${climbingExerciseTargetText(exercise)}</span></div>
+   <div class="exerciseTarget"><span class="pill orange">Pause ${rest?formatDurationSeconds(rest):'non imposée'}</span><span class="pill ${canLog?'green':''}">${canLog?'Relevé bloc par bloc autorisé':'Consigne en lecture seule'}</span></div>
+   ${exerciseCoachCommentBlock(exercise)}
+   ${canLog?`<div data-climbing-problems="${exerciseIndex}">${rows||'<p class="muted small climbingEmpty">Aucun bloc relevé pour le moment.</p>'}</div><button type="button" class="addblock" onclick="addClimbingProblem(${exerciseIndex})">+ Ajouter un bloc réalisé</button>`:`<div class="protocolnote">Le Coach ne demande pas de relevé bloc par bloc.${related.length?` ${related.length} ancien(s) relevé(s) restent conservé(s).`:''}</div>`}
+  </section>`
  }).join('');
- const plannedTarget=cfg.prescriptionMode==='DURATION'
-  ?`Objectif Coach : ${cfg.durationTargetMin||s.duration||0} min de travail technique`
-  :cfg.problemCount?`Objectif Coach : ${cfg.problemCount} bloc(s) imposé(s)`:'Aucun bloc imposé';
- document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${s.title}</h2><p class="muted">${cfg.mode==='FREE_FUN'?'Escalade libre / fun':(cfg.angle?'Kilterboard '+cfg.angle:(cfg.mode==='CLIMB_TECH'?'Escalade technique':'Bloc maximal'))}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>${coachCommentBlock(s)}<div class="protocolnote">${plannedTarget}</div><div id="climbingProblems">${rows||'<div class="card" id="noPlannedBlocks"><p class="muted">Aucun bloc imposé. Ajoute les blocs réellement grimpés.</p></div>'}</div>
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${htmlEscape(s.title)}</h2><p class="muted">${cfg.mode==='FREE_FUN'?'Escalade libre / fun':(cfg.angle?'Kilterboard '+htmlEscape(cfg.angle):(cfg.mode==='CLIMB_TECH'?'Escalade technique':'Bloc maximal'))}</p></div><button class="btn ghost" onclick="closeSheet()">Fermer</button></div>${coachCommentBlock(s)}${cfg.technicalFocus?`<div class="protocolnote"><b>Focus général :</b> ${htmlEscape(cfg.technicalFocus)}</div>`:''}${exerciseCards}
  <div class="field"><label>Durée réalisée (min)</label><input id="climbDuration" type="number" min="0" value="${s.execution?.duration??cfg.durationTargetMin??s.duration??''}"></div>
  <div class="field"><label>Plaisir /10</label><input id="climbEnjoyment" type="number" min="0" max="10" value="${s.execution?.enjoyment??''}"></div>
  <div class="field"><label>Qualité perçue /10</label><input id="climbQuality" type="number" min="0" max="10" value="${s.execution?.quality??''}"></div>
  <div class="field"><label>RPE séance</label><input id="climbRpe" type="number" min="0" max="10" value="${s.execution?.rpe??''}"></div>
  <div class="field"><label>Commentaire</label><textarea id="climbNote">${s.execution?.note||''}</textarea></div>
- <button class="addblock" onclick="addClimbingProblem()">+ Ajouter un bloc réalisé</button><button class="btn full" style="margin-top:10px" onclick="saveClimbingExecution('${s.sessionId}',document.querySelectorAll('.problem').length)">Valider la séance</button></div></div>`)
+ <button class="btn full" style="margin-top:10px" onclick="saveClimbingExecution('${s.sessionId}')">Valider la séance</button></div></div>`)
 }
 
-function addClimbingProblem(){
- const container=document.getElementById('climbingProblems');
+function climbingProblemEditorHtml(problem={},exerciseIndex,blockIndex,defaultGrade=''){
+ return `<div class="problem"><div class="row"><b class="problemTitle">Bloc ${blockIndex+1}</b><button class="btn ghost" type="button" onclick="removeClimbingProblem(this)">Retirer</button></div><div class="measuregrid">
+  <div class="field"><label>Nom / identifiant</label><input data-cname value="${htmlEscape(problem.name||'')}"></div>
+  <div class="field"><label>Cotation</label><input data-cgrade value="${htmlEscape(problem.grade||defaultGrade||'')}"></div>
+  <div class="field"><label>Flash</label><select data-cflash onchange="toggleAttempts(this)"><option value="">—</option><option value="yes" ${problem.flash===true?'selected':''}>Oui</option><option value="no" ${problem.flash===false?'selected':''}>Non</option></select></div>
+  <div class="field successWrap" style="${problem.flash===true?'display:none':''}"><label>Réussi</label><select data-csuccess><option value="">—</option><option value="yes" ${problem.success===true?'selected':''}>Oui</option><option value="no" ${problem.success===false?'selected':''}>Non</option></select></div>
+  <div class="field attemptWrap" style="${problem.flash===true?'display:none':''}"><label>Nombre d’essais</label><input data-cattempts type="number" min="1" value="${problem.attempts||''}"></div>
+  <div class="field"><label>Commentaire bloc</label><input data-ccomment value="${htmlEscape(problem.comment||'')}"></div>
+ </div></div>`
+}
+function addClimbingProblem(exerciseIndex){
+ const container=document.querySelector(`[data-climbing-problems="${exerciseIndex}"]`);
  if(!container)return toast('Carte escalade indisponible');
- document.getElementById('noPlannedBlocks')?.remove();
+ container.querySelector('.climbingEmpty')?.remove();
  const i=container.querySelectorAll('.problem').length;
- const block=`<div class="problem"><div class="row"><b>Bloc ${i+1} <span class="pill">Ajouté</span></b><button class="btn ghost" type="button" onclick="removeClimbingProblem(this)">Retirer</button></div><div class="measuregrid">
- <div class="field"><label>Nom / identifiant</label><input data-cname="${i}"></div>
- <div class="field"><label>Cotation</label><input data-cgrade="${i}"></div>
- <div class="field"><label>Flash</label><select data-cflash="${i}" onchange="toggleAttempts(${i},this.value)"><option value="">—</option><option value="yes">Oui</option><option value="no">Non</option></select></div>
- <div class="field" id="successWrap${i}"><label>Réussi</label><select data-csuccess="${i}"><option value="yes">Oui</option><option value="no">Non</option></select></div>
- <div class="field" id="attemptWrap${i}"><label>Nombre d’essais</label><input data-cattempts="${i}" type="number"></div>
- <div class="field"><label>Commentaire</label><input data-ccomment="${i}"></div></div></div>`;
- container.insertAdjacentHTML('beforeend',block)
+ const grade=container.closest('[data-climbing-exercise]')?.dataset.defaultGrade||'';
+ container.insertAdjacentHTML('beforeend',climbingProblemEditorHtml({},exerciseIndex,i,grade))
 }
 function removeClimbingProblem(button){
+ const container=button.closest('[data-climbing-problems]');
  button.closest('.problem')?.remove();
- renumberClimbingProblems()
+ renumberClimbingProblems(container)
 }
-function renumberClimbingProblems(){
- document.querySelectorAll('#climbingProblems .problem').forEach((block,i)=>{
-   const title=block.querySelector('b');
-   if(title)title.childNodes[0].nodeValue='Bloc '+(i+1)+' ';
-   block.querySelectorAll('[data-cname],[data-cgrade],[data-cflash],[data-csuccess],[data-cattempts],[data-ccomment]').forEach(el=>{
-     for(const key of ['cname','cgrade','cflash','csuccess','cattempts','ccomment']){
-       if(el.dataset[key]!==undefined)el.dataset[key]=String(i)
-     }
-   });
-   const sw=block.querySelector('[id^="successWrap"]');if(sw)sw.id='successWrap'+i;
-   const aw=block.querySelector('[id^="attemptWrap"]');if(aw)aw.id='attemptWrap'+i;
-   const flash=block.querySelector('[data-cflash]');if(flash)flash.setAttribute('onchange',`toggleAttempts(${i},this.value)`)
+function renumberClimbingProblems(container){
+ (container||document).querySelectorAll('.problem').forEach((block,i)=>{
+   const title=block.querySelector('.problemTitle');if(title)title.textContent='Bloc '+(i+1)
  })
 }
 
-function toggleAttempts(i,val){
- const hide=val==='yes';document.getElementById('successWrap'+i).style.display=hide?'none':'block';document.getElementById('attemptWrap'+i).style.display=hide?'none':'block'
+function toggleAttempts(select){
+ const block=select.closest('.problem'),hide=select.value==='yes';
+ const success=block?.querySelector('.successWrap'),attempt=block?.querySelector('.attemptWrap');
+ if(success)success.style.display=hide?'none':'block';if(attempt)attempt.style.display=hide?'none':'block'
 }
-function saveClimbingExecution(sessionId,count){
+function saveClimbingExecution(sessionId){
  const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
- const s=found.session,problems=[],blocks=[...document.querySelectorAll('#climbingProblems .problem')];
- blocks.forEach((block,i)=>{
-   const flash=block.querySelector('[data-cflash]')?.value||'';
-   problems.push({
-     name:block.querySelector('[data-cname]')?.value||'',
-     grade:block.querySelector('[data-cgrade]')?.value||'',
-     planned:i<(s.climbing?.problemCount||0),
-     flash:flash==='yes'?true:flash==='no'?false:null,
-     success:flash==='yes'?true:(block.querySelector('[data-csuccess]')?.value==='yes'),
-     attempts:flash==='yes'?1:(+block.querySelector('[data-cattempts]')?.value||null),
-     comment:block.querySelector('[data-ccomment]')?.value||''
-   })
- })
- s.execution={type:'CLIMBING',problems:problems,duration:+document.getElementById('climbDuration')?.value||null,quality:+climbQuality.value||null,enjoyment:+document.getElementById('climbEnjoyment')?.value||null,rpe:+climbRpe.value||null,note:climbNote.value,completed:true,completedAt:new Date().toISOString()};
+ const s=found.session,sections=[...document.querySelectorAll('[data-climbing-exercise]')];
+ const firstKey=sections[0]?.dataset.exerciseKey||'';
+ const permissions=new Map(sections.map(section=>[section.dataset.exerciseKey||'',section.dataset.canLog==='true']));
+ const problems=(s.execution?.problems||[]).filter(problem=>{
+  const key=problem.exerciseKey||firstKey;
+  return !permissions.has(key)||permissions.get(key)===false
+ });
+ sections.forEach(section=>{
+  if(section.dataset.canLog!=='true')return;
+  const exerciseKey=section.dataset.exerciseKey||'',exerciseName=section.dataset.exerciseName||'';
+  const targetCount=Number(section.dataset.targetCount)||0,targetUnit=section.dataset.targetUnit||'BLOCKS';
+  section.querySelectorAll('.problem').forEach((block,index)=>{
+    const flash=block.querySelector('[data-cflash]')?.value||'';
+    const successValue=block.querySelector('[data-csuccess]')?.value||'';
+    problems.push({
+      exerciseKey,exerciseName,
+      name:block.querySelector('[data-cname]')?.value||'',
+      grade:block.querySelector('[data-cgrade]')?.value||'',
+      planned:targetUnit==='BLOCKS'&&index<targetCount,
+      flash:flash==='yes'?true:flash==='no'?false:null,
+      success:flash==='yes'?true:successValue==='yes'?true:successValue==='no'?false:null,
+      attempts:flash==='yes'?1:(+block.querySelector('[data-cattempts]')?.value||null),
+      comment:block.querySelector('[data-ccomment]')?.value||''
+    })
+  })
+ });
+ s.execution={type:'CLIMBING',problems,duration:+document.getElementById('climbDuration')?.value||null,quality:+document.getElementById('climbQuality')?.value||null,enjoyment:+document.getElementById('climbEnjoyment')?.value||null,rpe:+document.getElementById('climbRpe')?.value||null,note:document.getElementById('climbNote')?.value||'',completed:true,completedAt:new Date().toISOString()};
  save();closeSheet();renderAthleteWeek();syncSessionExecution(sessionId);toast('Séance enregistrée localement')
 }
 
@@ -3501,13 +3705,28 @@ function openNextContainerPrescription(weekNumber,containerId){
  const ps=orderedContainerPrescriptions(w,c);
  const next=ps.find(p=>!p.execution?.completed)||ps[0];
  if(!next)return toast('Aucune prescription dans cette séance');
- openAthleteSession(next.sessionId)
+ openContainerWarmup(weekNumber,containerId,next.sessionId)
+}
+function openContainerWarmup(weekNumber,containerId,sessionId=''){
+ const w=publishedWeeks().find(x=>Number(x.number)===Number(weekNumber));
+ const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ if(!w||!c)return toast('Séance introuvable');
+ const ps=orderedContainerPrescriptions(w,c);
+ const target=ps.find(p=>String(p.sessionId)===String(sessionId))||ps.find(p=>!p.execution?.completed)||ps[0];
+ if(!target)return toast('Aucune prescription dans cette séance');
+ const warmup=resolvedContainerWarmup(w,c);
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="containerWarmupSheet"><div class="sheet"><div class="sheethead"><div><h2>${htmlEscape(c.title||'Séance')}</h2><p class="muted">Avant de débuter la séance prévue</p></div><button type="button" class="btn ghost" onclick="closeSheetById('containerWarmupSheet')">Fermer</button></div>
+  ${warmupReadOnlyHtml(warmup,false)}
+  <div class="protocolnote"><b>Aucune saisie demandée.</b> Lis le protocole, réalise l’échauffement, puis ouvre la prescription.</div>
+  <button type="button" class="btn full" onclick="closeSheetById('containerWarmupSheet');openAthleteSession('${target.sessionId}')">Débuter · ${htmlEscape(target.title||'Prescription')}</button>
+ </div></div>`)
 }
 
 function renderAthleteSessionCard(w,c,compact=false){
  const progress=containerProgress(w,c);
  const status=progress.complete?'Terminée':progress.done||progress.started?'En cours':'À faire';
- const actionLabel=progress.complete?'Revoir la séance':progress.done||progress.started?'Continuer la séance':'Commencer la séance';
+ const actionLabel=progress.complete?'Revoir la séance':progress.done||progress.started?'Voir l’échauffement et continuer':'Voir l’échauffement et commencer';
+ const warmup=resolvedContainerWarmup(w,c);
  return `<div class="athleteSessionCard ${progress.complete?'complete':''}">
   <div class="sessionContainerHeader">
    <div>
@@ -3520,9 +3739,10 @@ function renderAthleteSessionCard(w,c,compact=false){
   <div class="sessionProgress ${progress.complete?'complete':''}"><span style="width:${progress.percent}%"></span></div>
   <div class="muted small">${progress.percent}% terminé · ${progress.total} prescription(s)</div>
   ${c.comment?`<p class="muted">${c.comment}</p>`:''}
+  ${warmupReadOnlyHtml(warmup,true)}
   <div class="prescriptionStack">${progress.ps.map((p,index)=>{
     const pStatus=prescriptionAthleteStatus(p);
-    return `<button type="button" class="prescriptionMini" style="width:100%;text-align:left;border:1px solid var(--line)" onclick="openAthleteSession('${p.sessionId}')">
+    return `<button type="button" class="prescriptionMini" style="width:100%;text-align:left;border:1px solid var(--line)" onclick="openContainerWarmup(${Number(w.number)},'${c.containerId}','${p.sessionId}')">
       <div class="row" style="padding:0;border:0">
        <div class="athletePrescriptionMain">
         <span class="athletePrescriptionNumber">${index+1}</span>
@@ -3668,9 +3888,9 @@ PRESCRIPTIONS.push(
 {id:'fingerpower',domain:'B',quality:'Puissance doigts',name:'Puissance doigts — Pan Güllich',guide:'G04',objective:'Puissance',summary:'Choisir 1 à 2 orientations et les exercices officiels',editor:'exerciseLibrary',exerciseGuide:'G04',durationMin:45},
 {id:'pullpower',domain:'A',extraDomains:['A_PULL'],quality:'Puissance traction',name:'Puissance de traction',guide:'G05',objective:'Puissance',summary:'Choisir 2 à 3 exercices officiels · 3 à 5 séries · 2 reps',editor:'exerciseLibrary',exerciseGuide:'G05',durationMin:45},
 {id:'pushpower',domain:'A',extraDomains:['A_PUSH'],quality:'Puissance poussée',name:'Puissance de poussée',guide:'G06',objective:'Puissance',summary:'Choisir 2 à 3 exercices officiels · 3 à 5 séries · 2 reps',editor:'exerciseLibrary',exerciseGuide:'G06',durationMin:45},
-{id:'coordination',domain:'ESC',extraDomains:['C'],quality:'Coordination',name:'Coordination intégrée à la grimpe',guide:'G13',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G13',durationMin:90},
-{id:'speedtech',domain:'ESC',extraDomains:['C'],quality:'Vitesse gestuelle',name:'Vitesse gestuelle intégrée à la grimpe',guide:'G14',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G14',durationMin:90},
-{id:'precision',domain:'ESC',extraDomains:['C'],quality:'Précision gestuelle',name:'Précision gestuelle intégrée à la grimpe',guide:'G15',objective:'Technique',summary:'Choisir 3 à 5 situations pédagogiques',editor:'exerciseLibrary',exerciseGuide:'G15',durationMin:90},
+{id:'coordination',domain:'ESC',extraDomains:['C'],quality:'Coordination',name:'Coordination intégrée à la grimpe',guide:'G13',objective:'Technique',summary:'Choisir les situations puis définir durée ou quantité, récupération et relevé',editor:'climbingExercises',exerciseGuide:'G13',climbingMode:'CLIMB_TECH',durationMin:90},
+{id:'speedtech',domain:'ESC',extraDomains:['C'],quality:'Vitesse gestuelle',name:'Vitesse gestuelle intégrée à la grimpe',guide:'G14',objective:'Technique',summary:'Choisir les situations puis définir durée ou quantité, récupération et relevé',editor:'climbingExercises',exerciseGuide:'G14',climbingMode:'CLIMB_TECH',durationMin:90},
+{id:'precision',domain:'ESC',extraDomains:['C'],quality:'Précision gestuelle',name:'Précision gestuelle intégrée à la grimpe',guide:'G15',objective:'Technique',summary:'Choisir les situations puis définir durée ou quantité, récupération et relevé',editor:'climbingExercises',exerciseGuide:'G15',climbingMode:'CLIMB_TECH',durationMin:90},
 {id:'calisthenics',domain:'CALI',quality:'Calisthénie',name:'Skill calisthénie',guide:'G16',objective:'Skill',summary:'1 figure principale + 2 à 4 exercices de progression',editor:'exerciseLibrary',exerciseGuide:'G16',durationMin:45},
 {id:'runshort',domain:'D',quality:'Fractionné court',name:'R4 — Fractionné court',guide:'G17',objective:'Puissance aérobie',summary:'10 à 20 répétitions · RPE 8 à 9',sets:10,duration:30,rest:30,rpe:9,durationMin:55},
 {id:'runhills',domain:'D',quality:'Côtes',name:'R5 — Côtes',guide:'G17',objective:'Puissance en montée',summary:'6 à 12 montées de 10 à 45 s · quasi maximal',sets:8,duration:30,rest:120,rpe:9,durationMin:55},
@@ -3730,6 +3950,8 @@ const EXERCISE_LIBRARY=[
 {guide:'G24',name:'Pogo Jumps',category:'Puissance jambes',sets:2,reps:10,rest:90,exerciseCatalogId:'ex_pogo_jump'},
 {guide:'G24',name:'Drop Jump',category:'Puissance jambes',sets:3,reps:3,rest:120,exerciseCatalogId:'ex_drop_jump'},
 {guide:'G24',name:'Bond latéral',category:'Puissance jambes',sets:3,reps:4,rest:120,exerciseCatalogId:'ex_lateral_bound'},
+{guide:'G-CLIMB-ALL',name:'Escalade — blocs au choix',category:'Escalade générale',durationMin:60,exerciseCatalogId:'ex_climb_general',exerciseCode:'CLIMB_GENERAL'},
+{guide:'G-CLIMB-ALL',name:'Kilterboard — blocs au choix',category:'Escalade Kilterboard',durationMin:60,exerciseCatalogId:'ex_kilter',exerciseCode:'KILTER_MAX'},
 {guide:'G13',name:'Silent Feet',category:'Précision placements',durationMin:15},
 {guide:'G13',name:'No Readjust',category:'Précision placements',durationMin:15},
 {guide:'G13',name:'Feet Swap Drill',category:'Coordination membres',sets:3,durationMin:10},
