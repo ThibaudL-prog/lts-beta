@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b16">
+<link rel="manifest" href="manifest.webmanifest?v=0590b17">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b16">
+<link rel="shortcut icon" href="favicon.ico?v=0590b17">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.6</title>
+<title>LTS v0.5.9.0-beta1.7</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -170,7 +170,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .speedResult{font-size:22px;font-weight:950;color:var(--blue)}
 @media(max-width:760px){
  .coachTopSwitch{display:inline-flex}
- .coachBottom{grid-template-columns:repeat(3,1fr)}
+ .coachBottom{grid-template-columns:repeat(4,1fr)}
 }
 
 .coachActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -351,7 +351,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b16"></script><script>
+<script src="api-client.js?v=0590b17"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -515,7 +515,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.6 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.7 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -556,13 +556,14 @@ if(!state.checkins.evening)state.checkins.evening={};
 if(state.checkins.evening.bikeDuration===undefined)state.checkins.evening.bikeDuration=0;
 
 if(!state.records)state.records={measurements:[],checkins:[],tests:[]};
+if(!Array.isArray(state.cycleHistory))state.cycleHistory=[];
 if(!state.trackingRange)state.trackingRange='30d';
 if(!state.history)state.history={};
 if(!state.athlete.external1rm)state.athlete.external1rm={pull:44,dip:50};
 const REAL_METRICS={
 weight:{label:'Poids',unit:'kg'},waist:{label:'Tour de taille',unit:'cm'},chest:{label:'Poitrine',unit:'cm'},hips:{label:'Hanches',unit:'cm'},armRelaxed:{label:'Bras relâché',unit:'cm'},armContracted:{label:'Bras contracté',unit:'cm'},thigh:{label:'Cuisse',unit:'cm'},calf:{label:'Mollet',unit:'cm'},hrSupine:{label:'FC allongé',unit:'bpm'},hrStanding:{label:'FC debout',unit:'bpm'},
 sleep:{label:'Durée de sommeil',unit:'h'},sleepQuality:{label:'Qualité du sommeil',unit:'/10'},fatigue:{label:'Fatigue',unit:'/10'},stress:{label:'Stress',unit:'/10'},energy:{label:'Énergie',unit:'/10'},motivation:{label:'Motivation',unit:'/10'},pain:{label:'Douleur',unit:'/10'},bike:{label:'Distance vélo',unit:'km'},bikeDuration:{label:'Durée vélo',unit:'min'},bikeSpeed:{label:'Vitesse moyenne vélo',unit:'km/h'},
-pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Repeaters',unit:'tours'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
+pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Repeaters',unit:'tours'},powerSlapTouch:{label:'Power Slap — hauteur touchée',unit:'cm'},plyoPushupHeight:{label:'Pompe pliométrique — hauteur',unit:'cm'},coreSideLeft:{label:'McGill latéral gauche',unit:'s'},coreSideRight:{label:'McGill latéral droit',unit:'s'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
 function nowIso(){return new Date().toISOString()}
 function recordDateLabel(iso){const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeCutoff(range){const d=new Date();if(range==='7d')d.setDate(d.getDate()-7);else if(range==='30d')d.setDate(d.getDate()-30);else if(range==='cycle'&&state.cycle?.start)return new Date(state.cycle.start);else return new Date(0);return d}
@@ -965,7 +966,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.6</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.7</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1623,7 +1624,7 @@ function closeAllSheets(){
 }
 function switchRole(){state.role=state.role==='coach'?'athlete':'coach';save();render()}
 function coachShell(content,active='dashboard'){
- const bottom=[['dashboard','Accueil'],['weeks','Semaine'],['analytics','Suivi']];
+ const bottom=[['dashboard','Accueil'],['cycle','Cycle'],['weeks','Semaine'],['analytics','Suivi']];
  app.innerHTML=`<div class="coach"><aside class="side"><div class="logo">LTS Coach</div><div class="nav">${[['dashboard','Tableau de bord'],['cycle','Cycle'],['weeks','Semaines'],['analytics','Suivi']].map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</div><button class="btn full" style="position:absolute;bottom:18px;left:14px;width:202px" onclick="switchRole()">Espace Athlète</button></aside><main class="main"><div class="mobilebar"><b>LTS Coach</b><button class="btn secondary coachTopSwitch" onclick="switchRole()">Athlète</button></div>${content}</main><nav class="coachBottom">${bottom.map(x=>`<button class="${active===x[0]?'active':''}" onclick="coach('${x[0]}')">${x[1]}</button>`).join('')}</nav></div>`
 }
 function coach(view){if(view==='cycle')renderCycle();else if(view==='weeks')renderWeeks();else if(view==='tests')renderTests();else if(view==='analytics')renderCoachAnalytics();else renderDashboard()}
@@ -1661,7 +1662,7 @@ function renderDailyPerformanceTracking(){
 
 function trackingTab(tab){window.currentTrackingTab=tab;const tabs=`<div class="trackingtabs">${[['daily','Quotidien'],['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="trackingTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;let content='';
 if(tab==='daily')content=renderDailyPerformanceTracking();
-else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
+else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','powerSlapTouch','plyoPushupHeight','coreSideLeft','coreSideRight','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
 else if(tab==='life')content=`${bikeTrackingCard()}<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
 else content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`;
 coachShell(`<div class="pagehead"><div><h1>Suivi et analyses</h1><p class="muted">Données réellement saisies par l’Athlète et résultats validés par le Coach.</p></div></div><div class="realDataBanner"><b>Données réelles uniquement</b><div class="muted small">La semaine fictive et ses éventuelles saisies ne sont pas utilisées dans les graphiques.</div></div>${trackingRangeBar()}${tabs}${content}`,'analytics')}
@@ -1717,7 +1718,7 @@ function athleteProfileTab(tab='perf'){
  const tabs=`<div class="trackingtabs">${[['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="athleteProfileTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;
  let content='';
  if(tab==='perf'){
-  content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','coreFlexor','coreExtensor'].map(chartCard).join('')}</div>`
+  content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','powerSlapTouch','plyoPushupHeight','coreSideLeft','coreSideRight','coreFlexor','coreExtensor'].map(chartCard).join('')}</div>`
  }else if(tab==='life'){
   content=`${bikeTrackingCard()}<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`
  }else{
@@ -1727,59 +1728,167 @@ function athleteProfileTab(tab='perf'){
 }
 
 
+function cycleFactorCandidates(){
+ const fallback=[
+  {quality:'Force maximale doigts',level:null,source:'Choix du Coach'},
+  {quality:'Endurance doigts',level:null,source:'Choix du Coach'},
+  {quality:'Force haut du corps',level:null,source:'Choix du Coach'},
+  {quality:'Endurance haut du corps',level:null,source:'Choix du Coach'},
+  {quality:'Puissance haut du corps',level:null,source:'Choix du Coach'},
+  {quality:'Escalade / Kilterboard',level:null,source:'Choix du Coach'},
+  {quality:'Gainage',level:null,source:'Choix du Coach'},
+  {quality:'Running',level:null,source:'Choix du Coach'}
+ ];
+ const rows=[...(state.tests||[]),...fallback];
+ const unique=new Map();
+ rows.forEach(row=>{if(row?.quality&&!unique.has(row.quality))unique.set(row.quality,row)});
+ return [...unique.values()].sort((a,b)=>(Number(a.level)||99)-(Number(b.level)||99))
+}
+function defaultNextCycleStart(){
+ let date=state.cycle?.start?new Date(`${state.cycle.start}T12:00:00`):new Date();
+ if(state.cycle?.start)date.setDate(date.getDate()+56);
+ const today=new Date();today.setHours(12,0,0,0);
+ if(date<today){date=today;const offset=(8-date.getDay())%7;date.setDate(date.getDate()+offset)}
+ return localIsoDate(date)
+}
+function cycleSyncBadge(c){
+ const status=c?.cycleSync?.status||'local';
+ const label={local:'Local',pending:'Envoi…',synced:'Google Sheets',error:'Erreur sync'}[status]||'Local';
+ return `<span class="planSyncBadge ${status}">${label}</span>`
+}
+function cycleHistoryHtml(){
+ const rows=Array.isArray(state.cycleHistory)?state.cycleHistory:[];
+ if(!rows.length)return '';
+ return `<div class="card"><div class="sectiontitle"><div><h3>Cycles précédents</h3><p class="muted small">Conservés sans mélanger leurs semaines avec le cycle actif.</p></div><span class="pill">${rows.length}</span></div>${rows.map(entry=>{
+  const cycle=entry.cycle||entry;
+  const weeks=Array.isArray(entry.weeks)?entry.weeks:[];
+  return `<div class="row"><div><b>${htmlEscape(cycle.name||'Cycle LTS')}</b><div class="muted small">${cycle.start?new Date(`${cycle.start}T12:00:00`).toLocaleDateString('fr-FR'):'Date inconnue'} · ${weeks.length} semaine(s) conservée(s)</div></div><span class="pill">${htmlEscape(cycle.status==='VALIDATED'?'Terminé':'Archivé')}</span></div>`
+ }).join('')}</div>`
+}
+function initializeCycleForm(){
+ const props=cycleFactorCandidates();
+ const preferred=Math.max(0,props.findIndex(item=>Number(item.level)===Math.min(...props.map(row=>Number(row.level)||99))));
+ window.tempCycleFactors=props;
+ window.tempRoles=props.map((_,i)=>i===preferred?'primary':'excluded');
+ return {props,preferred}
+}
+function cycleCreationFormHtml(){
+ const {props,preferred}=initializeCycleForm();
+ const cycleNumber=(state.cycleHistory?.length||0)+(state.cycle?2:1);
+ return `<div class="card">
+  <div class="grid cols2">
+   <div class="field"><label>Nom du cycle</label><input id="cycleName" value="Cycle LTS ${cycleNumber}" oninput="validateCycle()"></div>
+   <div class="field"><label>Date de début</label><input id="cycleStart" type="date" value="${defaultNextCycleStart()}" oninput="validateCycle()"></div>
+  </div>
+  <div class="protocolnote"><b>Création sans perte :</b> le cycle actuellement actif et ses semaines seront archivés localement. Le nouveau cycle disposera de ses propres semaines 1 à 8 et de son propre identifiant Google Sheets.</div>
+  <h3>Facteurs proposés</h3>
+  ${props.map((p,i)=>`<div id="fac${i}" class="reqcard ${i===preferred?'selected':''}"><div><b>${htmlEscape(p.quality)}</b><div class="muted small">${htmlEscape(p.source||'Choix du Coach')}${Number.isFinite(Number(p.level))?` · N${Number(p.level)}`:''}</div></div><div class="dataTools" style="margin-top:8px"><button type="button" class="btn ghost ${i===preferred?'active':''}" onclick="setRole(${i},'primary',this)">Principal</button><button type="button" class="btn ghost" onclick="setRole(${i},'secondary',this)">Secondaire</button><button type="button" class="btn ghost" onclick="setRole(${i},'excluded',this)">Écarter</button></div></div>`).join('')}
+  <div class="field"><label>Commentaire d’arbitrage obligatoire — 40 caractères minimum</label><textarea id="arbComment" oninput="updateCounter()"></textarea><div class="muted small"><span id="counter">0</span>/40</div></div>
+  <button id="createCycleBtn" class="btn full" disabled onclick="createCycle()">Créer ce cycle</button>
+ </div>`
+}
+function openNewCycleCreator(){
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="newCycleSheet"><div class="sheet"><div class="sheethead"><div><h2>Créer un nouveau cycle</h2><p class="muted">Structure LTS 3 + 1 + 3 + 1</p></div><button type="button" class="btn ghost" onclick="closeSheetById('newCycleSheet')">Fermer</button></div>${cycleCreationFormHtml()}</div></div>`)
+}
 function renderCycle(){
  const c=state.cycle;
- if(c){
-   const statusLabel=c.status==='VALIDATED'?'Validé':'Brouillon';
-   const statusClass=c.status==='VALIDATED'?'green':'orange';
-   coachShell(`<div class="pagehead"><div><h1>Cycle</h1><p class="muted">Structure 3 + 1 + 3 + 1 · 8 semaines</p></div><button class="btn secondary" onclick="renderWeeks()">Voir les semaines</button></div>
-   <div class="card ${c.status==='DRAFT'?'cycleDraft':''}">
-    <div class="sectiontitle"><div><h3>${c.name||'Cycle LTS'}</h3><p class="muted small">Début : ${c.start?new Date(c.start+'T12:00:00').toLocaleDateString('fr-FR'):'Non défini'}</p></div><span class="pill ${statusClass}">${statusLabel}</span></div>
-    <div class="grid cols2">
-     <div class="summaryBox"><div class="muted small">Facteur principal</div><b>${c.primary||'Non défini'}</b></div>
-     <div class="summaryBox"><div class="muted small">Objectif secondaire</div><b>${c.secondary||'Aucun'}</b></div>
-     <div class="summaryBox"><div class="muted small">Semaine courante</div><b>S${c.currentWeek||1} / 8</b></div>
-     <div class="summaryBox"><div class="muted small">Identifiant stable</div><b class="small">${c.cycleId||'Créé à la prochaine sauvegarde'}</b></div>
-    </div>
-    <div style="margin-top:14px"><b>Arbitrage du Coach</b><p>${c.comment||'Aucun commentaire.'}</p></div>
-    ${c.status!=='VALIDATED'?`<button class="btn full" onclick="validateDemoCycle()">Valider ce cycle</button>`:`<button class="btn full" onclick="renderWeeks()">Préparer les semaines</button>`}
-   </div>
-   <div class="card"><h3>Règles du cycle</h3>
-    <div class="row"><span>Semaines 1 à 3</span><b>Construction</b></div>
-    <div class="row"><span>Semaine 4</span><b>Deload</b></div>
-    <div class="row"><span>Semaines 5 à 7</span><b>Construction</b></div>
-    <div class="row"><span>Semaine 8</span><b>Tests</b></div>
-   </div>`,'cycle');
-   return
+ if(!c){
+  coachShell(`<div class="pagehead"><div><h1>Créer un cycle</h1><p class="muted">Le Coach arbitre les facteurs proposés par les tests.</p></div></div>${cycleCreationFormHtml()}${cycleHistoryHtml()}`,'cycle');
+  return
  }
-
- const props=state.tests.filter(t=>Number(t.level)===2);
- window.tempRoles=props.map((_,i)=>i===0?'primary':'excluded');
- coachShell(`<div class="pagehead"><div><h1>Créer un cycle</h1><p class="muted">Le Coach arbitre les facteurs proposés par les tests.</p></div></div>
- <div class="card">
+ const statusLabel=c.status==='VALIDATED'?'Validé':'Brouillon';
+ const statusClass=c.status==='VALIDATED'?'green':'orange';
+ coachShell(`<div class="pagehead"><div><h1>Cycle</h1><p class="muted">Structure 3 + 1 + 3 + 1 · 8 semaines</p></div><div class="dataTools"><button class="btn secondary" onclick="renderWeeks()">Voir les semaines</button><button class="btn" onclick="openNewCycleCreator()">+ Nouveau cycle</button></div></div>
+ <div class="card ${c.status==='DRAFT'?'cycleDraft':''}">
+  <div class="sectiontitle"><div><h3>${htmlEscape(c.name||'Cycle LTS')}</h3><p class="muted small">Début : ${c.start?new Date(c.start+'T12:00:00').toLocaleDateString('fr-FR'):'Non défini'}</p></div><div class="dataTools"><span class="pill ${statusClass}">${statusLabel}</span>${cycleSyncBadge(c)}</div></div>
   <div class="grid cols2">
-   <div class="field"><label>Nom du cycle</label><input id="cycleName" value="Cycle LTS"></div>
-   <div class="field"><label>Date de début</label><input id="cycleStart" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+   <div class="summaryBox"><div class="muted small">Facteur principal</div><b>${htmlEscape(c.primary||'Non défini')}</b></div>
+   <div class="summaryBox"><div class="muted small">Objectif secondaire</div><b>${htmlEscape(c.secondary||'Aucun')}</b></div>
+   <div class="summaryBox"><div class="muted small">Semaine courante</div><b>S${c.currentWeek||1} / 8</b></div>
+   <div class="summaryBox"><div class="muted small">Identifiant stable</div><b class="small">${htmlEscape(c.cycleId||'Créé à la prochaine sauvegarde')}</b></div>
   </div>
-  <h3>Facteurs proposés</h3>
-  ${props.length?props.map((p,i)=>`<div id="fac${i}" class="reqcard ${i===0?'selected':''}"><div><b>${p.quality}</b><div class="muted small">${p.source}</div></div><div class="dataTools" style="margin-top:8px"><button class="btn ghost ${i===0?'active':''}" onclick="setRole(${i},'primary',this)">Principal</button><button class="btn ghost" onclick="setRole(${i},'secondary',this)">Secondaire</button><button class="btn ghost" onclick="setRole(${i},'excluded',this)">Écarter</button></div></div>`).join(''):'<p class="muted">Aucun facteur de niveau 2 disponible.</p>'}
-  <div class="field"><label>Commentaire d’arbitrage obligatoire — 40 caractères minimum</label><textarea id="arbComment" oninput="updateCounter()"></textarea><div class="muted small"><span id="counter">0</span>/40</div></div>
-  <button id="createCycleBtn" class="btn full" disabled onclick="createCycle()">Créer le cycle</button>
- </div>`,'cycle')
+  <div style="margin-top:14px"><b>Arbitrage du Coach</b><p>${htmlEscape(c.comment||'Aucun commentaire.')}</p></div>
+  ${c.status!=='VALIDATED'?`<button class="btn full" onclick="validateActiveCycle()">Valider et démarrer ce cycle</button>`:`<button class="btn full" onclick="renderWeeks()">Préparer les semaines</button>`}
+ </div>
+ <div class="card"><h3>Règles du cycle</h3>
+  <div class="row"><span>Semaines 1 à 3</span><b>Construction</b></div>
+  <div class="row"><span>Semaine 4</span><b>Deload</b></div>
+  <div class="row"><span>Semaines 5 à 7</span><b>Construction</b></div>
+  <div class="row"><span>Semaine 8</span><b>Tests ciblés</b></div>
+ </div>${cycleHistoryHtml()}`,'cycle')
 }
 
-function validateDemoCycle(){
+function validateActiveCycle(){
  if(!state.cycle)return;
- if(!confirm('Valider ce cycle ? Il ne sera plus affiché comme brouillon.'))return;
+ if(!confirm('Valider et démarrer ce cycle ? Le cycle précédent sera marqué comme terminé dans Google Sheets.'))return;
  state.cycle.status='VALIDATED';
  state.cycle.validatedAt=new Date().toISOString();
- save();renderCycle();toast('Cycle validé')
+ state.cycle.cycleSync={status:'pending',message:'Activation en cours',updatedAt:new Date().toISOString()};
+ save();renderCycle();
+ Promise.resolve(window.syncActiveCycle?.({activate:true})).finally(()=>renderCycle());
+ toast('Cycle validé')
 }
+function validateDemoCycle(){return validateActiveCycle()}
 
-function setRole(i,role,btn){window.tempRoles[i]=role;const box=document.getElementById('fac'+i);box.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');box.classList.toggle('selected',role!=='excluded');validateCycle()}
-function updateCounter(){counter.textContent=arbComment.value.length;validateCycle()}
-function validateCycle(){const primary=window.tempRoles?.includes('primary');const ok=primary&&arbComment.value.trim().length>=40;createCycleBtn.disabled=!ok}
-function createCycle(){const props=state.tests.filter(t=>t.level===2);const p=props[window.tempRoles.indexOf('primary')];const sec=props.filter((_,i)=>window.tempRoles[i]==='secondary').map(x=>x.quality).join(', ');state.cycle={name:cycleName.value,start:cycleStart.value,primary:p.quality,secondary:sec,comment:arbComment.value,currentWeek:1,status:'DRAFT',validatedAt:null,isDemo:false};state.weeks=[];save();toast('Cycle créé');renderWeeks()}
+function setRole(i,role,btn){
+ if(role==='primary')window.tempRoles=window.tempRoles.map((value,index)=>index===i?'primary':value==='primary'?'excluded':value);
+ else window.tempRoles[i]=role;
+ document.querySelectorAll('[id^="fac"]').forEach((box,index)=>{
+  const current=window.tempRoles[index]||'excluded';
+  box.querySelectorAll('button').forEach(button=>button.classList.toggle('active',button.textContent.trim().toLowerCase().startsWith(current==='primary'?'principal':current==='secondary'?'secondaire':'écarter')));
+  box.classList.toggle('selected',current!=='excluded')
+ });
+ validateCycle()
+}
+function updateCounter(){
+ const comment=document.getElementById('arbComment');
+ const counter=document.getElementById('counter');
+ if(counter)counter.textContent=comment?.value.length||0;
+ validateCycle()
+}
+function validateCycle(){
+ const primary=window.tempRoles?.includes('primary');
+ const comment=document.getElementById('arbComment');
+ const name=document.getElementById('cycleName');
+ const start=document.getElementById('cycleStart');
+ const button=document.getElementById('createCycleBtn');
+ const ok=primary&&String(comment?.value||'').trim().length>=40&&String(name?.value||'').trim()&&String(start?.value||'');
+ if(button)button.disabled=!ok
+}
+function archiveCurrentCycle(){
+ if(!state.cycle)return;
+ state.cycleHistory=Array.isArray(state.cycleHistory)?state.cycleHistory:[];
+ const id=String(state.cycle.cycleId||'');
+ const entry={cycle:safeClone(state.cycle),weeks:safeClone(state.weeks||[]),archivedAt:new Date().toISOString(),source:'PWA'};
+ const index=state.cycleHistory.findIndex(row=>String((row.cycle||row).cycleId||'')===id&&id);
+ if(index>=0)state.cycleHistory[index]=entry;else state.cycleHistory.unshift(entry)
+}
+function createCycle(){
+ const props=window.tempCycleFactors||cycleFactorCandidates();
+ const primaryIndex=window.tempRoles?.indexOf('primary')??-1;
+ const primary=props[primaryIndex];
+ const name=String(document.getElementById('cycleName')?.value||'').trim();
+ const start=String(document.getElementById('cycleStart')?.value||'');
+ const comment=String(document.getElementById('arbComment')?.value||'').trim();
+ if(!primary||!name||!start||comment.length<40)return toast('Complète le cycle et son arbitrage');
+ const pending=(state.weeks||[]).filter(w=>w.status==='PUBLISHED'&&w.planSync?.status!=='synced');
+ if(pending.length&&!confirm(`${pending.length} semaine(s) du cycle actuel ne sont pas confirmées dans Google Sheets. Elles seront conservées dans l’archive locale. Créer quand même le nouveau cycle ?`))return;
+ const previousCycleId=state.cycle?.cycleId||'';
+ archiveCurrentCycle();
+ const secondary=props.filter((_,i)=>window.tempRoles[i]==='secondary').map(row=>row.quality).join(', ');
+ state.cycle={
+  cycleId:stableId('cycle'),name,start,primary:primary.quality,secondary,comment,currentWeek:1,
+  status:'DRAFT',validatedAt:null,isDemo:false,version:1,supersedesCycleId:previousCycleId,
+  cycleSync:{status:'local',message:'Brouillon local',updatedAt:new Date().toISOString()}
+ };
+ state.weeks=[];
+ state.remoteWeeks=[];
+ ensureStableIds();
+ logAudit('CREATE','CYCLE',state.cycle.cycleId,`${name} · début ${start}`);
+ save();closeAllSheets();renderCycle();
+ Promise.resolve(window.syncActiveCycle?.({activate:false})).finally(()=>renderCycle());
+ toast('Nouveau cycle créé sans supprimer l’ancien')
+}
 const REMOTE_STIMULUS_DOMAIN_MAP={
  FINGER_MAX:['B'],FINGER_END:['B'],FINGER_POWER:['B'],
  BLOC_MAX:['ESC','BM'],
@@ -2436,10 +2545,143 @@ function showSpecialWeekProposal(number,type,title,description){
 function showDeloadProposal(){
  showSpecialWeekProposal(4,'DELOAD','Proposer le deload','Réduire la charge cible à 50 %, conserver la qualité technique et adapter le volume selon la récupération réelle.')
 }
+
+const TEST_WEEK_GROUPS=[
+ {
+  id:'fingerMax',label:'Doigts · Max Hang 20 mm — 5 s',guide:'G01 · FM20-5-0.2',day:'Lun',slot:'midi',warmup:'FINGER_STRENGTH',templates:['maxhang'],
+  prescriptions:[{templateId:'maxhang',domain:'B',title:'Test Max Hang 20 mm — 5 s',guide:'G01',duration:35,coachComment:'Test officiel LTS : suspension 20 mm pendant 5 secondes. Conserver la meilleure charge ajoutée validée.',testDefinition:{testCode:'FINGER_MAX_20_5',protocolVersion:'FM20-5-0.2',fields:[{key:'addedLoadKg',label:'Meilleure charge ajoutée validée',unit:'kg',column:'added_load_kg',metricKey:'fingerMax'}]}}]
+ },
+ {
+  id:'upperPower',label:'Puissance haut du corps',guide:'G05 / G06',day:'Mar',slot:'midi',warmup:'UPPER_STRENGTH',templates:['pullpower','pushpower'],conditional:true,
+  prescriptions:[
+   {templateId:'pullpower',domain:'A',extraDomains:['A_PULL'],title:'Test Power Slap',guide:'G05',duration:25,coachComment:'Test de puissance de traction prévu par le guide G05.',testDefinition:{testCode:'POWER_SLAP',protocolVersion:'PSLAP-0.2',fields:[{key:'barHeightCm',label:'Hauteur de la barre',unit:'cm',column:'bar_height_cm'},{key:'touchHeightCm',label:'Meilleure hauteur touchée',unit:'cm',column:'touch_height_cm',metricKey:'powerSlapTouch'}]}},
+   {templateId:'pushpower',domain:'A',extraDomains:['A_PUSH'],title:'Test pompe pliométrique',guide:'G06',duration:20,coachComment:'Test de puissance de poussée prévu par le guide G06.',testDefinition:{testCode:'PLYO_PUSHUP',protocolVersion:'PLYO-0.2',fields:[{key:'powerHeightCm',label:'Meilleure hauteur obtenue',unit:'cm',column:'power_height_cm',metricKey:'plyoPushupHeight'}]}}
+  ]
+ },
+ {
+  id:'kilter30',label:'Escalade · Kilterboard max flash 30°',guide:'Protocole LTS Kilter Flash',day:'Mer',slot:'midi',warmup:'CLIMBING',templates:['kiltertech','kilterintense','kiltervolume'],angle:30
+ },
+ {
+  id:'upperStrength',label:'Force haut du corps · 1RM tractions et dips',guide:'G02 / G03',day:'Jeu',slot:'midi',warmup:'UPPER_STRENGTH',templates:['pullstrength','dipstrength'],
+  prescriptions:[
+   {templateId:'pullstrength',domain:'A',extraDomains:['A_PULL'],title:'Test 1RM traction lestée',guide:'G02',duration:35,coachComment:'Test officiel LTS : meilleure traction stricte validée. Saisir uniquement la charge ajoutée.',testDefinition:{testCode:'PULLUP_1RM',protocolVersion:'PULL1RM-0.2',fields:[{key:'addedLoadKg',label:'Charge ajoutée validée',unit:'kg',column:'added_load_kg',metricKey:'pull1rm'}]}},
+   {templateId:'dipstrength',domain:'A',extraDomains:['A_PUSH'],title:'Test 1RM dip lesté',guide:'G03',duration:35,coachComment:'Test officiel LTS : meilleur dip strict validé. Saisir uniquement la charge ajoutée.',testDefinition:{testCode:'DIP_1RM',protocolVersion:'DIP1RM-0.2',fields:[{key:'addedLoadKg',label:'Charge ajoutée validée',unit:'kg',column:'added_load_kg',metricKey:'dip1rm'}]}}
+  ]
+ },
+ {
+  id:'core',label:'Gainage · batterie McGill',guide:'G10 · MCGILL-0.2',day:'Jeu',slot:'soir',warmup:'CORE_MOBILITY',templates:['corearc'],
+  prescriptions:[
+   {templateId:'corearc',domain:'E',title:'McGill — planche latérale',guide:'G10',duration:15,coachComment:'Réaliser le protocole McGill du guide G10 et saisir les deux côtés séparément.',testDefinition:{testCode:'MCGILL_SIDE',protocolVersion:'MCGILL-0.2',fields:[{key:'leftSeconds',label:'Côté gauche',unit:'s',column:'left_seconds',metricKey:'coreSideLeft'},{key:'rightSeconds',label:'Côté droit',unit:'s',column:'right_seconds',metricKey:'coreSideRight'}]}},
+   {templateId:'corearc',domain:'E',title:'McGill — fléchisseurs',guide:'G10',duration:10,coachComment:'Réaliser le protocole McGill des fléchisseurs prévu dans le guide G10.',testDefinition:{testCode:'MCGILL_FLEX',protocolVersion:'MCGILL-0.2',fields:[{key:'durationSeconds',label:'Temps validé',unit:'s',column:'flexion_seconds',alsoColumn:'duration_seconds',metricKey:'coreFlexor'}]}},
+   {templateId:'corearc',domain:'E',title:'McGill — Sorensen',guide:'G10',duration:10,coachComment:'Réaliser le protocole Sorensen prévu dans le guide G10.',testDefinition:{testCode:'MCGILL_SORENSEN',protocolVersion:'MCGILL-0.2',fields:[{key:'durationSeconds',label:'Temps validé',unit:'s',column:'sorensen_seconds',alsoColumn:'duration_seconds',metricKey:'coreExtensor'}]}}
+  ]
+ },
+ {
+  id:'fingerDensity',label:'Doigts · Density 20 mm — 7 s / 3 s',guide:'G07 · FE20-7-3-0.2',day:'Ven',slot:'midi',warmup:'FINGER_STRENGTH',templates:['repeaters'],
+  prescriptions:[{templateId:'repeaters',domain:'B',title:'Test Density 20 mm — 7 s / 3 s',guide:'G07',duration:35,coachComment:'Test officiel LTS : compter uniquement les tours entièrement complétés au protocole 7 secondes / 3 secondes.',testDefinition:{testCode:'FINGER_END_20_7_3',protocolVersion:'FE20-7-3-0.2',fields:[{key:'completedTours',label:'Tours entièrement complétés',unit:'tours',column:'completed_tours',metricKey:'fingerRepeaters'}]}}]
+ },
+ {
+  id:'kilter40',label:'Escalade · Kilterboard max flash 40°',guide:'Protocole LTS Kilter Flash',day:'Sam',slot:'midi',warmup:'CLIMBING',templates:['kiltertech','kilterintense','kiltervolume'],angle:40
+ },
+ {
+  id:'upperEndurance',label:'Endurance de force haut du corps · max reps',guide:'G08 / G09',day:'Dim',slot:'midi',warmup:'UPPER_STRENGTH',templates:['pullend','dipend'],
+  prescriptions:[
+   {templateId:'pullend',domain:'A',extraDomains:['A_PULL'],title:'Test tractions maximales',guide:'G08',duration:25,coachComment:'Test officiel LTS : répétitions strictes valides réalisées en une série maximale.',testDefinition:{testCode:'PULLUP_MAX_REPS',protocolVersion:'PULLMAX-0.2',fields:[{key:'repetitionsValid',label:'Répétitions strictes valides',unit:'reps',column:'repetitions_valid',metricKey:'pullReps'}]}},
+   {templateId:'dipend',domain:'A',extraDomains:['A_PUSH'],title:'Test dips maximaux',guide:'G09',duration:25,coachComment:'Test officiel LTS : répétitions strictes valides réalisées en une série maximale.',testDefinition:{testCode:'DIP_MAX_REPS',protocolVersion:'DIPMAX-0.2',fields:[{key:'repetitionsValid',label:'Répétitions strictes valides',unit:'reps',column:'repetitions_valid',metricKey:'dipReps'}]}}
+  ]
+ }
+];
+function cycleDevelopmentPrescriptions(){
+ return (state.weeks||[]).filter(w=>Number(w.number)<8).flatMap(w=>(w.sessions||[]).map(p=>({week:w,prescription:p})))
+}
+function testGroupEligibility(group){
+ const rows=cycleDevelopmentPrescriptions();
+ const primaryText=[state.cycle?.primary,state.cycle?.secondary].join(' ').toLowerCase();
+ const templateMatch=rows.some(({prescription})=>(group.templates||[]).includes(String(prescription.templateId||'')));
+ if(group.id==='upperPower')return templateMatch||/puissance.*haut|haut.*puissance/.test(primaryText);
+ if(group.id==='kilter30'||group.id==='kilter40'){
+  const angle=String(group.angle);
+  return rows.some(({prescription})=>String(prescription.templateId||'').startsWith('kilter')&&String(prescription.climbing?.angle||'').includes(angle))
+ }
+ return templateMatch
+}
+function testWeekOptionHtml(group){
+ const eligible=testGroupEligibility(group);
+ const blocked=group.conditional&&!eligible;
+ const selected=eligible&&!blocked;
+ return `<label class="reqcard ${selected?'selected':''}" style="display:block;cursor:${blocked?'not-allowed':'pointer'};opacity:${blocked?'.58':'1'}">
+  <span style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" data-test-week-option value="${group.id}" ${selected?'checked':''} ${blocked?'disabled':''}><span><b>${htmlEscape(group.label)}</b><span class="muted small" style="display:block">${htmlEscape(group.guide)} · ${blocked?'non proposé : aucune puissance haute dans le cycle':eligible?'repéré dans le cycle':'optionnel'}</span></span></span>
+ </label>`
+}
+function latestLowerBodyPrescription(templateId){
+ return cycleDevelopmentPrescriptions().filter(({prescription})=>String(prescription.templateId)===templateId)
+  .sort((a,b)=>Number(b.week.number)-Number(a.week.number))[0]||null
+}
+function buildTestPrescription(spec,container){
+ return {
+  sessionId:stableId('test'),containerId:container.containerId,day:container.day,slot:container.slot,
+  templateId:spec.templateId,domain:spec.domain,extraDomains:spec.extraDomains||[],title:spec.title,guide:spec.guide,
+  duration:spec.duration,notes:spec.coachComment,coachComment:spec.coachComment,testDefinition:safeClone(spec.testDefinition),
+  prescriptionOrder:0,structureType:'PRESCRIPTION',execution:null,revision:0,isOfficialTest:true
+ }
+}
+function buildKilterFlashPrescription(group,container){
+ const angle=`${group.angle}°`;
+ return {
+  sessionId:stableId('test-kilter'),containerId:container.containerId,day:container.day,slot:container.slot,
+  templateId:'kilterintense',domain:'ESC',extraDomains:['BM','B'],title:`Kilterboard max flash ${angle}`,guide:'G21 · Protocole Kilter Flash',duration:75,
+  notes:'Utiliser uniquement des blocs jamais essayés, sans vidéo ni méthode préalable. Un seul essai par bloc ; saisir tous les blocs tentés afin de conserver le meilleur niveau flash et le taux de réussite.',
+  coachComment:'Test de performance escalade standardisé. Le choix final des blocs et l’arrêt du test restent sous contrôle du Coach.',
+  climbing:{mode:'KILTER_FLASH_TEST',prescriptionMode:'PROBLEMS',durationTargetMin:75,angle,problemCount:10,attemptLimit:1,targetGrade:'',technicalFocus:'Maximum flash',fingerStimulus:true,athleteCanLogBlocks:true},
+  exercises:[{name:`Kilterboard flash ${angle}`,category:'Escalade — test flash',targetMode:'COUNT',targetCount:10,targetUnit:'BLOCKS',restBetweenSeconds:180,athleteCanLogBlocks:true,coachComment:'Un seul essai par bloc. Récupération complète avant chaque tentative.'}],
+  prescriptionOrder:1,structureType:'PRESCRIPTION',execution:null,revision:0,isKilterFlashTest:true
+ }
+}
+function addTestGroupToWeek(week,group){
+ const container={containerId:stableId('ctr-test'),day:group.day,slot:group.slot,title:group.label,comment:`Semaine 8 · ${group.guide}`,warmup:{presetId:group.warmup,coachNote:'Échauffement en lecture seule avant le premier test.'},status:'PLANNED',sessionOrder:(week.containers||[]).length+1,structureType:'SESSION_CONTAINER',isTestContainer:true};
+ week.containers.push(container);
+ const prescriptions=group.angle?[buildKilterFlashPrescription(group,container)]:(group.prescriptions||[]).map(spec=>buildTestPrescription(spec,container));
+ prescriptions.forEach((p,index)=>{p.prescriptionOrder=index+1;week.sessions.push(p)})
+}
+function addNormalLowerBodyFollowup(week){
+ ['lowerstrength','lowerpower'].forEach(templateId=>{
+  const found=latestLowerBodyPrescription(templateId);if(!found)return;
+  const source=found.prescription;
+  const sourceContainer=(found.week.containers||[]).find(c=>String(c.containerId)===String(source.containerId));
+  const day=sourceContainer?.day||source.day||(templateId==='lowerstrength'?'Mar':'Ven');
+  let slot=sourceContainer?.slot||source.slot||'soir';
+  if((week.containers||[]).some(c=>c.day===day&&c.slot===slot))slot=['soir','midi','matin'].find(candidate=>!(week.containers||[]).some(c=>c.day===day&&c.slot===candidate))||slot;
+  const container={containerId:stableId('ctr-lower'),day,slot,title:sourceContainer?.title||source.title,comment:'Suivi normal jambes pendant la semaine de tests — aucune évaluation officielle.',warmup:{presetId:templateId==='lowerpower'?'LOWER_POWER':'LOWER_STRENGTH',coachNote:''},status:'PLANNED',sessionOrder:week.containers.length+1,structureType:'SESSION_CONTAINER',normalTrackingDuringTests:true};
+  const copy=cleanRemotePlanningFields(safeClone(source));
+  copy.sessionId=stableId('presc-lower');copy.containerId=container.containerId;copy.day=day;copy.slot=slot;copy.execution=null;copy.revision=0;copy.prescriptionOrder=1;copy.structureType='PRESCRIPTION';copy.isOfficialTest=false;copy.normalTrackingDuringTests=true;
+  week.containers.push(container);week.sessions.push(copy)
+ })
+}
 function showTestProposal(){
- showSpecialWeekProposal(8,'TESTS','Proposer la semaine de tests','Planifier les tests utiles au cycle, avec suffisamment de récupération entre les évaluations et sans automatiser une semaine type.')
+ const lowerAvailable=!!latestLowerBodyPrescription('lowerstrength')||!!latestLowerBodyPrescription('lowerpower');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="testWeekProposal"><div class="sheet"><div class="sheethead"><div><h2>Créer la semaine 8 de tests</h2><p class="muted">Proposition ciblée d’après les contenus réellement travaillés</p></div><button type="button" class="btn ghost" onclick="closeSheetById('testWeekProposal')">Fermer</button></div>
+  <div class="protocolnote"><b>Exclusions validées :</b> aucun test running, force jambes ou puissance jambes. La calisthénie reste en suivi sans test. Le Coach conserve le dernier mot avant publication.</div>
+  <div class="reqboard">${TEST_WEEK_GROUPS.map(testWeekOptionHtml).join('')}</div>
+  <label class="reqcard" style="display:block"><span style="display:flex;gap:10px"><input id="carryLowerBodyWeek8" type="checkbox" ${lowerAvailable?'checked':'disabled'}><span><b>Conserver les séances jambes en suivi normal</b><span class="muted small" style="display:block">${lowerAvailable?'Recopier les dernières prescriptions G23/G24 sans créer de test.':'Aucune prescription jambes antérieure à recopier ; elles pourront être ajoutées manuellement.'}</span></span></span></label>
+  <div class="protocolnote">Les jours proposés servent de point de départ. Après génération, toutes les séances restent déplaçables, modifiables ou supprimables. Si de nombreuses familles sont cochées, le Coach doit vérifier la récupération et les interférences avant publication.</div>
+  <button type="button" class="btn full" onclick="createTestWeekFromProposal()">Créer la semaine 8 en brouillon</button>
+ </div></div>`)
+}
+function createTestWeekFromProposal(){
+ if((state.weeks||[]).some(w=>Number(w.number)===8))return toast('La semaine 8 existe déjà');
+ const selected=[...document.querySelectorAll('[data-test-week-option]:checked')].map(input=>input.value);
+ const range=plannedWeekDateRange(8);
+ const week={weekId:stableId('week'),number:8,type:'TESTS',status:'DRAFT',publicationVersion:0,startDate:range.start||undefined,endDate:range.end||undefined,containers:[],sessions:[],proposal:'Semaine de tests ciblée : seuls les domaines sélectionnés sont évalués. Running et jambes restent hors tests.',comment:'Semaine 8 · tests ciblés et récupération contrôlée.',testPlan:{selected,generatedAt:new Date().toISOString(),lowerBodyTests:false,runningTests:false,calisthenicsTests:false},planSync:{status:'local',message:'Brouillon local',updatedAt:new Date().toISOString()},isDemo:false};
+ TEST_WEEK_GROUPS.filter(group=>selected.includes(group.id)).forEach(group=>addTestGroupToWeek(week,group));
+ ensureDailyFlexibility(week);ensureWeekSessionStructureV0570(week);
+ if(document.getElementById('carryLowerBodyWeek8')?.checked)addNormalLowerBodyFollowup(week);
+ ensureWeekSessionStructureV0570(week);ensureStableIds();
+ state.weeks.push(week);state.weeks.sort((a,b)=>Number(a.number)-Number(b.number));state.cycle.currentWeek=8;
+ logAudit('GENERATE_TEST_WEEK','WEEK',week.weekId,`${selected.length} famille(s) de tests · jambes ${week.testPlan.lowerBodyTests?'testées':'suivi normal uniquement'}`);
+ save();closeAllSheets();openWeek(8);toast('Semaine 8 créée en brouillon')
 }
 function createSpecialWeek(number,type){
+ if(type==='TESTS')return showTestProposal();
  if(state.weeks.some(w=>Number(w.number)===Number(number)))return toast('Cette semaine existe déjà');
  const proposal=type==='DELOAD'?'Deload : charge cible 50 %, intensité ajustée et volume maîtrisé.':'Semaine de tests : évaluations choisies par le Coach selon le cycle.';
  const week={number,type,status:'DRAFT',sessions:[],proposal};
@@ -3372,11 +3614,51 @@ function findSession(sessionId){
 function openAthleteSession(sessionId){
  const found=findSession(sessionId);if(!found)return toast('Séance introuvable');
  const s=found.session,schema=guideSchemaFor(s);
+ if(s.testDefinition)return openTestExecution(s);
  if(schema.type==='CLIMBING')return openClimbingExecution(s);
  if(schema.type==='SETS'||schema.type==='TIMED_SETS'||schema.type==='REPEATERS')return openGuideSetExecution(s,schema);
  if(schema.type==='EXERCISES')return openExerciseExecution(s,schema);
  if(schema.type==='RUN'||schema.type==='RUN_INTERVALS')return openRunningExecution(s,schema);
  return openGenericExecution(s)
+}
+function previousTestMetricValue(metricKey){
+ if(!metricKey)return null;
+ const rows=(state.records?.tests||[]).filter(row=>row[metricKey]!==null&&row[metricKey]!==undefined&&row[metricKey]!=='')
+  .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ return rows.length?rows[0][metricKey]:null
+}
+function openTestExecution(s){
+ const definition=s.testDefinition||{},execution=s.execution||{},values=execution.values||{};
+ const fields=(definition.fields||[]).map(field=>{
+  const previous=previousTestMetricValue(field.metricKey);
+  return `<div class="field"><label>${htmlEscape(field.label)}${field.unit?` (${htmlEscape(field.unit)})`:''}</label><input data-test-result-field="${htmlEscape(field.key)}" type="number" step="0.1" inputmode="decimal" value="${htmlEscape(values[field.key]??'')}">${previous!==null?`<div class="previousSetHint">Résultat précédent : <b>${htmlEscape(previous)} ${htmlEscape(field.unit||'')}</b></div>`:''}</div>`
+ }).join('');
+ document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${htmlEscape(s.title)}</h2><p class="muted">${htmlEscape(definition.testCode||'Test LTS')} · ${htmlEscape(definition.protocolVersion||s.guide||'')}</p></div><button type="button" class="btn ghost" onclick="closeSheet()">Fermer</button></div>
+  ${coachCommentBlock(s)}
+  <div class="protocolnote"><b>Résultat factuel uniquement.</b> La PWA enregistre la mesure et l’historique ; l’interprétation et la décision de cycle restent celles du Coach.</div>
+  <div class="measuregrid">${fields}</div>
+  <div class="field"><label>Statut du test</label><select id="testExecutionStatus"><option value="VALID" ${execution.valid!==false&&execution.testStatus!=='NOT_DONE'?'selected':''}>Valide</option><option value="INVALID" ${execution.valid===false&&execution.testStatus!=='NOT_DONE'?'selected':''}>Réalisé mais invalide</option><option value="NOT_DONE" ${execution.testStatus==='NOT_DONE'?'selected':''}>Non réalisé</option></select></div>
+  <div class="measuregrid"><div class="field"><label>RPE du test</label><input id="testExecRpe" type="number" min="0" max="10" value="${execution.rpe??''}"></div><div class="field"><label>Douleur /10</label><input id="testExecPain" type="number" min="0" max="10" value="${execution.pain??0}"></div></div>
+  <div class="field"><label>Commentaire Athlète</label><textarea id="testExecNote">${htmlEscape(execution.note||'')}</textarea></div>
+  <button type="button" class="btn full" onclick="saveTestExecution('${s.sessionId}')">Enregistrer le résultat</button>
+ </div></div>`)
+}
+function saveTestExecution(sessionId){
+ const found=findSession(sessionId);if(!found)return toast('Test introuvable');
+ const s=found.session,definition=s.testDefinition||{},status=document.getElementById('testExecutionStatus')?.value||'VALID';
+ const values={};
+ (definition.fields||[]).forEach(field=>{
+  const raw=document.querySelector(`[data-test-result-field="${field.key}"]`)?.value;
+  values[field.key]=raw===''||raw===undefined?null:Number(raw)
+ });
+ if(status==='VALID'&&Object.values(values).some(value=>value===null||!Number.isFinite(value)))return toast('Renseigne toutes les mesures du test valide');
+ s.execution={type:'TEST',values,testCode:definition.testCode,testStatus:status,valid:status==='VALID',rpe:+document.getElementById('testExecRpe')?.value||null,pain:+document.getElementById('testExecPain')?.value||0,note:document.getElementById('testExecNote')?.value||'',completed:true,completedAt:new Date().toISOString()};
+ if(status==='VALID'){
+  const record={date:s.execution.completedAt,source:'Test Athlète'};
+  (definition.fields||[]).forEach(field=>{if(field.metricKey&&Number.isFinite(values[field.key]))record[field.metricKey]=values[field.key]});
+  if(Object.keys(record).length>2)addOrReplaceDailyRecord('tests',record)
+ }
+ save();closeSheet();renderAthleteWeek();syncSessionExecution(sessionId);toast(status==='VALID'?'Résultat de test enregistré':'Statut du test enregistré')
 }
 function openGuideSetExecution(s,schema){
  const existing=s.execution?.sets||[], labels=schema.labels||['Charge','Reps','RIR','Repos'];
@@ -3758,6 +4040,33 @@ function renderAthleteSessionCard(w,c,compact=false){
  </div>`
 }
 
+window.athleteWeekDayByWeek=window.athleteWeekDayByWeek||{};
+function selectedAthleteWeekDay(w){
+ const key=String(w?.weekId||w?.number||'week');
+ const stored=window.athleteWeekDayByWeek[key];
+ if(WEEK_PLANNER_DAYS.includes(stored))return stored;
+ const todayIso=localIsoDate();
+ const todayContainer=orderedSessionContainers(w).find(c=>containerCalendarDate(w,c)===todayIso);
+ const firstWithContent=WEEK_PLANNER_DAYS.find(day=>orderedSessionContainers(w).some(c=>c.day===day));
+ const selected=todayContainer?.day||firstWithContent||'Lun';
+ window.athleteWeekDayByWeek[key]=selected;
+ return selected
+}
+function switchAthleteWeekDay(weekKey,day){
+ if(!WEEK_PLANNER_DAYS.includes(day))return;
+ window.athleteWeekDayByWeek[String(weekKey)]=day;
+ document.querySelectorAll(`[data-athlete-week-day-button="${weekKey}"]`).forEach(button=>button.classList.toggle('active',button.dataset.day===day));
+ document.querySelectorAll(`[data-athlete-week-day-panel="${weekKey}"]`).forEach(panel=>panel.classList.toggle('active',panel.dataset.day===day));
+}
+function renderAthleteWeekDayPanel(w,day,activeDay,weekKey){
+ const sessions=orderedSessionContainers(w).filter(c=>c.day===day);
+ const total=sessions.reduce((sum,c)=>sum+containerProgress(w,c).total,0);
+ const done=sessions.reduce((sum,c)=>sum+containerProgress(w,c).done,0);
+ return `<section class="weekDayPanel ${day===activeDay?'active':''}" data-athlete-week-day-panel="${weekKey}" data-day="${day}">
+  <div class="weekDayHeading"><div><h3 style="margin:0">${day}</h3><div class="muted small">${sessions.length} séance(s) · ${done}/${total} prescription(s) terminée(s)</div></div></div>
+  ${sessions.length?sessions.map(c=>renderAthleteSessionCard(w,c)).join(''):`<div class="weekDayEmpty">Aucune séance prévue le ${day}.</div>`}
+ </section>`
+}
 function renderAthleteWeek(){
  const weeks=athleteVisibleWeeks();
  if(!weeks.length)return athleteShell('<h1>Ma semaine</h1><div class="card"><p>Aucune semaine publiée.</p></div>','week');
@@ -3765,9 +4074,16 @@ function renderAthleteWeek(){
   const sessions=orderedSessionContainers(w);
   const total=sessions.reduce((sum,c)=>sum+containerProgress(w,c).total,0);
   const done=sessions.reduce((sum,c)=>sum+containerProgress(w,c).done,0);
+  const activeDay=selectedAthleteWeekDay(w);
+  const weekKey=String(w.weekId||w.number);
   return `<div class="card">
    <div class="sectiontitle"><div><h3>Semaine ${w.number}</h3><p class="muted">${w.comment||''}</p></div>${w.isDemo?'<span class="pill orange">Démo</span>':`<span class="pill">${done}/${total}</span>`}</div>
-   ${sessions.length?sessions.map(c=>renderAthleteSessionCard(w,c)).join(''):'<p class="muted">Aucune séance publiée.</p>'}
+   ${sessions.length?`<div class="weekDaySwitcher">${WEEK_PLANNER_DAYS.map(day=>{
+     const daySessions=sessions.filter(c=>c.day===day);
+     const dayTotal=daySessions.reduce((sum,c)=>sum+containerProgress(w,c).total,0);
+     const dayDone=daySessions.reduce((sum,c)=>sum+containerProgress(w,c).done,0);
+     return `<button type="button" class="weekDayButton ${day===activeDay?'active':''}" data-athlete-week-day-button="${weekKey}" data-day="${day}" onclick="switchAthleteWeekDay('${weekKey}','${day}')"><b>${day}</b><span>${daySessions.length} séance(s) · ${dayDone}/${dayTotal}</span></button>`
+    }).join('')}</div>${WEEK_PLANNER_DAYS.map(day=>renderAthleteWeekDayPanel(w,day,activeDay,weekKey)).join('')}`:'<p class="muted">Aucune séance publiée.</p>'}
   </div>`
  }).join('');
  athleteShell('<div class="sectiontitle"><div><div class="muted">Planning publié</div><h1>Ma semaine</h1></div><span class="pill green">'+weeks.length+' publiée(s)</span></div>'+body,'week')

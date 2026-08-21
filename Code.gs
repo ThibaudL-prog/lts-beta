@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.9.0-beta1.4';
+const API_RELEASE = '0.5.9.0-beta1.7';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -32,6 +32,9 @@ function handleRequest_(method, p) {
     else if (action === 'sets.replace') { assertWriteEnabled_(); result = replaceChildren_('SET_RESULTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'climbing.replace') { assertWriteEnabled_(); result = replaceChildren_('CLIMBING_ATTEMPTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'running.upsert') { assertWriteEnabled_(); result = upsertById_('RUNNING_RESULTS','running_result_id',p.record || {}); }
+    else if (action === 'tests.upsert') { assertWriteEnabled_(); result = upsertTests_(p.records || [], String(p.athlete_id || '')); }
+    else if (action === 'cycle.upsert') { assertWriteEnabled_(); result = upsertCycle_(p.record || {}, String(p.athlete_id || ''), false); }
+    else if (action === 'cycle.activate') { assertWriteEnabled_(); result = upsertCycle_(p.record || {}, String(p.athlete_id || ''), true); }
     else if (action === 'sync.meta') { result = syncMeta_(p); }
     else if (action === 'plan.publish') { assertWriteEnabled_(); result = publishPlan_(p); }
     else throw new Error('Action inconnue : ' + action);
@@ -113,7 +116,8 @@ function syncMeta_(payload) {
   }
   if (type === 'plan') {
     const athleteId=String(payload.athlete_id||''), weekNo=Number(payload.week_no||0);
-    const weeks=rows_('WEEKS').filter(r=>String(r.athlete_id)===athleteId&&Number(r.week_no)===weekNo&&String(r.status).toLowerCase()==='published').sort((a,b)=>Number(b.version_no||0)-Number(a.version_no||0));
+    const cycleId=String(payload.cycle_id||'');
+    const weeks=rows_('WEEKS').filter(r=>String(r.athlete_id)===athleteId&&Number(r.week_no)===weekNo&&(!cycleId||String(r.cycle_id)===cycleId)&&String(r.status).toLowerCase()==='published').sort((a,b)=>Number(b.version_no||0)-Number(a.version_no||0));
     if(!weeks.length)return {found:false,entity_type:type,athlete_id:athleteId,week_no:weekNo};
     const week=weeks[0];
     const sessions=rows_('SESSIONS').filter(r=>String(r.training_week_id)===String(week.training_week_id));
@@ -125,6 +129,52 @@ function syncMeta_(payload) {
     return {found:true,entity_type:type,athlete_id:athleteId,week_no:weekNo,training_week_id:week.training_week_id,version_no:Number(week.version_no||0),updated_at:week.published_at||'',fingerprint:fingerprintObject_({week,sessions,blocks,prescriptions,targets})};
   }
   throw new Error('Type sync.meta inconnu : '+type);
+}
+
+function upsertCycle_(record, athleteId, activate) {
+  const cycle = Object.assign({}, record || {});
+  cycle.athlete_id = cycle.athlete_id || athleteId;
+  if (!cycle.cycle_id) throw new Error('cycle_id obligatoire');
+  if (!cycle.athlete_id) throw new Error('athlete_id obligatoire');
+  if (!cycle.name) throw new Error('name obligatoire');
+  if (!cycle.start_date) throw new Error('start_date obligatoire');
+
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  try {
+    if (activate) {
+      rows_('CYCLES')
+        .filter(row => String(row.athlete_id) === String(cycle.athlete_id) && String(row.cycle_id) !== String(cycle.cycle_id) && String(row.status).toLowerCase() === 'active')
+        .forEach(row => upsertById_('CYCLES', 'cycle_id', Object.assign({}, row, {status:'completed'})));
+      cycle.status = 'active';
+      cycle.validated_at = cycle.validated_at || new Date().toISOString();
+      cycle.validated_by = cycle.validated_by || 'coach';
+    }
+    upsertById_('CYCLES', 'cycle_id', cycle);
+    return {cycle_id:cycle.cycle_id,status:cycle.status,activated:activate};
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function upsertTests_(records, athleteId) {
+  const clean = (records || []).map(record => {
+    const row = Object.assign({}, record || {});
+    row.athlete_id = row.athlete_id || athleteId;
+    if (!row.test_result_id) throw new Error('test_result_id obligatoire');
+    if (!row.athlete_id) throw new Error('athlete_id obligatoire');
+    if (!row.test_code) throw new Error('test_code obligatoire');
+    if (!row.performed_at) throw new Error('performed_at obligatoire');
+    return row;
+  });
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  try {
+    clean.forEach(row => upsertById_('TEST_RESULTS', 'test_result_id', row));
+    return {count:clean.length,test_result_ids:clean.map(row => row.test_result_id)};
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function fingerprintObject_(value) {

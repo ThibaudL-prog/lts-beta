@@ -563,31 +563,35 @@
   function snapshotTestRecords(snapshot){
     const groups=new Map();
     const metricForCode={
-      PULLUP_1RM:['pull1rm',['added_load_kg','raw_value']],
-      DIP_1RM:['dip1rm',['added_load_kg','raw_value']],
-      PULLUP_MAX_REPS:['pullReps',['repetitions_valid','raw_value']],
-      DIP_MAX_REPS:['dipReps',['repetitions_valid','raw_value']],
-      FINGER_MAX_20_5:['fingerMax',['added_load_kg','raw_value']],
-      FINGER_END_20_7_3:['fingerRepeaters',['completed_tours','raw_value']],
-      MCGILL_FLEX:['coreFlexor',['duration_seconds','flexion_seconds','raw_value']],
-      MCGILL_SORENSEN:['coreExtensor',['duration_seconds','sorensen_seconds','raw_value']]
+      PULLUP_1RM:[['pull1rm',['added_load_kg','raw_value']]],
+      DIP_1RM:[['dip1rm',['added_load_kg','raw_value']]],
+      PULLUP_MAX_REPS:[['pullReps',['repetitions_valid','raw_value']]],
+      DIP_MAX_REPS:[['dipReps',['repetitions_valid','raw_value']]],
+      FINGER_MAX_20_5:[['fingerMax',['added_load_kg','raw_value']]],
+      FINGER_END_20_7_3:[['fingerRepeaters',['completed_tours','raw_value']]],
+      POWER_SLAP:[['powerSlapTouch',['touch_height_cm','power_height_cm','raw_value']]],
+      PLYO_PUSHUP:[['plyoPushupHeight',['power_height_cm','raw_value']]],
+      MCGILL_SIDE:[['coreSideLeft',['left_seconds']],['coreSideRight',['right_seconds']]],
+      MCGILL_FLEX:[['coreFlexor',['duration_seconds','flexion_seconds','raw_value']]],
+      MCGILL_SORENSEN:[['coreExtensor',['duration_seconds','sorensen_seconds','raw_value']]]
     };
     (snapshot?.test_results||[]).forEach(row=>{
       const valid=row.valid===true||String(row.valid).toLowerCase()==='true'||String(row.validation_status||'').toUpperCase()==='VALIDATED';
       if(!valid)return;
-      const mapping=metricForCode[String(row.test_code||'').toUpperCase()];
-      if(!mapping)return;
+      const mappings=metricForCode[String(row.test_code||'').toUpperCase()];
+      if(!mappings)return;
       const date=row.performed_at||row.created_at||row.updated_at;
       if(!date)return;
       const day=String(date).slice(0,10);
       if(!groups.has(day))groups.set(day,{date,source:'Tests Google Sheets',_remote:true});
-      const [metric,candidates]=mapping;
-      let value=null;
-      for(const field of candidates){
-        value=sheetNumber(row[field]);
-        if(value!==null)break
-      }
-      if(value!==null)groups.get(day)[metric]=value
+      mappings.forEach(([metric,candidates])=>{
+        let value=null;
+        for(const field of candidates){
+          value=sheetNumber(row[field]);
+          if(value!==null)break
+        }
+        if(value!==null)groups.get(day)[metric]=value
+      })
     });
     return [...groups.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date)))
   }
@@ -688,7 +692,16 @@
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
     state.remoteSnapshot=snapshot;
-    const rebuiltRemoteWeeks=rebuildRemoteWeeks(snapshot);
+    const sortedCycles=(snapshot.cycles||[]).slice().sort((a,b)=>{
+      const activeA=String(a.status||'').toLowerCase()==='active'?1:0;
+      const activeB=String(b.status||'').toLowerCase()==='active'?1:0;
+      return activeB-activeA||String(b.start_date||'').localeCompare(String(a.start_date||''))
+    });
+    const localCycleId=String(state.cycle?.cycleId||'');
+    const matchingCycle=localCycleId?sortedCycles.find(cycle=>String(cycle.cycle_id)===localCycleId):null;
+    const localDraftProtected=!!state.cycle&&state.cycle.status==='DRAFT'&&['local','pending','error'].includes(String(state.cycle.cycleSync?.status||'local'));
+    const remoteCycle=matchingCycle||(!localDraftProtected?sortedCycles[0]:null);
+    const rebuiltRemoteWeeks=remoteCycle?rebuildRemoteWeeks(snapshot,String(remoteCycle.cycle_id||'')):[];
     state.remoteWeeks=rebuiltRemoteWeeks;
 
     // Reconcile Coach-side publication badges with the source of truth.
@@ -726,25 +739,43 @@
     if(snapshot.athlete){
       state.athlete={...state.athlete,name:snapshot.athlete.display_name||state.athlete.name,weight:snapshot.athlete.body_weight_kg||state.athlete.weight}
     }
-    const remoteCycle=(snapshot.cycles||[]).slice().sort((a,b)=>{
-      const activeA=String(a.status||'').toLowerCase()==='active'?1:0;
-      const activeB=String(b.status||'').toLowerCase()==='active'?1:0;
-      return activeB-activeA||String(b.start_date||'').localeCompare(String(a.start_date||''))
-    })[0];
     if(remoteCycle){
       const today=new Date().toISOString().slice(0,10);
       const current=rebuiltRemoteWeeks.find(w=>w.startDate&&w.endDate&&today>=w.startDate&&today<=w.endDate);
+      const objective=String(remoteCycle.objective_summary||'');
+      const principalMatch=objective.match(/Principal\s*:\s*([^|]+)/i);
+      const secondaryMatch=objective.match(/Secondaire\s*:\s*([^|]+)/i);
+      const commentMatch=objective.match(/Arbitrage\s*:\s*(.+)$/i);
+      const legacyParts=objective.split(' + ').map(value=>value.trim()).filter(Boolean);
       state.cycle={
         ...(state.cycle||{}),
         cycleId:remoteCycle.cycle_id||state.cycle?.cycleId,
         name:remoteCycle.name||state.cycle?.name||'Cycle LTS',
         start:String(remoteCycle.start_date||state.cycle?.start||'').slice(0,10),
-        comment:remoteCycle.objective_summary||state.cycle?.comment||'',
+        primary:(principalMatch?.[1]||legacyParts[0]||state.cycle?.primary||'').trim(),
+        secondary:(secondaryMatch?.[1]||legacyParts.slice(1).join(', ')||state.cycle?.secondary||'').trim(),
+        comment:(commentMatch?.[1]||state.cycle?.comment||'').trim(),
         currentWeek:current?.number||state.cycle?.currentWeek||1,
         status:String(remoteCycle.status||'').toLowerCase()==='active'?'VALIDATED':state.cycle?.status||'DRAFT',
-        isDemo:false
+        isDemo:false,
+        version:Number(remoteCycle.version_no)||state.cycle?.version||1,
+        supersedesCycleId:remoteCycle.supersedes_cycle_id||state.cycle?.supersedesCycleId||'',
+        cycleSync:{status:'synced',message:'Cycle chargé depuis Google Sheets',updatedAt:new Date().toISOString()}
       }
     }
+    state.cycleHistory=Array.isArray(state.cycleHistory)?state.cycleHistory:[];
+    sortedCycles.filter(cycle=>String(cycle.cycle_id)!==String(remoteCycle?.cycle_id||'')).forEach(remote=>{
+      const id=String(remote.cycle_id||'');if(!id)return;
+      const existingIndex=state.cycleHistory.findIndex(entry=>String((entry.cycle||entry).cycleId||'')===id);
+      const existing=existingIndex>=0?state.cycleHistory[existingIndex]:null;
+      const objective=String(remote.objective_summary||'');
+      const principal=(objective.match(/Principal\s*:\s*([^|]+)/i)?.[1]||objective.split(' + ')[0]||'').trim();
+      const archived={
+        cycle:{...(existing?.cycle||{}),cycleId:id,name:remote.name||existing?.cycle?.name||'Cycle LTS',start:String(remote.start_date||'').slice(0,10),primary,status:String(remote.status||'').toLowerCase()==='active'?'VALIDATED':'ARCHIVED',version:Number(remote.version_no)||1,cycleSync:{status:'synced',message:'Google Sheets',updatedAt:new Date().toISOString()}},
+        weeks:existing?.weeks||[],archivedAt:existing?.archivedAt||new Date().toISOString(),source:'Google Sheets'
+      };
+      if(existingIndex>=0)state.cycleHistory[existingIndex]=archived;else state.cycleHistory.push(archived)
+    });
     if(typeof logAudit==='function')logAudit('SYNC_PULL','API',snapshot.athlete?.athlete_id||cfg().athleteId,'Instantané Google Sheets chargé');
     save()
   }
@@ -848,7 +879,7 @@
     const remoteWeeks=state.remoteWeeks||[];
     for(const remoteWeek of remoteWeeks){
       try{
-        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:remoteWeek.number});
+        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,cycle_id:remoteWeek.cycleId||state.cycle?.cycleId||'',week_no:remoteWeek.number});
         if(!meta.found)continue;
         remoteWeek.remoteFingerprint=meta.fingerprint||null;
         remoteWeek.remoteUpdatedAt=meta.updated_at||null;
@@ -1057,6 +1088,7 @@
       total:queue.length,
       executions:queue.filter(q=>q.type==='execution').length,
       plans:queue.filter(q=>q.type==='plan').length,
+      cycles:queue.filter(q=>q.type==='cycle').length,
       checkins:queue.filter(q=>q.type==='checkins').length,
       measurements:queue.filter(q=>q.type==='measurements').length
     }
@@ -1105,6 +1137,10 @@
     if(running){
       payloads.push({action:'running.upsert',payload:{record:running}})
     }
+    const tests=buildTestRows(session);
+    if(tests.length||e.type==='TEST'){
+      payloads.push({action:'tests.upsert',payload:{records:tests}})
+    }
     return payloads
   }
 
@@ -1132,6 +1168,11 @@
       for(const record of item.records||[])await request('checkins.upsert',{method:'POST',payload:{record}})
     }else if(item.type==='measurements'){
       if((item.records||[]).length)await request('measurements.append',{method:'POST',payload:{records:item.records}})
+    }else if(item.type==='cycle'){
+      await request(item.activate?'cycle.activate':'cycle.upsert',{method:'POST',payload:{record:item.record}});
+      if(state.cycle&&String(state.cycle.cycleId)===String(item.entityId)){
+        state.cycle.cycleSync={status:'synced',message:item.activate?'Cycle actif dans Google Sheets':'Brouillon enregistré dans Google Sheets',updatedAt:isoNow()}
+      }
     }else{
       throw new Error('Type de file inconnu : '+item.type)
     }
@@ -1201,6 +1242,11 @@
 
       if(item.type==='measurements'){
         if(!(item.records||[]).length)return false;
+      }
+
+      if(item.type==='cycle'){
+        if(!state.cycle||String(state.cycle.cycleId)!==String(item.entityId))return false;
+        if(state.cycle.cycleSync?.status==='synced')return false;
       }
 
       return true
@@ -1658,6 +1704,40 @@
     }
   }
 
+  function buildTestRows(session){
+    const e=session.execution||{},definition=session.testDefinition||{};
+    if(e.type!=='TEST'||!definition.testCode)return [];
+    const values=e.values||{},fields=definition.fields||[];
+    const testNum=value=>value===null||value===undefined||value===''?null:num(value);
+    const firstMeasured=fields.map(field=>testNum(values[field.key])).find(value=>value!==null);
+    const row={
+      test_result_id:`tr-${String(session.sessionId||definition.testCode).replace(/[^a-zA-Z0-9_-]+/g,'-')}`,
+      athlete_id:cfg().athleteId,
+      test_code:definition.testCode,
+      performed_at:e.completedAt||isoNow(),
+      protocol_version:definition.protocolVersion||'',
+      body_weight_kg:num(state.athlete?.weight),
+      added_load_kg:0,
+      assistance_kg:0,
+      raw_value:firstMeasured,
+      raw_unit:fields[0]?.unit||'',
+      valid:e.valid===true,
+      data_quality:'MEASURED',
+      notes:safeJson({sessionId:session.sessionId,testStatus:e.testStatus||'',rpe:e.rpe??null,pain:e.pain??0,comment:e.note||''}),
+      created_at:e.completedAt||isoNow()
+    };
+    fields.forEach(field=>{
+      const value=testNum(values[field.key]);
+      if(value===null)return;
+      if(field.column)row[field.column]=value;
+      if(field.alsoColumn)row[field.alsoColumn]=value
+    });
+    if(definition.testCode==='POWER_SLAP'&&testNum(row.touch_height_cm)!==null&&testNum(row.bar_height_cm)!==null){
+      row.power_height_cm=+(testNum(row.touch_height_cm)-testNum(row.bar_height_cm)).toFixed(2)
+    }
+    return [row]
+  }
+
   function normalizeFontGrade(value){
     const allowed=['4a','4a+','4b','4b+','4c','4c+','5a','5a+','5b','5b+','5c','5c+','6a','6a+','6b','6b+','6c','6c+','7a','7a+','7b','7b+','7c','7c+','8a','8a+','8b','8b+','8c'];
     const raw=String(value||'').trim().toLowerCase().replace(/\s+/g,'');
@@ -1835,6 +1915,55 @@
     return `<span class="planSyncBadge ${s}" title="${escapeHtml(w.planSync?.message||planSyncText(s))}">${planSyncText(s)}</span>`
   };
 
+  function cycleObjectiveSummary(c){
+    const clean=value=>String(value||'').replace(/\s*\|\s*/g,' / ').trim();
+    return `Principal : ${clean(c?.primary)||'Non défini'} | Secondaire : ${clean(c?.secondary)||'Aucun'} | Arbitrage : ${clean(c?.comment)||'Non renseigné'}`
+  }
+  function buildCycleRecord(c=state.cycle||{},activate=c.status==='VALIDATED'){
+    const start=planIsoDate(c.start)||new Date().toISOString().slice(0,10);
+    return {
+      cycle_id:c.cycleId||'cycle-local',
+      athlete_id:cfg().athleteId,
+      name:c.name||'Cycle LTS',
+      start_date:start,
+      end_date:addDaysIso(start,55),
+      cycle_type:'8_week',
+      objective_summary:cycleObjectiveSummary(c),
+      structure_code:'3+1+3+1',
+      status:activate?'active':'draft',
+      version_no:Number(c.version||1),
+      validated_at:activate?(c.validatedAt||isoNow()):'',
+      validated_by:activate?'coach':'',
+      supersedes_cycle_id:c.supersedesCycleId||''
+    }
+  }
+  window.syncActiveCycle=async function(options={}){
+    const cycle=state.cycle;if(!cycle?.cycleId)return;
+    const activate=options.activate===true||cycle.status==='VALIDATED';
+    const record=buildCycleRecord(cycle,activate),config=cfg();
+    if(!config.url){
+      cycle.cycleSync={status:'local',message:'Cycle conservé localement — API non configurée',updatedAt:isoNow()};
+      if(typeof save==='function')save();
+      return
+    }
+    cycle.cycleSync={status:'pending',message:activate?'Activation dans Google Sheets':'Enregistrement du brouillon',updatedAt:isoNow()};
+    if(typeof save==='function')save();
+    try{
+      await request(activate?'cycle.activate':'cycle.upsert',{method:'POST',payload:{record}});
+      removeQueueItem(queueId('cycle',cycle.cycleId));
+      cycle.cycleSync={status:'synced',message:activate?'Cycle actif dans Google Sheets':'Brouillon enregistré dans Google Sheets',updatedAt:isoNow()};
+      saveCfg({connected:true,lastSync:isoNow(),lastMessage:cycle.cycleSync.message});
+      if(typeof save==='function')save();
+      if(typeof toast==='function')toast(cycle.cycleSync.message)
+    }catch(error){
+      const queued=upsertQueueItem({queueId:queueId('cycle',cycle.cycleId),type:'cycle',entityId:cycle.cycleId,label:cycle.name||'Cycle LTS',activate,record});
+      cycle.cycleSync={status:'error',message:`Cycle en attente · ${error.message||'Erreur réseau'}`,updatedAt:isoNow(),queueId:queued.queueId};
+      saveCfg({connected:false,lastMessage:cycle.cycleSync.message});
+      if(typeof save==='function')save();
+      if(typeof toast==='function')toast('Cycle conservé localement et mis en attente')
+    }
+  };
+
   function buildPlanPayload(week){
     const c=state.cycle||{};
     const version=week.publicationVersion||1;
@@ -1845,21 +1974,7 @@
     const weekStart=addDaysIso(cycleStart,(Number(week.number||1)-1)*7);
     const weekEnd=addDaysIso(weekStart,6);
 
-    const cycle={
-      cycle_id:cycleId,
-      athlete_id:cfg().athleteId,
-      name:c.name||'Cycle LTS',
-      start_date:cycleStart,
-      end_date:addDaysIso(cycleStart,55),
-      cycle_type:'8_week',
-      objective_summary:[c.primary,c.secondary].filter(Boolean).join(' + '),
-      structure_code:'3+1+3+1',
-      status:c.status==='VALIDATED'?'active':'draft',
-      version_no:Number(c.version||1),
-      validated_at:c.validatedAt||'',
-      validated_by:'coach',
-      supersedes_cycle_id:''
-    };
+    const cycle=buildCycleRecord({...c,cycleId,start:cycleStart},c.status==='VALIDATED');
 
     const remoteWeek={
       training_week_id:remoteWeekId,
@@ -2017,7 +2132,7 @@
       const payload=buildPlanPayload(week);
       const force=consumeForceOnce(`plan:${week.weekId||week.number}`);
       if(!force){
-        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
+        const meta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,cycle_id:state.cycle?.cycleId||'',week_no:week.number});
         const known=knownRemoteFingerprint;
         const newer=meta.found&&Number(meta.version_no||0)>Number(week.publicationVersion||0);
         const sameVersion=meta.found&&Number(meta.version_no||0)===Number(week.publicationVersion||0);
@@ -2039,7 +2154,7 @@
       if(!payload.targets?.length)throw new Error('Aucune cible de stimulus à publier');
       const result=await request('plan.publish',{method:'POST',payload});
       removeQueueItem(queueId('plan',week.weekId||week.number));
-      const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,week_no:week.number});
+      const freshMeta=await fetchSyncMeta('plan',{athlete_id:cfg().athleteId,cycle_id:state.cycle?.cycleId||'',week_no:week.number});
       week.planSync={
         status:'synced',
         message:`Version ${week.publicationVersion} publiée · ${result.counts?.sessions||0} séance(s)`,
@@ -2107,6 +2222,30 @@
         updatedAt:row.ended_at||row.started_at||new Date().toISOString()
       }
     };
+
+    if(prescription?.testDefinition){
+      const definition=prescription.testDefinition;
+      const testRow=(snapshot?.test_results||[]).find(result=>{
+        if(String(result.test_code||'')!==String(definition.testCode||''))return false;
+        const meta=parseJson(result.notes,null);
+        return String(meta?.sessionId||'')===String(sessionId)||String(result.test_result_id||'').includes(String(sessionId))
+      });
+      if(testRow){
+        const meta=parseJson(testRow.notes,null)||{};
+        const values={};
+        (definition.fields||[]).forEach(field=>{
+          const direct=sheetNumber(testRow[field.column]);
+          const alternate=field.alsoColumn?sheetNumber(testRow[field.alsoColumn]):null;
+          values[field.key]=direct??alternate
+        });
+        return {
+          ...base,type:'TEST',values,testCode:definition.testCode,
+          testStatus:meta.testStatus||((testRow.valid===true||String(testRow.valid).toLowerCase()==='true')?'VALID':'INVALID'),
+          valid:testRow.valid===true||String(testRow.valid).toLowerCase()==='true',
+          rpe:sheetNumber(meta.rpe)??base.rpe,pain:sheetNumber(meta.pain)??base.pain,note:meta.comment||base.note
+        }
+      }
+    }
 
     const running=(snapshot?.running_results||[])
       .find(result=>String(result.session_execution_id)===String(row.session_execution_id));
@@ -2455,8 +2594,8 @@
     }
   }
 
-  function rebuildRemoteWeeks(snapshot){
-    const remoteWeeks=snapshot?.weeks||[];
+  function rebuildRemoteWeeks(snapshot,cycleId=''){
+    const remoteWeeks=(snapshot?.weeks||[]).filter(week=>!cycleId||String(week.cycle_id)===String(cycleId));
     const remoteSessions=snapshot?.sessions||[];
     const remoteBlocks=snapshot?.blocks||[];
     const remotePrescriptions=snapshot?.prescriptions||[];
@@ -2556,6 +2695,7 @@
         })
       });
       return {
+        cycleId:w.cycle_id||cycleId||'',
         weekId:w.local_week_id||String(w.training_week_id).replace(/-v\d+$/,''),
         remoteTrainingWeekId:w.training_week_id,
         number:Number(w.week_no),
