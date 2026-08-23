@@ -568,7 +568,7 @@
       PULLUP_MAX_REPS:[['pullReps',['repetitions_valid','raw_value']]],
       DIP_MAX_REPS:[['dipReps',['repetitions_valid','raw_value']]],
       FINGER_MAX_20_5:[['fingerMax',['added_load_kg','raw_value']]],
-      FINGER_END_20_7_3:[['fingerRepeaters',['completed_tours','raw_value']]],
+      FINGER_END_20_7_3:[['fingerRepeaters',['repetitions_valid','completed_tours','raw_value']]],
       POWER_SLAP:[['powerSlapTouch',['touch_height_cm','power_height_cm','raw_value']]],
       PLYO_PUSHUP:[['plyoPushupHeight',['power_height_cm','raw_value']]],
       MCGILL_SIDE:[['coreSideLeft',['left_seconds']],['coreSideRight',['right_seconds']]],
@@ -703,6 +703,7 @@
     const remoteCycle=matchingCycle||(!localDraftProtected?sortedCycles[0]:null);
     const rebuiltRemoteWeeks=remoteCycle?rebuildRemoteWeeks(snapshot,String(remoteCycle.cycle_id||'')):[];
     state.remoteWeeks=rebuiltRemoteWeeks;
+    window.migrateFingerDensityTestV0590B18?.({includeRemote:true});
 
     // Reconcile Coach-side publication badges with the source of truth.
     (state.weeks||[]).forEach(localWeek=>{

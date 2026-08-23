@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b17">
+<link rel="manifest" href="manifest.webmanifest?v=0590b18">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b17">
+<link rel="shortcut icon" href="favicon.ico?v=0590b18">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.7</title>
+<title>LTS v0.5.9.0-beta1.8</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -351,7 +351,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b17"></script><script>
+<script src="api-client.js?v=0590b18"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -436,7 +436,7 @@ const PRESCRIPTIONS=[
 {id:'lowerpower',domain:'LOWER',extraDomains:['LOWER_POWER'],quality:'Puissance bas du corps',name:'Jambes — puissance',guide:'G24',objective:'Puissance',summary:'Séance de 30 min maximum · qualité des sauts prioritaire · choisir les exercices dans REF_EXERCISES',durationMin:30,editor:'exerciseLibrary',exerciseGuide:'G24'}
 ];
 
-const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 tours au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.7","status":"READY","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
+const SEED={"role":"coach","athlete":{"name":"Thibaud","weight":85,"external1rm":{"pull":44,"dip":50}},"tests":[{"quality":"Force maximale doigts","level":2,"source":"Suspension 20 mm · 5 s · +14 kg"},{"quality":"Endurance doigts","level":2,"source":"7 répétitions continues au protocole 7/3"},{"quality":"Endurance running","level":2,"source":"5 km en 29:00 · 01/04/2026"},{"quality":"Force haut du corps","level":3,"source":"Tractions +44 kg · Dips +50 kg"},{"quality":"Endurance haut du corps","level":3,"source":"Tractions 22 reps · Dips 34 reps"}],"cycle":{"name":"Historique réel — juillet 2026","start":"2026-07-06","primary":"Force maximale doigts","secondary":"Endurance running","comment":"Import contrôlé des semaines réellement effectuées.","currentWeek":1,"status":"DRAFT","validatedAt":null,"isDemo":false,"cycleId":"cycle-lgrd-2026-07"},"weeks":[],"checkins":{"morning":{"sleep":0,"quality":0,"mood":0,"fatigue":0,"stress":0,"energy":0,"motivation":0,"soreness":0,"pain":0},"evening":{"rpe":0,"fatigue":0,"soreness":0,"pain":0,"bike":0}},"weekly":{"weight":85,"waist":88,"chest":114,"hips":92,"armRelaxed":36,"armFlexed":39,"thigh":54,"calf":37,"hrSupine":65,"hrStanding":76,"availability":"","pain":"","comment":""},"checkStatus":{"morning":"NOT_STARTED","evening":"NOT_STARTED","sunday":"NOT_STARTED"},"records":{"measurements":[],"checkins":[],"tests":[]},"trackingRange":"30d","history":{},"schemaVersion":"0.5.8.1","auditLog":[],"productionMigration":{"version":"0.5.8.7","status":"READY","athleteId":"ath_lgrd_001"}}, KEY='lts-current'; let state;
 
 function legacyLtsStateKeys(){
  const keys=[];
@@ -515,7 +515,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.7 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.8 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -563,7 +563,7 @@ if(!state.athlete.external1rm)state.athlete.external1rm={pull:44,dip:50};
 const REAL_METRICS={
 weight:{label:'Poids',unit:'kg'},waist:{label:'Tour de taille',unit:'cm'},chest:{label:'Poitrine',unit:'cm'},hips:{label:'Hanches',unit:'cm'},armRelaxed:{label:'Bras relâché',unit:'cm'},armContracted:{label:'Bras contracté',unit:'cm'},thigh:{label:'Cuisse',unit:'cm'},calf:{label:'Mollet',unit:'cm'},hrSupine:{label:'FC allongé',unit:'bpm'},hrStanding:{label:'FC debout',unit:'bpm'},
 sleep:{label:'Durée de sommeil',unit:'h'},sleepQuality:{label:'Qualité du sommeil',unit:'/10'},fatigue:{label:'Fatigue',unit:'/10'},stress:{label:'Stress',unit:'/10'},energy:{label:'Énergie',unit:'/10'},motivation:{label:'Motivation',unit:'/10'},pain:{label:'Douleur',unit:'/10'},bike:{label:'Distance vélo',unit:'km'},bikeDuration:{label:'Durée vélo',unit:'min'},bikeSpeed:{label:'Vitesse moyenne vélo',unit:'km/h'},
-pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Repeaters',unit:'tours'},powerSlapTouch:{label:'Power Slap — hauteur touchée',unit:'cm'},plyoPushupHeight:{label:'Pompe pliométrique — hauteur',unit:'cm'},coreSideLeft:{label:'McGill latéral gauche',unit:'s'},coreSideRight:{label:'McGill latéral droit',unit:'s'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
+pull1rm:{label:'1RM traction',unit:'kg'},dip1rm:{label:'1RM dips',unit:'kg'},pullReps:{label:'Tractions max',unit:'reps'},dipReps:{label:'Dips max',unit:'reps'},fingerMax:{label:'Max Hang',unit:'kg'},fingerRepeaters:{label:'Density 20 mm — 7/3 continu',unit:'reps'},powerSlapTouch:{label:'Power Slap — hauteur touchée',unit:'cm'},plyoPushupHeight:{label:'Pompe pliométrique — hauteur',unit:'cm'},coreSideLeft:{label:'McGill latéral gauche',unit:'s'},coreSideRight:{label:'McGill latéral droit',unit:'s'},coreFlexor:{label:'McGill fléchisseurs',unit:'s'},coreExtensor:{label:'McGill extenseurs',unit:'s'}};
 function nowIso(){return new Date().toISOString()}
 function recordDateLabel(iso){const d=new Date(iso);return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`}
 function rangeCutoff(range){const d=new Date();if(range==='7d')d.setDate(d.getDate()-7);else if(range==='30d')d.setDate(d.getDate()-30);else if(range==='cycle'&&state.cycle?.start)return new Date(state.cycle.start);else return new Date(0);return d}
@@ -966,7 +966,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.7</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.8</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -1662,7 +1662,7 @@ function renderDailyPerformanceTracking(){
 
 function trackingTab(tab){window.currentTrackingTab=tab;const tabs=`<div class="trackingtabs">${[['daily','Quotidien'],['perf','Tests & records'],['life','Lifestyle & santé'],['body','Mensurations']].map(x=>`<button class="${tab===x[0]?'active':''}" onclick="trackingTab('${x[0]}')">${x[1]}</button>`).join('')}</div>`;let content='';
 if(tab==='daily')content=renderDailyPerformanceTracking();
-else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','powerSlapTouch','plyoPushupHeight','coreSideLeft','coreSideRight','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Repeaters','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" step="0.1"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
+else if(tab==='perf')content=`<h3>Escalade — records flash</h3>${renderTopFlashBoards()}<h3 style="margin-top:18px">Tests physiques</h3><div class="chartgrid">${['pull1rm','dip1rm','pullReps','dipReps','fingerMax','fingerRepeaters','powerSlapTouch','plyoPushupHeight','coreSideLeft','coreSideRight','coreFlexor','coreExtensor'].map(chartCard).join('')}</div><div class="card" style="margin-top:14px"><h3>Ajouter un résultat réel</h3><div class="measureform"><div class="field"><label>Date</label><input id="tDate" type="date"></div>${[['Traction 1RM','tPull1rm'],['Dips 1RM','tDip1rm'],['Tractions max','tPullReps'],['Dips max','tDipReps'],['Max Hang','tFingerMax'],['Density 7/3 continu (reps)','tFingerRepeaters'],['McGill fléchisseurs','tCoreFlexor'],['McGill extenseurs','tCoreExtensor']].map(x=>`<div class="field"><label>${x[0]}</label><input id="${x[1]}" type="number" min="0" step="${x[1]==='tFingerRepeaters'?'1':'0.1'}"></div>`).join('')}</div><button class="btn full" onclick="saveRealTestRecord()">Enregistrer le résultat</button></div>`;
 else if(tab==='life')content=`${bikeTrackingCard()}<div class="chartgrid">${['sleep','sleepQuality','fatigue','stress','energy','motivation','pain','hrSupine','hrStanding'].map(chartCard).join('')}</div>`;
 else content=`${renderLatestAthleteMeasurements()}<div class="chartgrid">${['weight','waist','chest','hips','armRelaxed','armContracted','thigh','calf'].map(chartCard).join('')}</div>`;
 coachShell(`<div class="pagehead"><div><h1>Suivi et analyses</h1><p class="muted">Données réellement saisies par l’Athlète et résultats validés par le Coach.</p></div></div><div class="realDataBanner"><b>Données réelles uniquement</b><div class="muted small">La semaine fictive et ses éventuelles saisies ne sont pas utilisées dans les graphiques.</div></div>${trackingRangeBar()}${tabs}${content}`,'analytics')}
@@ -1711,7 +1711,7 @@ function saveAthleteMeasurement(){
  if(r.weight!==null){state.weekly.weight=r.weight;state.athlete.weight=r.weight}
  save();closeSheet();athlete('profile');toast('Mensurations enregistrées')
 }
-function saveRealTestRecord(){const date=(document.getElementById('tDate')?.value||new Date().toISOString().slice(0,10))+'T12:00:00';const r={date,source:'Test Coach',pull1rm:valueOrNull('tPull1rm'),dip1rm:valueOrNull('tDip1rm'),pullReps:valueOrNull('tPullReps'),dipReps:valueOrNull('tDipReps'),fingerMax:valueOrNull('tFingerMax'),fingerRepeaters:valueOrNull('tFingerRepeaters'),coreFlexor:valueOrNull('tCoreFlexor'),coreExtensor:valueOrNull('tCoreExtensor')};if(!Object.entries(r).some(([k,v])=>!['date','source'].includes(k)&&v!==null))return toast('Renseigne au moins un résultat');addOrReplaceDailyRecord('tests',r);save();trackingTab('perf');toast('Résultat réel enregistré')}
+function saveRealTestRecord(){const date=(document.getElementById('tDate')?.value||new Date().toISOString().slice(0,10))+'T12:00:00';const r={date,source:'Test Coach',pull1rm:valueOrNull('tPull1rm'),dip1rm:valueOrNull('tDip1rm'),pullReps:valueOrNull('tPullReps'),dipReps:valueOrNull('tDipReps'),fingerMax:valueOrNull('tFingerMax'),fingerRepeaters:valueOrNull('tFingerRepeaters'),coreFlexor:valueOrNull('tCoreFlexor'),coreExtensor:valueOrNull('tCoreExtensor')};if(r.fingerRepeaters!==null&&(!Number.isInteger(r.fingerRepeaters)||r.fingerRepeaters<0))return toast('Density 7/3 : saisis un nombre entier de répétitions');if(!Object.entries(r).some(([k,v])=>!['date','source'].includes(k)&&v!==null))return toast('Renseigne au moins un résultat');addOrReplaceDailyRecord('tests',r);save();trackingTab('perf');toast('Résultat réel enregistré')}
 
 function athleteProfileTab(tab='perf'){
  window.currentAthleteProfileTab=tab;
@@ -2546,6 +2546,11 @@ function showDeloadProposal(){
  showSpecialWeekProposal(4,'DELOAD','Proposer le deload','Réduire la charge cible à 50 %, conserver la qualité technique et adapter le volume selon la récupération réelle.')
 }
 
+const FINGER_DENSITY_TEST_COMMENT='Test officiel LTS : réglette 20 mm, prise semi-arquée à deux mains et poids du corps. Enchaîner sans interruption les répétitions de 7 secondes de suspension et 3 secondes de repos. Il n’existe aucune pause supplémentaire ni regroupement en tours. Arrêter dès qu’une suspension de 7 secondes n’est pas entièrement validée ou que la position n’est plus correcte. Compter uniquement les répétitions de 7 secondes entièrement réalisées.';
+function canonicalFingerDensityTestDefinition(){
+ return {testCode:'FINGER_END_20_7_3',protocolVersion:'FE20-7-3-0.2',fields:[{key:'repetitionsValid',label:'Répétitions de 7 s entièrement validées',unit:'reps',column:'repetitions_valid',metricKey:'fingerRepeaters',step:1,min:0,integer:true}]}
+}
+
 const TEST_WEEK_GROUPS=[
  {
   id:'fingerMax',label:'Doigts · Max Hang 20 mm — 5 s',guide:'G01 · FM20-5-0.2',day:'Lun',slot:'midi',warmup:'FINGER_STRENGTH',templates:['maxhang'],
@@ -2578,7 +2583,7 @@ const TEST_WEEK_GROUPS=[
  },
  {
   id:'fingerDensity',label:'Doigts · Density 20 mm — 7 s / 3 s',guide:'G07 · FE20-7-3-0.2',day:'Ven',slot:'midi',warmup:'FINGER_STRENGTH',templates:['repeaters'],
-  prescriptions:[{templateId:'repeaters',domain:'B',title:'Test Density 20 mm — 7 s / 3 s',guide:'G07',duration:35,coachComment:'Test officiel LTS : compter uniquement les tours entièrement complétés au protocole 7 secondes / 3 secondes.',testDefinition:{testCode:'FINGER_END_20_7_3',protocolVersion:'FE20-7-3-0.2',fields:[{key:'completedTours',label:'Tours entièrement complétés',unit:'tours',column:'completed_tours',metricKey:'fingerRepeaters'}]}}]
+  prescriptions:[{templateId:'repeaters',domain:'B',title:'Test Density 20 mm — 7 s / 3 s continu',guide:'G07',duration:35,coachComment:FINGER_DENSITY_TEST_COMMENT,testDefinition:canonicalFingerDensityTestDefinition()}]
  },
  {
   id:'kilter40',label:'Escalade · Kilterboard max flash 40°',guide:'Protocole LTS Kilter Flash',day:'Sam',slot:'midi',warmup:'CLIMBING',templates:['kiltertech','kilterintense','kiltervolume'],angle:40
@@ -2591,6 +2596,41 @@ const TEST_WEEK_GROUPS=[
   ]
  }
 ];
+function migrateFingerDensityTestV0590B18(options={}){
+ let changed=0;
+ const migratePrescription=prescription=>{
+  if(String(prescription?.testDefinition?.testCode||'').toUpperCase()!=='FINGER_END_20_7_3')return;
+  const oldField=prescription.testDefinition?.fields?.[0]||{};
+  const alreadyCurrent=oldField.key==='repetitionsValid'&&oldField.column==='repetitions_valid'&&oldField.unit==='reps';
+  prescription.title='Test Density 20 mm — 7 s / 3 s continu';
+  prescription.notes=FINGER_DENSITY_TEST_COMMENT;
+  prescription.coachComment=FINGER_DENSITY_TEST_COMMENT;
+  prescription.testDefinition=canonicalFingerDensityTestDefinition();
+  if(prescription.execution?.values&&Object.prototype.hasOwnProperty.call(prescription.execution.values,'completedTours')){
+   if(prescription.execution.values.repetitionsValid===undefined)prescription.execution.values.repetitionsValid=prescription.execution.values.completedTours;
+   delete prescription.execution.values.completedTours
+  }
+  if(!alreadyCurrent)changed+=1
+ };
+ const collections=[state.weeks||[]];
+ if(options.includeRemote)collections.push(state.remoteWeeks||[]);
+ collections.forEach(weeks=>weeks.forEach(week=>{
+  (week.sessions||[]).forEach(migratePrescription);
+  (week.containers||[]).forEach(container=>{
+   if(container.isTestContainer&&container.warmup?.coachNote==='Échauffement en lecture seule avant le premier test.'){
+    container.warmup.coachNote='Échauffement obligatoire, progressif et sans fatigue. Les essais d’approche ne sont pas comptabilisés dans le résultat.';changed+=1
+   }
+  })
+ }));
+ (state.tests||[]).forEach(test=>{
+  if(String(test.quality||'').toLowerCase()==='endurance doigts'&&/tour/i.test(String(test.source||''))){
+   test.source=String(test.source).replace(/tours?/i,'répétitions continues');changed+=1
+  }
+ });
+ state.fingerDensityProtocolMigration={version:'0.5.9.0-beta1.8',metric:'repetitions_valid',unit:'reps',migratedAt:new Date().toISOString()};
+ return changed
+}
+window.migrateFingerDensityTestV0590B18=migrateFingerDensityTestV0590B18;
 function cycleDevelopmentPrescriptions(){
  return (state.weeks||[]).filter(w=>Number(w.number)<8).flatMap(w=>(w.sessions||[]).map(p=>({week:w,prescription:p})))
 }
@@ -2638,7 +2678,7 @@ function buildKilterFlashPrescription(group,container){
  }
 }
 function addTestGroupToWeek(week,group){
- const container={containerId:stableId('ctr-test'),day:group.day,slot:group.slot,title:group.label,comment:`Semaine 8 · ${group.guide}`,warmup:{presetId:group.warmup,coachNote:'Échauffement en lecture seule avant le premier test.'},status:'PLANNED',sessionOrder:(week.containers||[]).length+1,structureType:'SESSION_CONTAINER',isTestContainer:true};
+ const container={containerId:stableId('ctr-test'),day:group.day,slot:group.slot,title:group.label,comment:`Semaine 8 · ${group.guide}`,warmup:{presetId:group.warmup,coachNote:'Échauffement obligatoire, progressif et sans fatigue. Les essais d’approche ne sont pas comptabilisés dans le résultat.'},status:'PLANNED',sessionOrder:(week.containers||[]).length+1,structureType:'SESSION_CONTAINER',isTestContainer:true};
  week.containers.push(container);
  const prescriptions=group.angle?[buildKilterFlashPrescription(group,container)]:(group.prescriptions||[]).map(spec=>buildTestPrescription(spec,container));
  prescriptions.forEach((p,index)=>{p.prescriptionOrder=index+1;week.sessions.push(p)})
@@ -3631,7 +3671,8 @@ function openTestExecution(s){
  const definition=s.testDefinition||{},execution=s.execution||{},values=execution.values||{};
  const fields=(definition.fields||[]).map(field=>{
   const previous=previousTestMetricValue(field.metricKey);
-  return `<div class="field"><label>${htmlEscape(field.label)}${field.unit?` (${htmlEscape(field.unit)})`:''}</label><input data-test-result-field="${htmlEscape(field.key)}" type="number" step="0.1" inputmode="decimal" value="${htmlEscape(values[field.key]??'')}">${previous!==null?`<div class="previousSetHint">Résultat précédent : <b>${htmlEscape(previous)} ${htmlEscape(field.unit||'')}</b></div>`:''}</div>`
+  const step=field.step??0.1,min=field.min??'',max=field.max??'',inputMode=Number(step)===1?'numeric':'decimal';
+  return `<div class="field"><label>${htmlEscape(field.label)}${field.unit?` (${htmlEscape(field.unit)})`:''}</label><input data-test-result-field="${htmlEscape(field.key)}" type="number" step="${htmlEscape(step)}" ${min!==''?`min="${htmlEscape(min)}"`:''} ${max!==''?`max="${htmlEscape(max)}"`:''} inputmode="${inputMode}" value="${htmlEscape(values[field.key]??'')}">${previous!==null?`<div class="previousSetHint">Résultat précédent : <b>${htmlEscape(previous)} ${htmlEscape(field.unit||'')}</b></div>`:''}</div>`
  }).join('');
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap"><div class="sheet"><div class="sheethead"><div><h2>${htmlEscape(s.title)}</h2><p class="muted">${htmlEscape(definition.testCode||'Test LTS')} · ${htmlEscape(definition.protocolVersion||s.guide||'')}</p></div><button type="button" class="btn ghost" onclick="closeSheet()">Fermer</button></div>
   ${coachCommentBlock(s)}
@@ -3652,6 +3693,10 @@ function saveTestExecution(sessionId){
   values[field.key]=raw===''||raw===undefined?null:Number(raw)
  });
  if(status==='VALID'&&Object.values(values).some(value=>value===null||!Number.isFinite(value)))return toast('Renseigne toutes les mesures du test valide');
+ const invalidInteger=(definition.fields||[]).find(field=>field.integer&&values[field.key]!==null&&!Number.isInteger(values[field.key]));
+ if(status==='VALID'&&invalidInteger)return toast(`${invalidInteger.label} : saisis un nombre entier`);
+ const belowMinimum=(definition.fields||[]).find(field=>field.min!==undefined&&values[field.key]!==null&&values[field.key]<Number(field.min));
+ if(status==='VALID'&&belowMinimum)return toast(`${belowMinimum.label} : valeur minimale ${belowMinimum.min}`);
  s.execution={type:'TEST',values,testCode:definition.testCode,testStatus:status,valid:status==='VALID',rpe:+document.getElementById('testExecRpe')?.value||null,pain:+document.getElementById('testExecPain')?.value||0,note:document.getElementById('testExecNote')?.value||'',completed:true,completedAt:new Date().toISOString()};
  if(status==='VALID'){
   const record={date:s.execution.completedAt,source:'Test Athlète'};
@@ -4342,6 +4387,9 @@ const EXERCISE_LIBRARY=[
 {guide:'G20',name:'Nordic Hamstring',category:'Membres inférieurs',sets:3,reps:6},
 {guide:'G20',name:'Monster Walk',category:'Membres inférieurs',sets:3,reps:15}
 ];
+
+const fingerDensityMigrationChanges=migrateFingerDensityTestV0590B18({includeRemote:true});
+if(fingerDensityMigrationChanges)save();
 
 function render(){state.role==='coach'?renderDashboard():renderDaily()}
 window.addEventListener('lts-api-status',()=>{if(state.role==='coach')renderDashboard()});
