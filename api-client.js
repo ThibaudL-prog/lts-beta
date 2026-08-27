@@ -3,6 +3,7 @@
   const CONFIG_KEY='lts-api-config-v050';
   const MIGRATION_LOCK_KEY='lts-production-sync-lock-v0580';
   const RELEASE_UNLOCK_KEY='lts-production-sync-unlock-v0582';
+  const TEST_METRICS_BACKFILL_KEY='lts-test-metrics-backfill-v0590b19';
   const DEFAULT={url:'',athleteId:'ath_lgrd_001',connected:false,lastSync:null,lastMessage:'Prête à synchroniser',schemaVersion:null,writeEnabled:false};
 
   // v0.5.8.10 conserve la migration clôturée, normalise les stimuli distants et restaure les check-ins du jour. Le verrou hérité de v0.5.8.0/1
@@ -603,6 +604,39 @@
     return [...map.values()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
   }
 
+  const TEST_RECORD_META_KEYS=new Set(['date','source','_remote','_remoteId','test_result_id']);
+  function testRecordMetricKeys(record){
+    return Object.keys(record||{}).filter(key=>!TEST_RECORD_META_KEYS.has(key)&&record[key]!==null&&record[key]!==undefined&&record[key]!=='')
+  }
+  function sameTestMetricValue(a,b){
+    const left=Number(a),right=Number(b);
+    if(Number.isFinite(left)&&Number.isFinite(right))return left===right;
+    return String(a??'')===String(b??'')
+  }
+  function mergeSnapshotTestRecords(remoteRows,localRows){
+    const map=new Map();
+    (remoteRows||[]).forEach(row=>map.set(String(row.date||'').slice(0,10),{...row,_remote:true}));
+    (localRows||[]).forEach(local=>{
+      const day=String(local.date||'').slice(0,10),remote=map.get(day);
+      if(!remote){map.set(day,{...local,_remote:false});return}
+      const merged={...remote};
+      let pending=false;
+      testRecordMetricKeys(local).forEach(key=>{
+        const remoteHas=remote[key]!==null&&remote[key]!==undefined&&remote[key]!=='';
+        if(!remoteHas){merged[key]=local[key];pending=true;return}
+        if(!sameTestMetricValue(remote[key],local[key])){
+          const remoteTime=new Date(remote.date).getTime()||0,localTime=new Date(local.date).getTime()||0;
+          if(localTime>remoteTime){merged[key]=local[key];pending=true}
+        }
+      });
+      merged.date=pending&&new Date(local.date)>new Date(remote.date)?local.date:remote.date;
+      merged.source=pending?'Test Athlète · en attente':'Tests Google Sheets';
+      merged._remote=!pending;
+      map.set(day,merged)
+    });
+    return [...map.values()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
+  }
+
   function localDayKey(date=new Date()){
     const value=date instanceof Date?date:new Date(date);
     if(Number.isNaN(value.getTime()))return String(date||'').slice(0,10);
@@ -730,7 +764,7 @@
     const localTestOverlay=(state.records.tests||[]).filter(record=>!record._remote);
     state.records.checkins=mergeSnapshotRecords(snapshotCheckinRecords(snapshot),localCheckinOverlay);
     state.records.measurements=mergeSnapshotRecords(snapshotMeasurementRecords(snapshot),localMeasurementOverlay);
-    state.records.tests=mergeSnapshotRecords(snapshotTestRecords(snapshot),localTestOverlay);
+    state.records.tests=mergeSnapshotTestRecords(snapshotTestRecords(snapshot),localTestOverlay);
     restoreTodayCheckinsFromSnapshot();
     const latestMeasurement=state.records.measurements[state.records.measurements.length-1];
     if(latestMeasurement){
@@ -899,6 +933,15 @@
     saveApiSettings({silent:true});saveCfg({lastMessage:'Chargement de l’instantané…'});
     const executionOverlay=collectExecutionOverlay();
     try{
+      if(localStorage.getItem(TEST_METRICS_BACKFILL_KEY)!=='done'){
+        try{
+          await request('tests.metrics.rebuild',{method:'POST'});
+          localStorage.setItem(TEST_METRICS_BACKFILL_KEY,'done')
+        }catch(error){
+          // Compatible avec une PWA mise à jour avant le redéploiement de Code.gs.
+          console.warn('Rattrapage TEST_METRICS différé',error)
+        }
+      }
       const r=await request('snapshot');
       window.__LTS_SUPPRESS_LOCAL_CHANGE__=true;
       try{

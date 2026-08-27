@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b18">
+<link rel="manifest" href="manifest.webmanifest?v=0590b19">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b18">
+<link rel="shortcut icon" href="favicon.ico?v=0590b19">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.8</title>
+<title>LTS v0.5.9.0-beta1.9</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -351,7 +351,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b18"></script><script>
+<script src="api-client.js?v=0590b19"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -515,7 +515,7 @@ if(localStorage.getItem(PRODUCTION_LOCAL_RESET_KEY)!=='done'){
  ['lts-sync-queue-v054','lts-sync-conflicts-v054','lts-sync-force-v054']
   .forEach(key=>localStorage.removeItem(key));
 
- // La migration est terminée en v0.5.9.0-beta1.8 : la lecture distante est autorisée.
+ // La migration est terminée en v0.5.9.0-beta1.9 : la lecture distante est autorisée.
  localStorage.setItem(PRODUCTION_SYNC_LOCK_KEY,'0');
 
  // L’URL Apps Script est conservée, mais l’identifiant DEMO est remplacé.
@@ -586,6 +586,21 @@ function metricSeries(key){
   // Le graphique de fatigue repose exclusivement sur le check-in du soir.
   return rows.filter(row=>String(row.source||'').toLowerCase().includes('soir'))
  }
+ if(Object.prototype.hasOwnProperty.call(TEST_HISTORY_METRIC_KEYS,key)){
+  // Une saisie de test existe d'abord localement puis revient depuis TEST_RESULTS.
+  // On conserve un seul point par métrique et par jour, en privilégiant la valeur
+  // la plus récente puis la source Google Sheets en cas d'égalité.
+  const byDay=new Map();
+  rows.forEach(row=>{
+   const day=String(row.date||'').slice(0,10),current=byDay.get(day);
+   if(!current){byDay.set(day,row);return}
+   const currentTime=new Date(current.date).getTime()||0,rowTime=new Date(row.date).getTime()||0;
+   const rowRemote=String(row.source||'').toLowerCase().includes('google sheets');
+   const currentRemote=String(current.source||'').toLowerCase().includes('google sheets');
+   if(rowTime>currentTime||(rowTime===currentTime&&rowRemote&&!currentRemote))byDay.set(day,row)
+  });
+  return [...byDay.values()].sort((a,b)=>new Date(a.date)-new Date(b.date))
+ }
  if(!['bike','bikeDuration','bikeSpeed'].includes(key))return rows;
  // Les métriques vélo proviennent du check-in du soir : une seule valeur quotidienne.
  const byDay=new Map();
@@ -595,6 +610,7 @@ function metricSeries(key){
  });
  return [...byDay.values()].sort((a,b)=>new Date(a.date)-new Date(b.date))
 }
+const TEST_HISTORY_METRIC_KEYS={pull1rm:true,dip1rm:true,pullReps:true,dipReps:true,fingerMax:true,fingerRepeaters:true,powerSlapTouch:true,plyoPushupHeight:true,coreSideLeft:true,coreSideRight:true,coreFlexor:true,coreExtensor:true};
 function addOrReplaceDailyRecord(bucket,record){record={...record,_remote:false};const day=record.date.slice(0,10),arr=state.records[bucket]||(state.records[bucket]=[]),i=arr.findIndex(x=>x.date?.slice(0,10)===day&&x.source===record.source);if(i>=0)arr[i]={...arr[i],...record};else arr.push(record)}
 
 
@@ -966,7 +982,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.8</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.9</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">

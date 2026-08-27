@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.9.0-beta1.8';
+const API_RELEASE = '0.5.9.0-beta1.9';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -33,6 +33,7 @@ function handleRequest_(method, p) {
     else if (action === 'climbing.replace') { assertWriteEnabled_(); result = replaceChildren_('CLIMBING_ATTEMPTS','session_execution_id',String(p.session_execution_id || ''),p.records || []); }
     else if (action === 'running.upsert') { assertWriteEnabled_(); result = upsertById_('RUNNING_RESULTS','running_result_id',p.record || {}); }
     else if (action === 'tests.upsert') { assertWriteEnabled_(); result = upsertTests_(p.records || [], String(p.athlete_id || '')); }
+    else if (action === 'tests.metrics.rebuild') { assertWriteEnabled_(); result = rebuildTestMetrics_(String(p.athlete_id || getConfig_('default_athlete_id') || 'ath_lgrd_001')); }
     else if (action === 'cycle.upsert') { assertWriteEnabled_(); result = upsertCycle_(p.record || {}, String(p.athlete_id || ''), false); }
     else if (action === 'cycle.activate') { assertWriteEnabled_(); result = upsertCycle_(p.record || {}, String(p.athlete_id || ''), true); }
     else if (action === 'sync.meta') { result = syncMeta_(p); }
@@ -82,6 +83,7 @@ function snapshot_(athleteId) {
   const checkins = rows_('CHECKINS').filter(r => String(r.athlete_id) === athleteId);
   const measurements = rows_('BODY_MEASUREMENTS').filter(r => String(r.athlete_id) === athleteId);
   const testResults = optionalRows_('TEST_RESULTS').filter(r => String(r.athlete_id) === athleteId);
+  const testMetrics = optionalRows_('TEST_METRICS').filter(r => String(r.athlete_id) === athleteId);
   const referenceExercises = optionalRows_('REF_EXERCISES');
   const referenceTemplates = optionalRows_('REF_SESSION_TEMPLATES');
   const referenceQualities = optionalRows_('REF_QUALITIES');
@@ -91,7 +93,7 @@ function snapshot_(athleteId) {
     snapshot:{
       athlete,profile,cycles,weeks,sessions,blocks,prescriptions,targets,executions,
       set_results:setResults,climbing_attempts:climbing,running_results:running,
-      checkins,measurements,test_results:testResults,
+      checkins,measurements,test_results:testResults,test_metrics:testMetrics,
       reference_exercises:referenceExercises,
       reference_session_templates:referenceTemplates,
       reference_qualities:referenceQualities,
@@ -100,7 +102,7 @@ function snapshot_(athleteId) {
     counts:{
       cycles:cycles.length,weeks:weeks.length,sessions:sessions.length,blocks:blocks.length,
       prescriptions:prescriptions.length,targets:targets.length,executions:executions.length,
-      tests:testResults.length,reference_exercises:referenceExercises.length
+      tests:testResults.length,test_metrics:testMetrics.length,reference_exercises:referenceExercises.length
     }
   };
 }
@@ -170,11 +172,188 @@ function upsertTests_(records, athleteId) {
   const lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
-    clean.forEach(row => upsertById_('TEST_RESULTS', 'test_result_id', row));
-    return {count:clean.length,test_result_ids:clean.map(row => row.test_result_id)};
+    const context = testMetricContext_();
+    const metricIds = [];
+    clean.forEach(row => {
+      upsertById_('TEST_RESULTS', 'test_result_id', row);
+      const metric = buildTestMetric_(row, context);
+      if (metric) {
+        upsertById_('TEST_METRICS', 'test_metric_id', metric);
+        metricIds.push(metric.test_metric_id);
+      }
+    });
+    return {count:clean.length,test_result_ids:clean.map(row => row.test_result_id),metric_count:metricIds.length,test_metric_ids:metricIds};
   } finally {
     lock.releaseLock();
   }
+}
+
+function rebuildTestMetrics_(athleteId) {
+  const rows = optionalRows_('TEST_RESULTS').filter(row => !athleteId || String(row.athlete_id) === String(athleteId));
+  const context = testMetricContext_();
+  const metricIds = [];
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  try {
+    rows.forEach(row => {
+      const metric = buildTestMetric_(row, context);
+      if (!metric) return;
+      upsertById_('TEST_METRICS', 'test_metric_id', metric);
+      metricIds.push(metric.test_metric_id);
+    });
+    return {count:metricIds.length,test_metric_ids:metricIds,rebuilt_at:new Date().toISOString()};
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function testMetricContext_() {
+  return {
+    tests: optionalRowsByHeaders_(['test_id','test_code','classifying_metric_code']),
+    thresholds: optionalRowsByHeaders_(['threshold_id','test_code','metric_code','level_code','min_inclusive','max_exclusive'])
+  };
+}
+
+function optionalRowsByHeaders_(requiredHeaders) {
+  const sheets = SpreadsheetApp.getActive().getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const data = sheets[i].getDataRange().getValues();
+    if (!data.length) continue;
+    const headers = data[0].map(String);
+    if (!requiredHeaders.every(header => headers.indexOf(header) >= 0)) continue;
+    return data.slice(1).filter(row => row.some(value => value !== '' && value !== null)).map(row => {
+      const object = {};
+      headers.forEach((header, index) => object[header] = serialize_(row[index]));
+      return object;
+    });
+  }
+  return [];
+}
+
+function metricNumber_(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const number = Number(value);
+  return isFinite(number) ? number : null;
+}
+
+function metricBoolean_(value, defaultValue) {
+  if (value === '' || value === null || value === undefined) return defaultValue;
+  if (value === true || String(value).toLowerCase() === 'true') return true;
+  if (value === false || String(value).toLowerCase() === 'false') return false;
+  return defaultValue;
+}
+
+function testMetricId_(testResultId) {
+  const id = String(testResultId || '');
+  if (/^tr_/.test(id)) return 'tm_' + id.slice(3);
+  if (/^tr-/.test(id)) return 'tm-' + id.slice(3);
+  return 'tm-' + id;
+}
+
+function testMetricFallback_(testCode) {
+  const map = {
+    CLIMB_K40_AW:['grade_rank','rank'],
+    FINGER_MAX_20_5:['supported_load_ratio','ratio'],
+    FINGER_END_20_7_3:['repetitions_valid','rep'],
+    FINGER_POWER_CAMPUS:['raw_value','level_rank'],
+    PULLUP_1RM:['added_load_ratio','ratio'],
+    DIP_1RM:['added_load_ratio','ratio'],
+    PULLUP_MAX_REPS:['max_reps','rep'],
+    DIP_MAX_REPS:['max_reps','rep'],
+    POWER_SLAP:['power_height_cm','cm'],
+    PLYO_PUSHUP:['power_height_cm','cm'],
+    RUN_5K_AGE:['age_score','ratio'],
+    MCGILL_SIDE:['side_plank_mean_s','s'],
+    MCGILL_FLEX:['duration_seconds','s'],
+    MCGILL_SORENSEN:['duration_seconds','s'],
+    LOWER_CMJ:['jump_height_cm','cm'],
+    LOWER_BROAD_JUMP:['distance_height_ratio','ratio']
+  };
+  return map[String(testCode || '').toUpperCase()] || ['raw_value',''];
+}
+
+function thresholdForMetric_(context, testCode, metricCode, metricValue, performedAt) {
+  const day = String(performedAt || '').slice(0,10);
+  return (context.thresholds || []).filter(row => {
+    if (String(row.test_code || '').toUpperCase() !== testCode) return false;
+    if (String(row.metric_code || '') !== metricCode) return false;
+    if (!metricBoolean_(row.active, true)) return false;
+    const validFrom = String(row.valid_from || '').slice(0,10);
+    const validTo = String(row.valid_to || '').slice(0,10);
+    if (day && validFrom && day < validFrom) return false;
+    if (day && validTo && day > validTo) return false;
+    const min = metricNumber_(row.min_inclusive);
+    const max = metricNumber_(row.max_exclusive);
+    return (min === null || metricValue >= min) && (max === null || metricValue < max);
+  }).sort((a,b) => String(b.valid_from || '').localeCompare(String(a.valid_from || '')))[0] || null;
+}
+
+function buildTestMetric_(row, context) {
+  const testCode = String(row.test_code || '').toUpperCase();
+  if (!row.test_result_id || !testCode) return null;
+  const bodyWeight = metricNumber_(row.body_weight_kg);
+  const addedLoad = metricNumber_(row.added_load_kg);
+  const assistance = metricNumber_(row.assistance_kg);
+  const addedLoadRatio = bodyWeight > 0 ? (addedLoad || 0) / bodyWeight : null;
+  const assistanceRatio = bodyWeight > 0 ? (assistance || 0) / bodyWeight : null;
+  const supportedLoadKg = bodyWeight === null ? null : bodyWeight + (addedLoad || 0) - (assistance || 0);
+  const supportedLoadRatio = bodyWeight > 0 ? supportedLoadKg / bodyWeight : null;
+  const left = metricNumber_(row.left_seconds), right = metricNumber_(row.right_seconds);
+  const sideMean = left !== null && right !== null ? (left + right) / 2 : null;
+  const sideAsymmetry = left !== null && right !== null && Math.max(left,right) > 0 ? Math.abs(left-right) / Math.max(left,right) * 100 : null;
+  const touch = metricNumber_(row.touch_height_cm), bar = metricNumber_(row.bar_height_cm);
+  const powerHeight = metricNumber_(row.power_height_cm) !== null ? metricNumber_(row.power_height_cm) : (touch !== null && bar !== null ? touch - bar : null);
+  const timeSeconds = metricNumber_(row.time_seconds), ageStandardSeconds = metricNumber_(row.age_standard_seconds);
+  const derived = {
+    raw_value:metricNumber_(row.raw_value),
+    grade_rank:metricNumber_(row.grade_rank),
+    repetitions_valid:metricNumber_(row.repetitions_valid),
+    completed_tours:metricNumber_(row.completed_tours),
+    max_reps:metricNumber_(row.repetitions_valid),
+    added_load_ratio:addedLoadRatio,
+    assistance_ratio:assistanceRatio,
+    supported_load_kg:supportedLoadKg,
+    supported_load_ratio:supportedLoadRatio,
+    power_height_cm:powerHeight,
+    side_plank_mean_s:sideMean,
+    duration_seconds:metricNumber_(row.flexion_seconds) !== null ? metricNumber_(row.flexion_seconds) : (metricNumber_(row.sorensen_seconds) !== null ? metricNumber_(row.sorensen_seconds) : metricNumber_(row.duration_seconds)),
+    age_score:timeSeconds > 0 && ageStandardSeconds !== null ? ageStandardSeconds / timeSeconds : null,
+    jump_height_cm:metricNumber_(row.jump_height_cm),
+    distance_height_ratio:metricNumber_(row.distance_height_ratio)
+  };
+  const reference = (context.tests || []).find(item => String(item.test_code || '').toUpperCase() === testCode) || {};
+  const fallback = testMetricFallback_(testCode);
+  // Le test Density mesure désormais des répétitions 7/3 continues, jamais des tours.
+  const metricCode = testCode === 'FINGER_END_20_7_3' ? 'repetitions_valid' : String(reference.classifying_metric_code || fallback[0]);
+  const metricUnit = testCode === 'FINGER_END_20_7_3' ? 'rep' : String(reference.default_unit || fallback[1] || row.raw_unit || '');
+  const metricValue = Object.prototype.hasOwnProperty.call(derived,metricCode) ? derived[metricCode] : metricNumber_(row[metricCode]);
+  if (metricValue === null || metricValue === undefined) return null;
+  const valid = metricBoolean_(row.valid, false);
+  const classificationEnabled = metricBoolean_(reference.classification_enabled, true);
+  const threshold = valid && classificationEnabled ? thresholdForMetric_(context,testCode,metricCode,metricValue,row.performed_at) : null;
+  return {
+    test_metric_id:testMetricId_(row.test_result_id),
+    test_result_id:row.test_result_id,
+    athlete_id:row.athlete_id,
+    test_code:testCode,
+    metric_code:metricCode,
+    metric_value:metricValue,
+    metric_unit:metricUnit,
+    added_load_ratio:addedLoadRatio,
+    assistance_ratio:assistanceRatio,
+    supported_load_kg:supportedLoadKg,
+    supported_load_ratio:supportedLoadRatio,
+    side_plank_mean_s:sideMean,
+    side_asymmetry_pct:sideAsymmetry,
+    running_age_score:derived.age_score,
+    level_code:threshold ? threshold.level_code : '',
+    threshold_id:threshold ? threshold.threshold_id : '',
+    rule_version:threshold ? threshold.rule_version : '',
+    classification_status:!valid ? 'INVALID' : (threshold ? 'CLASSIFIED' : 'NOT_CLASSIFIED'),
+    valid:valid,
+    calculated_at:new Date().toISOString(),
+    notes:'Calcul automatique ' + API_RELEASE
+  };
 }
 
 function fingerprintObject_(value) {
@@ -201,6 +380,7 @@ function schemaAudit_() {
     CLIMBING_ATTEMPTS: ['climbing_attempt_id','session_execution_id','grading_system','grade_code','result_status','validation_status'],
     RUNNING_RESULTS: ['running_result_id','session_execution_id','distance_m','time_seconds','valid'],
     TEST_RESULTS: ['test_result_id','athlete_id','test_code','performed_at','valid'],
+    TEST_METRICS: ['test_metric_id','test_result_id','athlete_id','test_code','metric_code','metric_value','metric_unit','classification_status','valid'],
     REF_INTERFERENCE_RULES: ['interference_rule_version_id','source_stimulus_code','target_stimulus_code','same_day_allowed']
   };
   const checks = [];
