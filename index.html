@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b112">
+<link rel="manifest" href="manifest.webmanifest?v=0590b113">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b112">
+<link rel="shortcut icon" href="favicon.ico?v=0590b113">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.12</title>
+<title>LTS v0.5.9.0-beta1.13</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -364,7 +364,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b112"></script><script>
+<script src="api-client.js?v=0590b113"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -1005,7 +1005,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.12</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.13</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -3703,16 +3703,39 @@ function publishedWeeks(){
  const latest=new Map();
  candidates.forEach(candidate=>{
   const w=candidate.week;
-  const identity=[candidate.cycleId,w.weekId||'',w.startDate||w.start_date||'',w.number||''].join('|');
+  // Une semaine locale créée avant beta1.12 peut ne pas avoir de dates brutes,
+  // tandis que sa copie Google Sheets les possède. Il s'agit tout de même de
+  // la même semaine logique : un cycle ne peut avoir qu'une S1, une S2, etc.
+  const weekNumber=Number(w.number||w.week_no);
+  const identity=Number.isFinite(weekNumber)
+   ?`${candidate.cycleId}|S${weekNumber}`
+   :[candidate.cycleId,w.weekId||'',weekCalendarStart(w)].join('|');
   const current=latest.get(identity);
   const newer=Number(w.publicationVersion||0)>Number(current?.week?.publicationVersion||0);
   const preferred=Number(w.publicationVersion||0)===Number(current?.week?.publicationVersion||0)&&candidate.priority>=(current?.priority??-1);
   if(!current||newer||preferred)latest.set(identity,candidate)
  });
  return [...latest.values()].map(row=>row.week).sort((a,b)=>{
-  const byDate=String(a.startDate||a.start_date||'').localeCompare(String(b.startDate||b.start_date||''));
+  const byDate=weekCalendarStart(a).localeCompare(weekCalendarStart(b));
   return byDate||Number(a.number)-Number(b.number)
  })
+}
+function cycleIdentityForWeek(w){
+ const explicit=String(w?.cycleId||w?.cycle_id||'');
+ if(explicit)return explicit;
+ if((state.weeks||[]).includes(w))return String(state.cycle?.cycleId||'current');
+ const archived=(state.cycleHistory||[]).find(entry=>(entry?.weeks||[]).includes(w));
+ return String((archived?.cycle||archived)?.cycleId||(archived?.cycle||archived)?.cycle_id||'archive')
+}
+function athleteContainerIdentity(w,c){
+ const prescriptionIds=containerPrescriptions(w,c)
+  .map(p=>String(p.sessionId||`${p.templateId||''}|${p.title||''}`))
+  .filter(Boolean)
+  .sort();
+ const contentIdentity=prescriptionIds.length
+  ?prescriptionIds.join(',')
+  :String(c?.containerId||`${c?.slot||''}|${c?.title||''}`);
+ return [cycleIdentityForWeek(w),containerCalendarDate(w,c),c?.slot||'',contentIdentity].join('|')
 }
 function coachCommentBlock(s){
  const text=[s?.coachComment,s?.progressionRule].map(value=>String(value||'').trim()).filter((value,index,all)=>value&&all.indexOf(value)===index).join('\n');
@@ -4319,12 +4342,16 @@ function renderToday(){
  const today=dayMap[new Date().getDay()];
  const todayIso=localIsoDate();
  const weeks=publishedWeeks();
- const rows=[];
+ const rowsByIdentity=new Map();
  weeks.forEach(w=>{
   orderedSessionContainers(w)
    .filter(c=>containerCalendarDate(w,c)===todayIso)
-   .forEach(c=>rows.push({week:w,container:c}))
+   .forEach(c=>{
+    const row={week:w,container:c},identity=athleteContainerIdentity(w,c);
+    if(!rowsByIdentity.has(identity))rowsByIdentity.set(identity,row)
+   })
  });
+ const rows=[...rowsByIdentity.values()];
  rows.sort((a,b)=>{
   const slot=(SESSION_SLOT_ORDER[a.container.slot]??99)-(SESSION_SLOT_ORDER[b.container.slot]??99);
   if(slot)return slot;
