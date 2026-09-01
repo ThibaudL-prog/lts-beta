@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="LTS">
-<link rel="manifest" href="manifest.webmanifest?v=0590b113">
+<link rel="manifest" href="manifest.webmanifest?v=0590b114">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/lts-favicon-32-v05810.png">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/lts-favicon-96-v05810.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/lts-icon-192-v05810.png">
-<link rel="shortcut icon" href="favicon.ico?v=0590b113">
+<link rel="shortcut icon" href="favicon.ico?v=0590b114">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/lts-touch-180-v05810.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/lts-touch-180-v05810.png">
-<title>LTS v0.5.9.0-beta1.13</title>
+<title>LTS v0.5.9.0-beta1.14</title>
 <style>
 :root{--navy:#0a2d59;--blue:#1764e8;--bg:#f4f7fb;--card:#fff;--text:#10213d;--muted:#6c7890;--line:#e3e9f2;--green:#11a36a;--orange:#f18a28;--red:#d84d5e;--shadow:0 10px 30px rgba(16,33,61,.08)}
 *{box-sizing:border-box;scrollbar-width:none}*::-webkit-scrollbar{display:none}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -364,7 +364,7 @@ button,input,select,textarea{font:inherit}.app{min-height:100vh}.coach{display:g
 .coachComment b{display:block;margin-bottom:4px}
 .exerciseLoad{font-weight:850;color:var(--blue)}
 </style></head><body><div id="app" class="app"></div>
-<script src="api-client.js?v=0590b113"></script><script>
+<script src="api-client.js?v=0590b114"></script><script>
 if(typeof window.renderGlobalSyncCenter!=='function'){
   window.renderGlobalSyncCenter=function(){return ''}
 }
@@ -1005,7 +1005,7 @@ function openV057ReleaseAudit(){
  const audit=collectV057ReleaseAudit();
  const migration=audit.migration;
  document.body.insertAdjacentHTML('beforeend',`<div class="sheetwrap" id="v057ReleaseAuditSheet"><div class="sheet">
-  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.13</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
+  <div class="sheethead"><div><h2>Diagnostic v0.5.9.0-beta1.14</h2><p class="muted">Ce contrôle ne modifie aucune donnée.</p></div><button type="button" class="btn ghost" onclick="closeSheetById('v057ReleaseAuditSheet')">Fermer</button></div>
   <div class="releaseAuditCard ${!audit.valid?'invalid':audit.fullyReady?'ready':'warning'}">
    <div class="row"><div><b>${audit.valid?(audit.fullyReady?'Structure et synchronisation prêtes':'Structure valide · synchronisation à finaliser'):'Anomalies structurelles détectées'}</b><div class="muted small">Schéma ${LTS_SCHEMA_VERSION} · modèle de séance ${SESSION_STRUCTURE_VERSION}</div></div><span class="pill ${audit.valid?'green':'orange'}">${audit.errors.length} erreur(s)</span></div>
    <div class="releaseAuditGrid">
@@ -4229,9 +4229,29 @@ function containerProgress(w,c){
  return {ps,done,started,total,percent,complete:total>0&&done===total}
 }
 
+function findPublishedContainerContext(weekNumber,containerId,sessionId=''){
+ const weeks=publishedWeeks(),wantedContainer=String(containerId||''),wantedSession=String(sessionId||'');
+ let w=null,p=null;
+ if(wantedSession){
+  for(const candidate of weeks){
+   const found=(candidate.sessions||[]).find(item=>String(item.sessionId)===wantedSession);
+   if(found){w=candidate;p=found;break}
+  }
+ }
+ if(!w&&wantedContainer){
+  w=weeks.find(candidate=>Number(candidate.number)===Number(weekNumber)&&(candidate.containers||[]).some(item=>String(item.containerId)===wantedContainer))
+   ||weeks.find(candidate=>(candidate.containers||[]).some(item=>String(item.containerId)===wantedContainer))
+ }
+ if(!w&&!wantedContainer)w=weeks.find(candidate=>Number(candidate.number)===Number(weekNumber));
+ const effectiveContainer=wantedContainer||String(p?.containerId||'');
+ const c=(w?.containers||[]).find(item=>String(item.containerId)===effectiveContainer)
+  ||(p?(w?.containers||[]).find(item=>String(item.containerId)===String(p.containerId)):null);
+ return {week:w,container:c,prescription:p}
+}
+
 function openNextContainerPrescription(weekNumber,containerId){
- const w=publishedWeeks().find(x=>Number(x.number)===Number(weekNumber));
- const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ const resolved=findPublishedContainerContext(weekNumber,containerId);
+ const w=resolved.week,c=resolved.container;
  if(!w||!c)return toast('Séance introuvable');
  const ps=orderedContainerPrescriptions(w,c);
  const next=ps.find(p=>!p.execution?.completed)||ps[0];
@@ -4239,8 +4259,8 @@ function openNextContainerPrescription(weekNumber,containerId){
  openContainerWarmup(weekNumber,containerId,next.sessionId)
 }
 function openContainerWarmup(weekNumber,containerId,sessionId=''){
- const w=publishedWeeks().find(x=>Number(x.number)===Number(weekNumber));
- const c=w?.containers?.find(x=>String(x.containerId)===String(containerId));
+ const resolved=findPublishedContainerContext(weekNumber,containerId,sessionId);
+ const w=resolved.week,c=resolved.container;
  if(!w||!c)return toast('Séance introuvable');
  const ps=orderedContainerPrescriptions(w,c);
  const target=ps.find(p=>String(p.sessionId)===String(sessionId))||ps.find(p=>!p.execution?.completed)||ps[0];
