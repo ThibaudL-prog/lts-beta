@@ -454,7 +454,7 @@
         writeEnabled:health.write_enabled===true,
         lastMessage:`API disponible · schéma ${health.schema_version} · chargement du planning…`
       });
-      await syncSheetsSnapshot({silent:true,forceRemote:true});
+      await syncSheetsSnapshot({silent:true,forceRemote:false});
       const counts=state.remoteSnapshot?{
         weeks:(state.remoteSnapshot.weeks||[]).length,
         sessions:(state.remoteSnapshot.sessions||[]).length,
@@ -490,6 +490,10 @@
     return 0
   }
 
+  function archivedCycleWeeks(){
+    return (state.cycleHistory||[]).flatMap(entry=>Array.isArray(entry?.weeks)?entry.weeks:[])
+  }
+
   function collectExecutionOverlay(){
     const overlay=new Map();
     const ingest=weeks=>{
@@ -509,6 +513,7 @@
       }))
     };
     ingest(state.weeks);
+    ingest(archivedCycleWeeks());
     ingest(state.remoteWeeks);
     return overlay
   }
@@ -517,8 +522,10 @@
     return (snapshot?.checkins||[]).map(row=>{
       const type=String(row.checkin_type||'').toUpperCase();
       const painValue=sheetNumber(row.pain_intensity_0_10)??sheetNumber(row.pain_0_10)??(String(row.pain_present).toLowerCase()==='true'?1:0);
+      const date=row.checked_at||row.date||row.created_at||new Date().toISOString();
       return {
-        date:row.checked_at||row.date||row.created_at||new Date().toISOString(),
+        date,
+        localDate:localDayKey(date),
         source:type==='EVENING'?'Check-in soir':type==='WEEKLY'?'Check-up dimanche':'Check-in matin',
         sleep:sheetNumber(row.sleep_duration_h),
         sleepQuality:sheetNumber(row.sleep_quality_0_10),
@@ -552,8 +559,8 @@
     (snapshot?.measurements||[]).forEach(row=>{
       const date=row.measured_at||row.created_at||row.date;
       if(!date)return;
-      const day=String(date).slice(0,10);
-      if(!groups.has(day))groups.set(day,{date,source:'Google Sheets',_remote:true});
+      const day=localDayKey(date);
+      if(!groups.has(day))groups.set(day,{date,localDate:day,source:'Google Sheets',_remote:true});
       const key=typeMap[String(row.measurement_type||'').toLowerCase()];
       if(key)groups.get(day)[key]=sheetNumber(row.value)
     });
@@ -599,8 +606,8 @@
 
   function mergeSnapshotRecords(remoteRows,localRows){
     const map=new Map();
-    (remoteRows||[]).forEach(row=>map.set(`${String(row.date||'').slice(0,10)}|${row.source||''}`,row));
-    (localRows||[]).forEach(row=>map.set(`${String(row.date||'').slice(0,10)}|${row.source||''}`,row));
+    (remoteRows||[]).forEach(row=>map.set(`${recordLocalDayKey(row)}|${row.source||''}`,row));
+    (localRows||[]).forEach(row=>map.set(`${recordLocalDayKey(row)}|${row.source||''}`,row));
     return [...map.values()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')))
   }
 
@@ -643,6 +650,12 @@
     return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`
   }
 
+  function recordLocalDayKey(record){
+    const explicit=String(record?.localDate||record?.local_date||'').slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(explicit))return explicit;
+    return localDayKey(record?.date||record?.checked_at||record?.created_at||'')
+  }
+
   function emptyMorningCheckin(){
     return {sleep:0,quality:0,mood:0,fatigue:0,stress:0,energy:0,motivation:0,soreness:0,pain:0}
   }
@@ -654,7 +667,7 @@
   function latestCheckinForToday(sourceLabel){
     const today=localDayKey();
     return (state.records?.checkins||[])
-      .filter(record=>String(record.date||'').slice(0,10)===today&&String(record.source||'')===sourceLabel)
+      .filter(record=>recordLocalDayKey(record)===today&&String(record.source||'')===sourceLabel)
       .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))[0]||null
   }
 
@@ -722,6 +735,7 @@
       state.checkStatus.sunday='NOT_STARTED'
     }
   }
+  window.restoreTodayCheckinsFromSnapshot=restoreTodayCheckinsFromSnapshot;
 
   function mapSnapshotToLocal(snapshot){
     if(!snapshot)return;
@@ -775,7 +789,7 @@
       state.athlete={...state.athlete,name:snapshot.athlete.display_name||state.athlete.name,weight:snapshot.athlete.body_weight_kg||state.athlete.weight}
     }
     if(remoteCycle){
-      const today=new Date().toISOString().slice(0,10);
+      const today=localDayKey();
       const current=rebuiltRemoteWeeks.find(w=>w.startDate&&w.endDate&&today>=w.startDate&&today<=w.endDate);
       const objective=String(remoteCycle.objective_summary||'');
       const principalMatch=objective.match(/Principal\s*:\s*([^|]+)/i);
@@ -825,6 +839,21 @@
     if(filtered.length!==rows.length)saveConflicts(filtered)
   }
 
+  function planIdentifierSet(week,key){
+    const rows=key==='containerId'?(week?.containers||[]):(week?.sessions||[]);
+    return new Set(rows.map(row=>String(row?.[key]||'')).filter(Boolean))
+  }
+
+  function incompleteRemotePlan(localWeek,remoteWeek){
+    const localContainers=planIdentifierSet(localWeek,'containerId');
+    const remoteContainers=planIdentifierSet(remoteWeek,'containerId');
+    const localSessions=planIdentifierSet(localWeek,'sessionId');
+    const remoteSessions=planIdentifierSet(remoteWeek,'sessionId');
+    const missingContainer=[...localContainers].some(id=>!remoteContainers.has(id));
+    const missingSession=[...localSessions].some(id=>!remoteSessions.has(id));
+    return missingContainer||missingSession
+  }
+
   function replaceCoachPublishedWeeksFromRemote(options={}){
     const remoteWeeks=state.remoteWeeks||[];
     if(!remoteWeeks.length)return;
@@ -847,6 +876,23 @@
         const freshlyConfirmed=confirmedAt>0&&(now-confirmedAt)<protectionMs;
         const sameConfirmedVersion=Number(localWeek.localPublishConfirmedVersion||0)===localVersion;
         const sameVersion=remoteVersion===localVersion;
+
+        // A snapshot with the same publication version must contain every
+        // locally published container and prescription. If it is partial, keep
+        // the complete local plan and schedule a repair publication instead of
+        // making Athlete sessions disappear.
+        if(sameVersion&&incompleteRemotePlan(localWeek,remoteWeek)){
+          localWeek.planSync={
+            ...(localWeek.planSync||{}),
+            status:'pending',
+            message:'Instantané incomplet · planning local conservé',
+            updatedAt:new Date().toISOString(),
+            remoteWeekId:remoteWeek.remoteTrainingWeekId||localWeek.planSync?.remoteWeekId||null,
+            remoteFingerprint:remoteWeek.remoteFingerprint||localWeek.planSync?.remoteFingerprint||null,
+            remoteUpdatedAt:remoteWeek.remoteUpdatedAt||remoteWeek.publishedAt||null
+          };
+          return
+        }
 
         // Google Sheets may briefly return the previous snapshot immediately
         // after plan.publish. Keep the just-confirmed local plan in that case.
@@ -972,7 +1018,7 @@
       measurements=localMeasurementRecords.flatMap(r=>{
         const mapping={weight:'weight_kg',waist:'waist_cm',chest:'chest_cm',hips:'hips_cm',armRelaxed:'arm_relaxed_cm',armContracted:'arm_contract_cm',thigh:'thigh_cm',calf:'calf_cm'};
         return Object.entries(mapping).filter(([k])=>r[k]!==null&&r[k]!==undefined&&r[k]!=='').map(([k,type])=>({
-          body_measurement_id:`bm-${r.date?.slice(0,10)}-${type}`,athlete_id:cfg().athleteId,measured_at:r.date,measurement_type:type,body_side:'none',value:r[k],unit:type==='weight_kg'?'kg':'cm',protocol_code:'PWA',source_type:'athlete',data_quality:'measured',notes:r.source||''
+          body_measurement_id:`bm-${recordLocalDayKey(r)}-${type}`,athlete_id:cfg().athleteId,measured_at:r.date,measurement_type:type,body_side:'none',value:r[k],unit:type==='weight_kg'?'kg':'cm',protocol_code:'PWA',source_type:'athlete',data_quality:'measured',notes:r.source||''
         }))
       });
       for(const record of checkins)await request('checkins.upsert',{method:'POST',payload:{record}});
@@ -1356,7 +1402,7 @@
         Number(c.weekNo)===Number(week.number)
       );
 
-      if(!hasOpenConflict && remoteVersion>=localVersion){
+      if(!hasOpenConflict && remoteVersion>=localVersion&&!incompleteRemotePlan(week,remote)){
         week.planSync={
           ...(week.planSync||{}),
           status:'synced',
@@ -1385,7 +1431,7 @@
     if(typeof migrateAthleteExecutionCanonicalV0575==='function'){
       migrateAthleteExecutionCanonicalV0575()
     }
-    const sessions=(state.weeks||[]).flatMap(w=>w.sessions||[]);
+    const sessions=[...(state.weeks||[]),...archivedCycleWeeks()].flatMap(w=>w.sessions||[]);
     for(const session of sessions){
       if(!session.execution)continue;
       if(session.execution.sync?.status==='synced')continue;
@@ -1433,12 +1479,10 @@
       updateGlobalSyncProgress(1,'Sécurisation des performances locales…');
       await syncUnsyncedExecutions();
 
-      const hasLocalPlanEditsBeforePull=(state.weeks||[]).some(weekHasUnpublishedLocalContent);
-
       updateGlobalSyncProgress(1,'Lecture de Google Sheets…');
       await syncSheetsSnapshot({
         silent:true,
-        forceRemote:!hasLocalPlanEditsBeforePull
+        forceRemote:false
       });
 
       updateGlobalSyncProgress(2,'Nettoyage des conflits obsolètes…');
@@ -1455,10 +1499,9 @@
       await pushLocalAthleteData({silent:true});
 
       updateGlobalSyncProgress(6,'Vérification finale…');
-      const hasLocalPlanEditsAfterPush=(state.weeks||[]).some(weekHasUnpublishedLocalContent);
       await syncSheetsSnapshot({
         silent:true,
-        forceRemote:!hasLocalPlanEditsAfterPush
+        forceRemote:false
       });
       reconcilePublishedWeekSyncStatus();
       pruneStaleQueueItems();

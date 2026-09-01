@@ -1,6 +1,6 @@
 
 const SCHEMA_VERSION = '0.5.8.1';
-const API_RELEASE = '0.5.9.0-beta1.9';
+const API_RELEASE = '0.5.9.0-beta1.12';
 
 function doGet(e) {
   return handleRequest_('GET', e && e.parameter ? e.parameter : {});
@@ -516,7 +516,8 @@ function replaceRowsByValues_(sheetName, columnName, valuesToReplace, records) {
 function upsertCheckin_(record, athleteId) {
   record = Object.assign({}, record);
   record.athlete_id = record.athlete_id || athleteId;
-  record.checkin_id = record.checkin_id || ('ci-' + record.athlete_id + '-' + String(record.date || new Date().toISOString()).slice(0,10) + '-' + String(record.source || 'PWA').replace(/\s+/g,'_'));
+  const localDay = String(record.localDate || record.local_date || record.date || new Date().toISOString()).slice(0,10);
+  record.checkin_id = record.checkin_id || ('ci-' + record.athlete_id + '-' + localDay + '-' + String(record.source || 'PWA').replace(/\s+/g,'_'));
   if (!record.checkin_type) {
     const sourceLower = String(record.source || '').toLowerCase();
     record.checkin_type = (sourceLower.indexOf('dimanche') >= 0 || sourceLower.indexOf('weekly') >= 0 || sourceLower.indexOf('hebdo') >= 0)
